@@ -135,7 +135,7 @@ Toda chamada de agente fica gravada e aparece na tela, em "Detalhes para auditor
 **[A FAZER: prints comentados]**
 
 1. **Painel** — uma tabela só; botões de status (Recebido, Verificação, Revisão, Aguardando envio, Enviado, Recusado, Escalado) filtram a mesma tabela. Cada linha mostra só status e andamento, sem faróis (ficam na negociação). Por quê: a pessoa vê de relance o que depende dela, sem excesso de informação.
-2. **Negociação** — resumo em tópicos no topo; e-mail original recolhido (ao abrir, **trechos usados destacados**); cada condição com campos editáveis e uma bolinha por campo. Por quê: o operador vê o mínimo para decidir; o texto original está a um clique.
+2. **Negociação** — resumo em tópicos no topo; e-mail original recolhido (ao abrir, **trechos usados destacados**); logo abaixo, os textos para copiar, um bloco recolhido por destinatário (resposta ao fornecedor; memorando à Diretoria quando houver); cada condição com campos editáveis e uma bolinha por campo. Por quê: o operador vê o mínimo para decidir; o texto original está a um clique.
 3. **Faróis** — 🟢 ok · 🟡 deduzido/atenção · 🔴 trava · ⚪ não se aplica. Agrupados em Leitura (IA), Cadastro, Política (um farol por regra, com o § da política) e Contrato do ERP.
 4. **Decisão** — vermelho trava; cada amarelo exige "Dar ciência" no próprio item; aprovação "como {você}" só se o perfil escolhido em "Quem você é" tem a alçada.
 5. **Texto suspeito** — só a marca "⚠ Texto suspeito · Escalado à Diretoria Comercial", sem expor o trecho nem o que ele pedia.

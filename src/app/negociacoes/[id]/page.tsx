@@ -152,6 +152,10 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
           </div>
         </details>
 
+        {/* textos para copiar logo abaixo do e-mail, um por destinatário, recolhidos (D19) */}
+        {neg.rascunhoFornecedor && <TextoParaEnviar titulo="Resposta ao fornecedor" para={neg.remetente} texto={neg.rascunhoFornecedor} origem={neg.textosOrigem} />}
+        {neg.memorando && <TextoParaEnviar titulo="Memorando à Diretoria" para="Diretoria Comercial" texto={neg.memorando} origem={neg.textosOrigem} />}
+
         <section className="grid content-start gap-4">
           {!conds.length && (
             <div className="rounded-xl border bg-white px-4 py-8 text-center text-sm text-zinc-500">
@@ -263,21 +267,6 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
             </div>
           )}
 
-          {(neg.rascunhoFornecedor || neg.memorando) && (
-            <details className="group rounded-xl border bg-white">
-              <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-2.5 text-sm">
-                <span className="font-medium">Textos prontos para copiar {neg.textosOrigem === "ia" ? "(Agente Redator)" : "(padrão, sem IA)"}</span>
-                <span className="text-teal-700 group-open:hidden">abrir ▾</span>
-                <span className="hidden text-teal-700 group-open:inline">recolher ▴</span>
-              </summary>
-              <div className="grid gap-3 border-t px-4 py-3">
-                {neg.rascunhoFornecedor && <Texto titulo="Resposta ao fornecedor" texto={neg.rascunhoFornecedor} />}
-                {neg.memorando && <Texto titulo="Memorando à Diretoria" texto={neg.memorando} />}
-                <p className="text-xs text-zinc-500">Nada é enviado por e-mail pelo sistema: copie e envie pelo seu e-mail.</p>
-              </div>
-            </details>
-          )}
-
           <details className="group rounded-xl border border-dashed bg-white/60">
             <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-2.5 text-sm text-zinc-600">
               <span className="font-medium">Detalhes para auditoria · faróis, IA rodada por rodada e linha do tempo (quem fez o quê)</span>
@@ -387,15 +376,25 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
   );
 }
 
-function Texto({ titulo, texto }: { titulo: string; texto: string }) {
+function TextoParaEnviar({ titulo, para, texto, origem }: { titulo: string; para: string; texto: string; origem: string | null }) {
   return (
-    <div>
-      <div className="mb-1 flex items-center justify-between">
-        <span className="text-xs font-medium text-zinc-500">{titulo}</span>
-        <Copiar texto={texto} />
+    <details className="group rounded-xl border bg-white">
+      <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-2.5 text-sm">
+        <span>
+          <span className="font-medium">{titulo}</span>
+          <span className="ml-2 text-zinc-500">para {para}</span>
+        </span>
+        <span className="shrink-0 text-teal-700 group-open:hidden">Ver texto ▾</span>
+        <span className="hidden shrink-0 text-teal-700 group-open:inline">Recolher ▴</span>
+      </summary>
+      <div className="grid gap-2 border-t px-4 py-3">
+        <div className="flex items-center justify-between gap-3">
+          <span className="text-xs text-zinc-500">{origem === "ia" ? "Escrito pelo Agente Redator" : "Texto padrão (sem IA)"} · nada é enviado pelo sistema: copie e envie pelo seu e-mail.</span>
+          <Copiar texto={texto} />
+        </div>
+        <p className="whitespace-pre-wrap rounded-md bg-zinc-50 px-3 py-2 text-sm">{texto}</p>
       </div>
-      <p className="whitespace-pre-wrap rounded-md bg-zinc-50 px-3 py-2 text-sm">{texto}</p>
-    </div>
+    </details>
   );
 }
 
