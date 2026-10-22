@@ -15,7 +15,7 @@ import { reiniciarSessao, sessaoAtual } from "@/lib/sessao";
 import { COOKIE_PERFIL, perfilAtual } from "@/lib/perfil";
 import { cookies } from "next/headers";
 import { processarRodada } from "@/lib/tarefas/agendador";
-import { enfileirar } from "@/lib/tarefas/fila";
+import { enfileirar, semRodadaEmCurso } from "@/lib/tarefas/fila";
 
 export async function trocarPerfil(matricula: string): Promise<RespostaAcao> {
   const p = PERFIS.find((x) => x.matricula === matricula);
@@ -376,9 +376,12 @@ export async function processarAgora(): Promise<RespostaAcao> {
   return ok(r.executadas ? `Rodada executou ${r.executadas} tarefa(s).` : "Nenhuma tarefa pronta agora.");
 }
 
+// Do zero (D16): mesma sessão, semeada de novo; perfil volta ao padrão (Analista) e os limites da demo zeram
 export async function reiniciarDemo(): Promise<RespostaAcao> {
   const sid = await sessaoAtual();
-  await reiniciarSessao(sid);
+  const r = await semRodadaEmCurso(() => reiniciarSessao(sid));
+  if (r.ocupada) return falha("Há uma rodada em andamento; tente reiniciar em alguns segundos.");
+  (await cookies()).delete(COOKIE_PERFIL);
   refresh();
-  return ok("Demo reiniciada: 4 e-mails em Recebido, ERP de volta à captura de 30/09.");
+  return ok("Demo reiniciada do zero: 4 e-mails em Recebido, ERP na captura de 30/09, perfil Analista.");
 }

@@ -55,6 +55,18 @@ async function soltarLease(dono: string) {
   await db.update(s.lease).set({ ate: null, ultimaRodadaEm: new Date() }).where(and(eq(s.lease.nome, "rodada"), eq(s.lease.dono, dono)));
 }
 
+// Reiniciar a demo (D16) usa a mesma trava: não apaga a sessão no meio de uma rodada (ex.: envio ao ERP em voo,
+// que gravaria uma condição na sessão recém-semeada). Solta sem mexer em ultimaRodadaEm (o contador não pula).
+export async function semRodadaEmCurso<T>(fn: () => Promise<T>): Promise<{ ocupada: true } | { ocupada: false; valor: T }> {
+  const dono = crypto.randomUUID();
+  if (!(await pegarLease(dono, 60_000))) return { ocupada: true };
+  try {
+    return { ocupada: false, valor: await fn() };
+  } finally {
+    await db.update(s.lease).set({ ate: null }).where(and(eq(s.lease.nome, "rodada"), eq(s.lease.dono, dono)));
+  }
+}
+
 export async function proximaRodadaEm(): Promise<Date | null> {
   const l = await db.select().from(s.lease).where(eq(s.lease.nome, "rodada")).get();
   return l?.ultimaRodadaEm ? new Date(l.ultimaRodadaEm.getTime() + INTERVALO_RODADA_MS) : null;

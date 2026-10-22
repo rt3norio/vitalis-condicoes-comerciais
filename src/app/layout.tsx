@@ -3,6 +3,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
 import { Suspense } from "react";
 import { PerfilTopo } from "@/components/perfil-topo";
+import { ReiniciarDemo } from "@/components/reiniciar-demo";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -36,6 +37,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                 <Link href="/" className="hover:text-zinc-900">Painel</Link>
                 <Link href="/erp" className="hover:text-zinc-900">ERP (simulado)</Link>
                 <a href="/politica-comercial.pdf" target="_blank" className="hover:text-zinc-900">Política POL-COM-004</a>
+                <ReiniciarDemo />
               </nav>
             </div>
           </header>

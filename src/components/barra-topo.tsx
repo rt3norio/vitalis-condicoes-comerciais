@@ -1,9 +1,9 @@
 "use client";
-// Topo do painel: próxima rodada, processar agora, novo e-mail, reiniciar. Atualiza a tela a cada 4 s.
+// Topo do painel: próxima rodada, processar agora, novo e-mail. Atualiza a tela a cada 4 s. Reiniciar fica no cabeçalho (D16).
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { gerarNovosEmails, novoEmail, processarAgora, reiniciarDemo, type RespostaAcao } from "@/app/acoes";
+import { gerarNovosEmails, novoEmail, processarAgora, type RespostaAcao } from "@/app/acoes";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -59,16 +59,6 @@ export function BotoesTopo({ ia }: { ia: boolean }) {
         </Button>
       )}
       <NovoEmail />
-      <Button
-        size="sm"
-        variant="ghost"
-        disabled={pend}
-        onClick={() => {
-          if (confirm("Reiniciar a demo? Os 4 e-mails voltam para Recebido e o ERP volta à captura de 30/09.")) start(async () => avisar(await reiniciarDemo()));
-        }}
-      >
-        Reiniciar demo
-      </Button>
     </div>
   );
 }
