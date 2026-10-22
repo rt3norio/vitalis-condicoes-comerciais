@@ -114,6 +114,7 @@ O ERP do case cai de propósito (cerca de 1 em cada 5 chamadas responde "sistema
 | Regras fixas (hardcoded) | As 21 conferências (Anexo C) e o pacote que vai ao ERP | Escritas no código do sistema, sem IA, porque regra de negócio tem que dar sempre o mesmo resultado e ser auditável. |
 | Conexão com o ERP | Fala o mesmo contrato do ERP do case (consultas, gravação, recusas, manutenção) | Trocar para o SAP real é trocar o endereço e a autenticação. |
 | Hospedagem | O link público | Fly.io, uma máquina sempre ligada (o agendador roda nela), na região de São Paulo, por ~US$ 5 por mês. |
+| Ferramentas de apoio | Tela, banco, formato das respostas da IA, testes e código | Tailwind e shadcn/ui na interface (componentes prontos e acessíveis); Drizzle para acessar o banco; Zod para validar o formato das respostas da IA; testes automáticos (Vitest) só no motor de regras e no contrato do ERP, onde um erro custa caro; código no GitHub, sem integração contínua (fora da avaliação do case); pnpm e Node 24 (LTS). |
 
 O custo de IA medido é de ~US$ 0,006 por e-mail (leitura, conferência e resumo, com o GLM-5.3), mais ~US$ 0,001 por texto gerado. Para 400 condições por mês, fica abaixo de US$ 5. Na demonstração, os 4 e-mails do exemplo usam a leitura real da IA gravada uma vez, então reiniciar não gasta. A IA roda ao vivo em e-mail novo (colado ou gerado), quando alguém corrige algo (o resumo é refeito) e quando alguém clica em **Gerar texto**.
 
@@ -212,6 +213,7 @@ Para a pessoa não precisar de treinamento, a tela:
 - escreve o motivo de cada bloqueio ao lado do campo;
 - mostra a divergência como escolha, com o trecho de cada lado;
 - deixa a premissa da sugestão visível;
+- mostra a dica de cada campo em tópicos ao passar o mouse, com o sinal "confira ⓘ" para deixar claro que a dica existe;
 - tem botões que dizem o que fazem ("Aprovar como Carlos Duarte", "Gerar texto", "Reiniciar demo");
 - avisa quando algo está sendo processado ("atualizando com as alterações… até 1 min").
 
@@ -235,7 +237,7 @@ Vídeo (até 3 min): [A PREENCHER: link do vídeo]
 | Unidade de trabalho | Um e-mail pode ter várias condições (Gama: desconto + verba) | e-mail × condição | A negociação (o e-mail), com as condições dentro | O pacote vai junto ao ERP (premissa 3) |
 | Execução | ERP instável (manutenção, limite de 10 por minuto) | na hora × fila em segundo plano | Tudo é tarefa, a cada minuto, com nova tentativa | Resiliente e auditável, com até 1 minuto de espera |
 | Revisão humana | A política exige alçada | opcional × obrigatória | Obrigatória, com as saídas aprovar, recusar ou escalar | Nada é gravado sem dono |
-| Incerteza | O case pede "o que foi suposto" | sim/não × semáforo | Verde, amarelo (deduzido, exige ciência) e vermelho (trava) | Toda suposição vira uma ciência registrada, com nome e hora |
+| Incerteza | O case pede "o que foi suposto" | sim/não × semáforo | Verde, amarelo (deduzido, exige ciência) e vermelho (trava); cinza só nas regras da política que não se aplicam (por exemplo, contrapartida num desconto) | Toda suposição vira uma ciência registrada, com nome e hora |
 | Onde usar IA | Texto livre × regra escrita | IA em tudo × IA só na leitura e na redação | IA lê e redige; regra fixa (hardcoded) decide | O mesmo e-mail dá o mesmo resultado nas regras |
 | Modelo | Custo × qualidade | GLM-5.2, GLM-5.3, GLM-5.3-flash | GLM-5.3 nos três agentes | Mais caro que o flash, mas leu tudo certo (seção 05) |
 | Texto suspeito | A Nutrivida pede para "pular validações" | avisar × bloquear | Marcar e escalar, sem liberação e sem expor o trecho na tela | A proposta não segue e o fornecedor precisa de novo contato. A validar com o negócio |
@@ -246,6 +248,12 @@ Vídeo (até 3 min): [A PREENCHER: link do vídeo]
 | Histórico | O case pede saber o que foi suposto e quem respondeu; o ERP e a IA falham | só o resultado × tudo registrado | Gravar cada tarefa, tentativa, falha, ação de pessoa (ciência, edição, escolha, aprovação) e chamada de IA, e mostrar tudo em "Detalhes para auditoria", recolhido no fim da tela | Qualquer pessoa reconstrói o caso depois; quem decide não vê esse volume no dia a dia |
 | Sem alçada | Quem não tem a alçada não deveria mexer na condição | avisar × só leitura | Só leitura por condição: sem a alçada, não edita, não dá ciência e não aprova. Escalar, recusar, gerar texto e reler pedem alçada em todas as condições do pacote; desconto vedado fica com a Diretoria (§11). Vale na tela e no servidor | A analista acompanha e confere com os olhos; quem tem a alçada corrige, dá ciência e aprova |
 | Envio parcial | O ERP não grava duas condições de uma vez | sem alternativa | Reconfere tudo antes do 1º envio; uma recusa volta à revisão com o que foi gravado | O envio parcial vira exceção visível |
+| Painel | O operador precisa achar rápido o que depende dele | quadro com raias × tabela única com filtros; com faróis × sem faróis na tabela | Tabela única em que os botões de status filtram a mesma tabela, e cada e-mail anda pelo funil como um ticket que troca de raia. Sem faróis na tabela, porque era muita informação | Os faróis ficam na negociação; a tabela mostra status e andamento |
+| Primeira visita | O processamento roda a cada minuto | já pronto em Revisão × começar em Recebido | Os 4 e-mails começam em Recebido, com o aviso da próxima rodada e o botão "Processar agora", que só antecipa a mesma rodada | O avaliador vê o funil andar de verdade; o primeiro minuto é de espera |
+| E-mails de teste | A banca pode querer ver casos fora dos 4 do exemplo | só os 4 × colar ou subir .eml × gerar com IA | "Novo e-mail" (colar o texto ou subir o .eml) e o botão "Gerar novos e-mails (IA)", que escreve e-mails fictícios de fornecedores; os dois entram no funil normal | Prova que funciona fora do roteiro; cada e-mail novo é lido pela IA ao vivo |
+| Limites de uso | Link público e custo de IA | sem limite × limite por sessão | Até 5 e-mails colados e 3 gerações de 3 e-mails por sessão. "Gerar texto" sem limite, porque o teto de gasto está na conta do OpenRouter | Ninguém esgota o crédito colando e-mails em massa |
+| Auditoria da IA | A tela não expõe o texto suspeito | esconder o trecho também na auditoria × manter o retorno bruto | Manter na auditoria o retorno bruto da IA, inclusive o trecho suspeito; a tela de decisão mostra só a marca | Quem audita vê exatamente o que a IA recebeu e devolveu; um caso escalado só a Diretoria e o Comitê abrem |
+| Tempo do case | 48 horas, para um case maior que o prazo de propósito | construir até o fim × corte de funcionalidades | Funcionalidades até as 15h de 22/10; depois, só correção de bug importante, documentação, vídeo e publicação | Sobrou tempo para o PDF e o vídeo; o que ficou de fora está nos recortes abaixo e no plano |
 | Hospedagem | O agendador precisa rodar a cada minuto | Vercel × Fly.io | Fly.io, uma máquina | Simples e barato, sem redundância |
 | Custo da demonstração | Link público, dezenas de visitantes | IA ao vivo × leitura salva | Os 4 e-mails do exemplo usam a leitura real gravada uma vez | Reiniciar não gasta; a IA roda ao vivo só quando o visitante pede |
 
@@ -359,6 +367,6 @@ Prompts e formatos de saída como estão no código entregue. Todo agente recebe
 
 ## Anexo C · As 21 conferências
 
-Cada negociação passa pelas mesmas conferências, sempre na mesma ordem. Na tela, elas aparecem como a bolinha ao lado de cada campo, e a lista completa fica em **Detalhes para auditoria**.
+Cada negociação passa pelas mesmas conferências, sempre na mesma ordem. Na lista completa, cinza indica uma regra da política que não se aplica àquela condição (por exemplo, contrapartida num desconto). Na tela, elas aparecem como a bolinha ao lado de cada campo, e a lista completa fica em **Detalhes para auditoria**.
 
 <!-- ANEXO:CONFERENCIAS -->

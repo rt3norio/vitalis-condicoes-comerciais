@@ -259,6 +259,11 @@ hr { display: none; }
 <td>O link público</td>
 <td>Fly.io, uma máquina sempre ligada (o agendador roda nela), na região de São Paulo, por ~US$ 5 por mês.</td>
 </tr>
+<tr>
+<td>Ferramentas de apoio</td>
+<td>Tela, banco, formato das respostas da IA, testes e código</td>
+<td>Tailwind e shadcn/ui na interface (componentes prontos e acessíveis); Drizzle para acessar o banco; Zod para validar o formato das respostas da IA; testes automáticos (Vitest) só no motor de regras e no contrato do ERP, onde um erro custa caro; código no GitHub, sem integração contínua (fora da avaliação do case); pnpm e Node 24 (LTS).</td>
+</tr>
 </tbody></table>
 <p>O custo de IA medido é de ~US$ 0,006 por e-mail (leitura, conferência e resumo, com o GLM-5.3), mais ~US$ 0,001 por texto gerado. Para 400 condições por mês, fica abaixo de US$ 5. Na demonstração, os 4 e-mails do exemplo usam a leitura real da IA gravada uma vez, então reiniciar não gasta. A IA roda ao vivo em e-mail novo (colado ou gerado), quando alguém corrige algo (o resumo é refeito) e quando alguém clica em <strong>Gerar texto</strong>.</p>
 <p>O time comercial usa a tela, e TI mantém a hospedagem e a conexão com o SAP. Mudar uma regra da política é mudar uma regra no código, com teste automático.</p>
@@ -383,6 +388,7 @@ hr { display: none; }
 <li>escreve o motivo de cada bloqueio ao lado do campo;</li>
 <li>mostra a divergência como escolha, com o trecho de cada lado;</li>
 <li>deixa a premissa da sugestão visível;</li>
+<li>mostra a dica de cada campo em tópicos ao passar o mouse, com o sinal &quot;confira ⓘ&quot; para deixar claro que a dica existe;</li>
 <li>tem botões que dizem o que fazem (&quot;Aprovar como Carlos Duarte&quot;, &quot;Gerar texto&quot;, &quot;Reiniciar demo&quot;);</li>
 <li>avisa quando algo está sendo processado (&quot;atualizando com as alterações… até 1 min&quot;).</li>
 </ul>
@@ -456,7 +462,7 @@ hr { display: none; }
 <td>Incerteza</td>
 <td>O case pede &quot;o que foi suposto&quot;</td>
 <td>sim/não × semáforo</td>
-<td>Verde, amarelo (deduzido, exige ciência) e vermelho (trava)</td>
+<td>Verde, amarelo (deduzido, exige ciência) e vermelho (trava); cinza só nas regras da política que não se aplicam (por exemplo, contrapartida num desconto)</td>
 <td>Toda suposição vira uma ciência registrada, com nome e hora</td>
 </tr>
 <tr>
@@ -528,6 +534,48 @@ hr { display: none; }
 <td>sem alternativa</td>
 <td>Reconfere tudo antes do 1º envio; uma recusa volta à revisão com o que foi gravado</td>
 <td>O envio parcial vira exceção visível</td>
+</tr>
+<tr>
+<td>Painel</td>
+<td>O operador precisa achar rápido o que depende dele</td>
+<td>quadro com raias × tabela única com filtros; com faróis × sem faróis na tabela</td>
+<td>Tabela única em que os botões de status filtram a mesma tabela, e cada e-mail anda pelo funil como um ticket que troca de raia. Sem faróis na tabela, porque era muita informação</td>
+<td>Os faróis ficam na negociação; a tabela mostra status e andamento</td>
+</tr>
+<tr>
+<td>Primeira visita</td>
+<td>O processamento roda a cada minuto</td>
+<td>já pronto em Revisão × começar em Recebido</td>
+<td>Os 4 e-mails começam em Recebido, com o aviso da próxima rodada e o botão &quot;Processar agora&quot;, que só antecipa a mesma rodada</td>
+<td>O avaliador vê o funil andar de verdade; o primeiro minuto é de espera</td>
+</tr>
+<tr>
+<td>E-mails de teste</td>
+<td>A banca pode querer ver casos fora dos 4 do exemplo</td>
+<td>só os 4 × colar ou subir .eml × gerar com IA</td>
+<td>&quot;Novo e-mail&quot; (colar o texto ou subir o .eml) e o botão &quot;Gerar novos e-mails (IA)&quot;, que escreve e-mails fictícios de fornecedores; os dois entram no funil normal</td>
+<td>Prova que funciona fora do roteiro; cada e-mail novo é lido pela IA ao vivo</td>
+</tr>
+<tr>
+<td>Limites de uso</td>
+<td>Link público e custo de IA</td>
+<td>sem limite × limite por sessão</td>
+<td>Até 5 e-mails colados e 3 gerações de 3 e-mails por sessão. &quot;Gerar texto&quot; sem limite, porque o teto de gasto está na conta do OpenRouter</td>
+<td>Ninguém esgota o crédito colando e-mails em massa</td>
+</tr>
+<tr>
+<td>Auditoria da IA</td>
+<td>A tela não expõe o texto suspeito</td>
+<td>esconder o trecho também na auditoria × manter o retorno bruto</td>
+<td>Manter na auditoria o retorno bruto da IA, inclusive o trecho suspeito; a tela de decisão mostra só a marca</td>
+<td>Quem audita vê exatamente o que a IA recebeu e devolveu; um caso escalado só a Diretoria e o Comitê abrem</td>
+</tr>
+<tr>
+<td>Tempo do case</td>
+<td>48 horas, para um case maior que o prazo de propósito</td>
+<td>construir até o fim × corte de funcionalidades</td>
+<td>Funcionalidades até as 15h de 22/10; depois, só correção de bug importante, documentação, vídeo e publicação</td>
+<td>Sobrou tempo para o PDF e o vídeo; o que ficou de fora está nos recortes abaixo e no plano</td>
 </tr>
 <tr>
 <td>Hospedagem</td>
@@ -912,7 +960,7 @@ Escreva o memorando à Diretoria Comercial: o caso em poucas linhas e o que se p
 </tr>
 </tbody></table>
 <h2>Anexo C · As 21 conferências</h2>
-<p>Cada negociação passa pelas mesmas conferências, sempre na mesma ordem. Na tela, elas aparecem como a bolinha ao lado de cada campo, e a lista completa fica em <strong>Detalhes para auditoria</strong>.</p>
+<p>Cada negociação passa pelas mesmas conferências, sempre na mesma ordem. Na lista completa, cinza indica uma regra da política que não se aplica àquela condição (por exemplo, contrapartida num desconto). Na tela, elas aparecem como a bolinha ao lado de cada campo, e a lista completa fica em <strong>Detalhes para auditoria</strong>.</p>
 <table>
 <thead>
 <tr>
