@@ -34,7 +34,7 @@ A IA lê o e-mail e a planilha, uma segunda IA confere a leitura e a IA escreve 
 - Sempre há revisão humana, com três saídas: aprovar, recusar ou escalar.
 - Sem a alçada da condição, só leitura. Escalar ou recusar o e-mail inteiro pede a maior alçada; desconto vedado fica com a Diretoria (§11).
 - "Quem você é", no topo e sem login, assina aprovações, ciências e escalonamentos. Caso escalado só a Diretoria e o Comitê veem.
-- Cada item amarelo tem o próprio "Dar ciência", ao lado da dica do campo.
+- Cada item amarelo tem o próprio "Dar ciência", ao lado da dica do campo, para que a pessoa não possa dizer que "não viu" o que aceitou.
 
 ### IA
 

@@ -117,6 +117,11 @@ const CSS_RESUMO = `
 const renderer = new marked.Renderer();
 const codigoPadrao = renderer.code.bind(renderer);
 renderer.code = (t) => (t.lang === "mermaid" ? `<div class="figura"><pre class="mermaid">${t.text}</pre></div>` : codigoPadrao(t));
+// "~" nos documentos é "cerca de" (~R$ 48 mil), nunca tachado: o GFM riscava o trecho entre dois "~" (F19)
+renderer.del = function (t) {
+  const til = t.raw.match(/^~+/)?.[0] ?? "~";
+  return til + this.parser.parseInline(t.tokens) + til;
+};
 const paraHtml = (md: string) => marked.parse(md, { renderer, gfm: true }) as string;
 const corpo = `<section class="resumo">${paraHtml(mdResumo)}</section>\n<section class="completo">${paraHtml(mdCompleto)}</section>`;
 
