@@ -184,11 +184,13 @@ async function redigirTarefa(t: Tarefa): Promise<Resultado> {
   const { neg, conds, farois } = dados;
   let r: Redacao;
   let origem: "ia" | "padrao" = "padrao";
+  let deCache = false;
   const salvo = usaSalvo(neg) ? cacheIa()[neg.chaveDataset!] : undefined;
   if (salvo?.redator && neg.status === (salvo.statusRedator ?? "revisao")) {
     // primeiro texto do dataset: saída salva do Redator, sem chamar a IA
     r = salvo.redator;
     origem = "ia";
+    deCache = true;
   } else if (iaConfigurada() && !usaSalvo(neg)) {
     try {
       r = (await redigir(dadosRedator(neg, conds, farois))).saida;
@@ -203,7 +205,8 @@ async function redigirTarefa(t: Tarefa): Promise<Resultado> {
     .update(s.negociacoes)
     .set({ resumo: r.resumo, rascunhoFornecedor: r.rascunho_fornecedor, memorando: r.memorando_diretoria, textosOrigem: origem })
     .where(eq(s.negociacoes.id, neg.id));
-  return { mensagem: origem === "ia" ? `Textos escritos pelo Redator (${MODELOS.redator()}).` : "Textos padrão (sem IA)." };
+  const msg = deCache ? `Textos do Redator: saída salva (${salvo?.modeloRedator ?? "IA"}), sem chamada nova.` : origem === "ia" ? `Textos escritos pelo Redator (${MODELOS.redator()}).` : "Textos padrão (sem IA).";
+  return { mensagem: msg };
 }
 
 // ---------- 4 → 5: enviar ao ERP ----------
