@@ -209,18 +209,20 @@ function textosPadrao(neg: LinhaNegociacao, conds: (typeof s.condicoes.$inferSel
 async function redigirTarefa(t: Tarefa): Promise<Resultado> {
   const dados = await carregar(t.sessionId, t.negociacaoId);
   if (!dados) throw new Permanente("negociação não encontrada");
-  const { neg, conds, farois } = dados;
+  const { neg, conds, farois, leitura } = dados;
   let r: Redacao;
   let origem: "ia" | "padrao" = "padrao";
   let deCache = false;
   const salvo = usaSalvo(neg) ? cacheIa()[neg.chaveDataset!] : undefined;
-  if (salvo?.redator && neg.status === (salvo.statusRedator ?? "revisao")) {
+  // texto salvo só vale para a leitura salva: depois de "reler ao vivo" ele descreveria outra leitura
+  if (salvo?.redator && leitura?.origem === "cache" && neg.status === (salvo.statusRedator ?? "revisao")) {
     // primeiro texto do dataset: saída salva do Redator, sem chamar a IA
     r = salvo.redator;
     origem = "ia";
     deCache = true;
     await registrarIa(t, salvo.chamadas?.redator, "cache", salvo.geradoEm ?? null);
-  } else if (iaConfigurada() && !usaSalvo(neg)) {
+  } else if (iaConfigurada() && leitura?.origem === "ia") {
+    // Redator ao vivo só quando a leitura também foi ao vivo (e-mail novo ou "reler ao vivo")
     try {
       const red = await redigir(dadosRedator(neg, conds, farois));
       await registrarIa(t, red.registro, "ia");

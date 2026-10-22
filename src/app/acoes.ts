@@ -128,6 +128,9 @@ export async function escolherAlternativa(condId: number, valor: number): Promis
   const r = await condicaoEditavel(condId);
   if ("erro" in r) return falha(r.erro!);
   const { sid, c } = r;
+  const atual = c.tipo === "DESCONTO_PERCENTUAL" ? c.percentual : c.valor;
+  // clicar de novo no valor já escolhido não muda nada nem repete o registro na linha do tempo
+  if (c.proveniencia.valor?.ajustado && atual === valor) return ok("Valor já escolhido.");
   const prov = { ...c.proveniencia, valor: { ...c.proveniencia.valor!, ajustado: true } };
   await db
     .update(s.condicoes)
