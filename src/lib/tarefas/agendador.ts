@@ -8,7 +8,8 @@ export const processarRodada = (opts: { sessionId?: string } = {}) => rodada(HAN
 const g = globalThis as unknown as { __agendador?: NodeJS.Timeout };
 
 export async function iniciarAgendador() {
-  if (g.__agendador || process.env.AGENDADOR === "off") return;
+  // não roda no `next build` (pré-renderização também carrega o instrumentation)
+  if (g.__agendador || process.env.AGENDADOR === "off" || process.env.NEXT_PHASE === "phase-production-build") return;
   await garantirMigracao();
   const tick = () =>
     processarRodada().then(

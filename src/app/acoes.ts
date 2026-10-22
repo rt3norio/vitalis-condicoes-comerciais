@@ -27,6 +27,7 @@ async function condicaoEditavel(condId: number) {
   const dados = await carregar(sid, c.negociacaoId);
   if (!dados) return { erro: "Negociação não encontrada." } as const;
   if (dados.neg.status !== "revisao") return { erro: "Só dá para editar na revisão humana." } as const;
+  if (c.erpCodCondicao) return { erro: `Condição já gravada no ERP como ${c.erpCodCondicao}; não pode mais ser editada.` } as const;
   if (c.aprovadaEm) return { erro: "Condição já aprovada. Desfaça a aprovação para editar." } as const;
   return { sid, c, dados } as const;
 }
@@ -157,6 +158,7 @@ export async function desfazerAprovacao(condId: number): Promise<RespostaAcao> {
   if (!c) return falha("Condição não encontrada.");
   const dados = await carregar(sid, c.negociacaoId);
   if (!dados || dados.neg.status !== "revisao") return falha("Só dá para desfazer na revisão.");
+  if (c.erpCodCondicao) return falha(`Esta condição já está gravada no ERP como ${c.erpCodCondicao}; não dá para desfazer aqui.`);
   await db.update(s.condicoes).set({ aprovador: null, aprovadaEm: null, idempotencyKey: null }).where(eq(s.condicoes.id, condId));
   refresh();
   return ok("Aprovação desfeita.");

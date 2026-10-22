@@ -209,7 +209,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                   </div>
                   <AprovarCondicao
                     condId={c.id}
-                    emRevisao={emRevisao}
+                    emRevisao={emRevisao && !c.erpCodCondicao}
                     aprovada={c.aprovadaEm ? `Aprovada por ${c.aprovador?.nome} (${c.aprovador?.cargo}) em ${fmtDataHora(c.aprovadaEm)}${c.erpCodCondicao ? ` · gravada no ERP como ${c.erpCodCondicao}` : ""}` : null}
                     podeAgora={!vermelhos.length}
                     motivo={pa.ok ? null : vermelhos.length ? `Trava: ${vermelhos.map((f) => f.codigo).join(", ")}.` : pa.motivo.includes("Conferi") ? pa.motivo : null}

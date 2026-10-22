@@ -10,6 +10,8 @@ RUN pnpm install --frozen-lockfile
 
 FROM deps AS build
 COPY . .
+# o agendador só deve subir no servidor final, nunca durante o build
+ENV AGENDADOR=off
 RUN pnpm build
 
 FROM base AS run
