@@ -18,7 +18,7 @@ import { sessaoAtual } from "@/lib/sessao";
 import { perfilAtual, podeVer } from "@/lib/perfil";
 import { cn } from "@/lib/utils";
 import { AuditoriaIa } from "./auditoria-ia";
-import { AprovarCondicao, BotaoCiencia, BotaoReabrir, BotaoReler, Copiar, EditorCondicao, Encerrar } from "./cliente";
+import { AprovarCondicao, BotaoCiencia, BotaoGerarTexto, BotaoReabrir, BotaoReler, Copiar, EditorCondicao, Encerrar } from "./cliente";
 
 export default function Pagina(props: PageProps<"/negociacoes/[id]">) {
   return (
@@ -152,9 +152,13 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
           </div>
         </details>
 
-        {/* textos para copiar logo abaixo do e-mail, um por destinatário, recolhidos (D19) */}
-        {neg.rascunhoFornecedor && <TextoParaEnviar titulo="Resposta ao fornecedor" para={neg.remetente} texto={neg.rascunhoFornecedor} origem={neg.textosOrigem} />}
-        {neg.memorando && <TextoParaEnviar titulo="Memorando à Diretoria" para="Diretoria Comercial" texto={neg.memorando} origem={neg.textosOrigem} />}
+        {/* textos para enviar logo abaixo do e-mail, um por destinatário, recolhidos (D19); gerados quando a pessoa pede (D20) */}
+        {(conds.length > 0 || neg.status === "escalado") && (
+          <TextoParaEnviar negId={neg.id} destino="fornecedor" titulo="Resposta ao fornecedor" para={neg.remetente} texto={neg.rascunhoFornecedor} meta={neg.textosMeta.fornecedor} />
+        )}
+        {(sugerirEscalar || neg.status === "escalado") && (
+          <TextoParaEnviar negId={neg.id} destino="diretoria" titulo="Memorando à Diretoria" para="Diretoria Comercial" texto={neg.memorando} meta={neg.textosMeta.diretoria} />
+        )}
 
         <section className="grid content-start gap-4">
           {!conds.length && (
@@ -376,7 +380,9 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
   );
 }
 
-function TextoParaEnviar({ titulo, para, texto, origem }: { titulo: string; para: string; texto: string; origem: string | null }) {
+type MetaTexto = { em: string; por: string; origem: "ia" | "padrao"; modelo: string | null };
+
+function TextoParaEnviar({ negId, destino, titulo, para, texto, meta }: { negId: number; destino: "fornecedor" | "diretoria"; titulo: string; para: string; texto: string | null; meta?: MetaTexto }) {
   return (
     <details className="group rounded-xl border bg-white">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-2.5 text-sm">
@@ -384,15 +390,30 @@ function TextoParaEnviar({ titulo, para, texto, origem }: { titulo: string; para
           <span className="font-medium">{titulo}</span>
           <span className="ml-2 text-zinc-500">para {para}</span>
         </span>
-        <span className="shrink-0 text-teal-700 group-open:hidden">Ver texto ▾</span>
+        <span className="shrink-0 text-teal-700 group-open:hidden">{texto ? "Ver texto ▾" : "Gerar ▾"}</span>
         <span className="hidden shrink-0 text-teal-700 group-open:inline">Recolher ▴</span>
       </summary>
       <div className="grid gap-2 border-t px-4 py-3">
-        <div className="flex items-center justify-between gap-3">
-          <span className="text-xs text-zinc-500">{origem === "ia" ? "Escrito pelo Agente Redator" : "Texto padrão (sem IA)"} · nada é enviado pelo sistema: copie e envie pelo seu e-mail.</span>
-          <Copiar texto={texto} />
-        </div>
-        <p className="whitespace-pre-wrap rounded-md bg-zinc-50 px-3 py-2 text-sm">{texto}</p>
+        {texto ? (
+          <>
+            <div className="flex flex-wrap items-center justify-between gap-2">
+              <span className="text-xs text-zinc-500">
+                {meta ? `${meta.origem === "ia" ? `Agente Redator (${meta.modelo})` : "Texto padrão (sem IA)"} · pedido por ${meta.por} em ${fmtDataHora(meta.em)} · ` : ""}
+                nada é enviado pelo sistema: copie e envie pelo seu e-mail.
+              </span>
+              <span className="flex gap-2">
+                <BotaoGerarTexto negId={negId} destino={destino} jaTem />
+                <Copiar texto={texto} />
+              </span>
+            </div>
+            <p className="whitespace-pre-wrap rounded-md bg-zinc-50 px-3 py-2 text-sm">{texto}</p>
+          </>
+        ) : (
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <span className="text-sm text-zinc-500">Ainda não gerado. O Agente Redator escreve sobre o estado atual da negociação (campos, escolhas, aprovações).</span>
+            <BotaoGerarTexto negId={negId} destino={destino} />
+          </div>
+        )}
       </div>
     </details>
   );

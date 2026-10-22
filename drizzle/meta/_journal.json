@@ -36,6 +36,13 @@
       "when": 1792676700590,
       "tag": "0004_chamadas_ia",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "6",
+      "when": 1792688485458,
+      "tag": "0005_textos_sob_demanda",
+      "breakpoints": true
     }
   ]
 }

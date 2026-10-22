@@ -82,13 +82,13 @@ function Chamada({ c, n }: { c: ChamadaIa; n: number }) {
 }
 
 export function AuditoriaIa({ chamadas, semIa }: { chamadas: ChamadaIa[]; semIa: string | null }) {
-  // agrupa por rodada: mesma tarefa + mesma tentativa (o Gerador não tem tarefa: fica no próprio grupo)
+  // agrupa por rodada: mesma tarefa + mesma tentativa (Gerador e "Gerar texto" não têm tarefa: cada chamada no próprio grupo)
   const grupos: { chave: string; titulo: string; quando: Date | null; itens: ChamadaIa[] }[] = [];
   for (const c of chamadas) {
     const chave = c.tarefa ? `${c.tarefa}#${c.tentativa}` : `g${c.id}`;
     const ultimo = grupos.at(-1);
     if (ultimo?.chave === chave) ultimo.itens.push(c);
-    else grupos.push({ chave, titulo: c.tarefa ? `${TAREFA[c.tarefa] ?? c.tarefa} · tentativa ${c.tentativa}` : "Botão “Gerar novos e-mails (IA)”", quando: c.rodadaEm ?? c.em, itens: [c] });
+    else grupos.push({ chave, titulo: c.tarefa ? `${TAREFA[c.tarefa] ?? c.tarefa} · tentativa ${c.tentativa}` : c.registro.agente === "gerador" ? "Botão “Gerar novos e-mails (IA)”" : "Botão “Gerar texto” (pedido na tela)", quando: c.rodadaEm ?? c.em, itens: [c] });
   }
   let n = 0;
   return (

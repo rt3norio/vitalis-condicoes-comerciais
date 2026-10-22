@@ -67,10 +67,12 @@ export type Verificacao = z.infer<typeof schemaVerificacao>;
 
 export const schemaRedacao = z.object({
   resumo: z.array(z.string()).describe("3 a 5 tópicos curtos (até ~12 palavras cada), sem prosa: 1) o que é a proposta, 2) o que trava, 3) o que a pessoa precisa decidir"),
-  rascunho_fornecedor: z.string().describe("resposta curta e cordial ao fornecedor; sem prometer cadastro se houver bloqueio; sem expor política interna"),
-  memorando_diretoria: z.string().nullable().describe("só se a negociação precisa ir à Diretoria; senão null"),
 });
 export type Redacao = z.infer<typeof schemaRedacao>;
+
+// texto sob demanda (D20): resposta ao fornecedor ou memorando à Diretoria
+export const schemaTexto = z.object({ texto: z.string().describe("só a mensagem, pronta para copiar") });
+export type Texto = z.infer<typeof schemaTexto>;
 
 // Gerador de e-mails de teste (ferramenta da demo, fora do funil)
 export const schemaGeracao = z.object({

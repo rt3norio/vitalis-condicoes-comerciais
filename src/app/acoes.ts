@@ -3,7 +3,9 @@
 import { eq } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { db, schema as s } from "@/db";
-import { gerarEmails, iaConfigurada } from "@/lib/agentes/agentes";
+import { FalhaIa, gerarEmails, iaConfigurada, redigirTexto } from "@/lib/agentes/agentes";
+import { dadosRedator } from "@/lib/agentes/entrada-redator";
+import { textoPadrao, type DestinoTexto } from "@/lib/agentes/textos-padrao";
 import { capturaErp, parseEml } from "@/lib/dominio/dataset";
 import { hoje, isISO } from "@/lib/dominio/datas";
 import { alcada, PERFIS, veEscalados } from "@/lib/dominio/politica";
@@ -12,7 +14,7 @@ import { carregar, paraCondicao, recalcularFarois } from "@/lib/negociacao";
 import { amarelosSemCiencia, chaveCiencia } from "@/lib/regras/ciencia";
 import { podeAprovar } from "@/lib/regras/farois";
 import { reiniciarSessao, sessaoAtual } from "@/lib/sessao";
-import { COOKIE_PERFIL, perfilAtual } from "@/lib/perfil";
+import { COOKIE_PERFIL, perfilAtual, podeVer } from "@/lib/perfil";
 import { cookies } from "next/headers";
 import { processarRodada } from "@/lib/tarefas/agendador";
 import { enfileirar, semRodadaEmCurso } from "@/lib/tarefas/fila";
@@ -268,12 +270,57 @@ export async function reabrir(negId: number): Promise<RespostaAcao> {
   return ok("Reaberta para revisão.");
 }
 
+// Textos sob demanda (D20): a pessoa abre o bloco e clica em "Gerar texto"; o Redator escreve sobre o estado ATUAL
+// (campos editados, escolhas, aprovações, envio). Sem IA configurada, usa o texto padrão. Custo: limite na conta do OpenRouter.
+export async function gerarTexto(negId: number, destino: DestinoTexto): Promise<RespostaAcao> {
+  const sid = await sessaoAtual();
+  const dados = await carregar(sid, negId);
+  if (!dados) return falha("Negociação não encontrada.");
+  const quem = await perfilAtual();
+  if (!podeVer(dados.neg, quem)) return falha("Caso escalado: só a Diretoria ou o Comitê veem.");
+  const { neg, conds, farois } = dados;
+  if (!conds.length && neg.status !== "escalado") return falha("Ainda não há leitura do e-mail.");
+  let texto: string;
+  let origem: "ia" | "padrao" = "padrao";
+  let modelo: string | null = null;
+  if (iaConfigurada()) {
+    const entrada = {
+      ...dadosRedator(neg, conds, farois),
+      hoje: hoje(),
+      vigencias: conds.map((c) => ({ condicao: c.titulo, inicio: c.dataInicio, fim: c.dataFim, aprovada: !!c.aprovadaEm, gravada_no_erp: c.erpCodCondicao })),
+    };
+    try {
+      const r = await redigirTexto(destino, entrada);
+      await db.insert(s.chamadasIa).values({ negociacaoId: negId, origem: "ia", registro: r.registro });
+      texto = r.saida.texto;
+      origem = "ia";
+      modelo = r.modelo;
+    } catch (e) {
+      if (e instanceof FalhaIa) await db.insert(s.chamadasIa).values({ negociacaoId: negId, origem: "ia", registro: e.registro });
+      return falha("A IA não respondeu; tente de novo.");
+    }
+  } else texto = textoPadrao(destino, neg, conds, farois);
+  const meta = { ...neg.textosMeta, [destino]: { em: new Date().toISOString(), por: `${quem.nome} (${quem.cargo})`, origem, modelo } };
+  await db
+    .update(s.negociacoes)
+    .set(destino === "fornecedor" ? { rascunhoFornecedor: texto, textosMeta: meta } : { memorando: texto, textosMeta: meta })
+    .where(eq(s.negociacoes.id, negId));
+  const nome = destino === "fornecedor" ? "a resposta ao fornecedor" : "o memorando à Diretoria";
+  await registrar(negId, `Gerou ${nome} (${origem === "ia" ? "IA" : "texto padrão"})`);
+  refresh();
+  return ok(origem === "ia" ? `Texto gerado pelo Agente Redator (${modelo}).` : "Texto padrão gerado (IA não configurada).");
+}
+
 export async function relerComIa(negId: number): Promise<RespostaAcao> {
   const sid = await sessaoAtual();
   const dados = await carregar(sid, negId);
   if (!dados || !["recebido", "verificacao", "revisao"].includes(dados.neg.status)) return falha("Só relê antes da aprovação.");
   if (dados.conds.some((c) => c.aprovadaEm)) return falha("Há condição aprovada; desfaça antes de reler.");
-  await db.update(s.negociacoes).set({ status: "recebido", forcarLeituraIa: true, ciencias: {}, alertaRevisao: null, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
+  // textos gerados descreviam a leitura antiga (D20)
+  await db
+    .update(s.negociacoes)
+    .set({ status: "recebido", forcarLeituraIa: true, ciencias: {}, alertaRevisao: null, rascunhoFornecedor: null, memorando: null, textosMeta: {}, atualizadoEm: new Date() })
+    .where(eq(s.negociacoes.id, negId));
   await enfileirar(sid, negId, "ler_email");
   await registrar(negId, "Pediu nova leitura ao vivo pela IA");
   refresh();

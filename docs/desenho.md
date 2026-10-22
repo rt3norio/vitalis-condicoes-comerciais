@@ -21,7 +21,7 @@ Unidade = **negociação** (1 e-mail = 1 linha). Dentro dela, N **condições** 
 | 5 Enviado | — | fim |
 | Recusado / Escalado | — | fim (escalado pode ser reaberto manualmente) |
 
-Tarefa `redigir` (Agente Redator) roda à parte depois de `verificar`; falha dela não trava o funil.
+Tarefa `redigir` (Agente Redator) roda à parte depois de `verificar` e escreve só o resumo; falha dela não trava o funil. Resposta ao fornecedor e memorando são gerados na tela, quando a pessoa clica em "Gerar texto" (D20).
 
 Toda tarefa: independente, falhável, executada só pelo agendador (rodada a cada 60 s ou "processar agora"). Falha transitória → `proxima_em` e tenta na próxima rodada; permanente → registra e para.
 
@@ -102,7 +102,7 @@ Aprovar uma condição exige: nenhum 🔴, caixa de conferência marcada se houv
 **`/negociacoes/[id]` — Negociação**
 - Esquerda: e-mail original com trechos usados destacados; anexo em tabela.
 - Direita, por condição: campos editáveis com farol de Leitura; faróis de Cadastro, Política e ERP agrupados; resumo do Redator.
-- Rodapé: caixa "Conferi os N itens deduzidos", seletor de aprovador, **Aprovar** / **Recusar** / **Escalar**; textos do Redator com **Copiar**.
+- Rodapé: caixa "Conferi os N itens deduzidos", seletor de aprovador, **Aprovar** / **Recusar** / **Escalar**. Textos para enviar abaixo do e-mail original, com **Gerar texto** e **Copiar** (D19, D20).
 - Linha do tempo das tarefas e tentativas (S34).
 
 **`/erp` — ERP simulado (apoio à demo)**: condições gravadas e log de chamadas da sessão.

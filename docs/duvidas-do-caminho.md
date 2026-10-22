@@ -10,7 +10,7 @@ Registro do que surgiu durante a construção do protótipo (21/10, 21:40–22:1
 | C4 | P1 (data real): os 4 e-mails nascem com POL-06b vermelho. | Para destravar, a pessoa edita o início na tela (vira verde "ajustado na revisão"). Foi assim que testei a Beta (início 22/10). | Decidir P1: é aceitável o operador mudar a data sem novo aceite do fornecedor? Para o vídeo, é a única forma de chegar a "Enviado". |
 | C15 | Deploy no Fly. | `Dockerfile` e `fly.toml` prontos (máquina sempre ligada, volume `/data`, região gru). Não testei o build da imagem (Docker não verificado aqui) e não implantei. | Conta Fly + autorização para `fly deploy`. Custo estimado US$ 4–7/mês. |
 | C14 | O hook GateGuard do ECC bloqueou 34 escritas/comandos pedindo justificativa. | Respondi cada um. Custou tempo de construção. | Decidir se mantém; dá para isentar a pasta com `GATEGUARD_EXEMPT_GLOBS`. |
-| C24 | ~~Custo de IA por visitante~~ **Resolvido conforme você:** dataset nunca chama a IA ao vivo (usa a saída salva, inclusive do Redator); reiniciar não gasta. IA ao vivo só em e-mail gerado/colado ou "reler ao vivo". | — | — |
+| C24 | ~~Custo de IA por visitante~~ **Resolvido conforme você:** dataset nunca chama a IA ao vivo (usa a saída salva, inclusive do Redator); reiniciar não gasta. *Desde D20: os textos para enviar são gerados ao vivo quando a pessoa clica em "Gerar texto".* IA ao vivo só em e-mail gerado/colado ou "reler ao vivo". | — | — |
 | C25 | Build da imagem Docker não verificado: Docker Desktop está desligado nesta máquina. | `pnpm build` de produção passa local; o Dockerfile desliga o agendador no build. | Ligar o Docker Desktop (ou deixar o Fly montar a imagem no deploy). |
 
 ## Decidido por mim (vetável)

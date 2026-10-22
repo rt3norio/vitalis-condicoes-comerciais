@@ -89,7 +89,7 @@ Cada etapa é uma **tarefa** gravada no banco e executada por um processo em seg
 | **Cliente do ERP** (HTTP) | Fala o contrato do `mock_erp` com `Idempotency-Key` | Trocar para o SAP real = trocar endereço e autenticação. |
 | **Hospedagem** (Fly.io, uma máquina) | Link público | Máquina sempre ligada (o agendador roda nela), ~US$ 5/mês. |
 
-**Custo de IA:** a leitura dos 4 e-mails do dataset roda uma vez e fica salva; reiniciar a demo não chama a IA. IA ao vivo só quando alguém gera ou cola um e-mail novo. Em produção, ~1 leitura por e-mail recebido: **~US$ 0,006 por e-mail** com o GLM-5.3 (medido nos 4 e-mails: ~3,2 mil tokens de entrada e ~1,7 mil de saída por e-mail, somando Extrator, Verificador e Redator). Modelos mais baratos foram avaliados e não leram igual (C10).
+**Custo de IA:** a leitura dos 4 e-mails do dataset roda uma vez e fica salva; reiniciar a demo não chama a IA. IA ao vivo só quando alguém gera ou cola um e-mail novo, ou clica em **Gerar texto** (resposta ao fornecedor, memorando). Em produção, ~1 leitura por e-mail recebido: **~US$ 0,006 por e-mail** com o GLM-5.3 (medido nos 4 e-mails: ~3,2 mil tokens de entrada e ~1,7 mil de saída por e-mail, somando Extrator, Verificador e Redator). Modelos mais baratos foram avaliados e não leram igual (C10).
 
 **Como ficaria no ambiente da Vitalis:** Azure (hospedagem e banco), Outlook/Exchange (caixa do comercial como entrada), SAP (gravação), Teams (aviso para o aprovador), Databricks (indicadores). **[A FAZER: diagrama]**
 
@@ -103,7 +103,7 @@ Cada etapa é uma **tarefa** gravada no banco e executada por um processo em seg
 |---|---|---|
 | **Extrator** | Lê e-mail e anexo; devolve cada campo com o **trecho de origem** e a **certeza** (escrito / deduzido / ausente); lista divergências entre corpo e anexo sem escolher | Ler texto livre é onde a IA ganha do humano em velocidade e consistência. |
 | **Verificador** | Confere, de forma independente, cada campo lido contra o e-mail original; concorda, duvida ou discorda | Uma segunda leitura pega erro da primeira. Teste real: com o valor apagado de propósito, o Verificador discordou citando "18% de desconto". |
-| **Redator** | Escreve o resumo para quem aprova, o rascunho de resposta ao fornecedor e o memorando à Diretoria | Texto para pessoas; não decide nada. |
+| **Redator** | Escreve o resumo para quem aprova (automático) e, quando a pessoa pede, a resposta ao fornecedor e o memorando à Diretoria sobre o estado atual da negociação | Texto para pessoas; não decide nada. |
 | *(Gerador)* | *Ferramenta da demo: escreve e-mails fictícios para teste* | *Fora do funil.* |
 
 Modelo atual: GLM-5.3 nos três (configurável por agente). **[A FAZER: comparar com outro modelo no Verificador para independência real]**
@@ -135,7 +135,7 @@ Toda chamada de agente fica gravada e aparece na tela, em "Detalhes para auditor
 **[A FAZER: prints comentados]**
 
 1. **Painel** — uma tabela só; botões de status (Recebido, Verificação, Revisão, Aguardando envio, Enviado, Recusado, Escalado) filtram a mesma tabela. Cada linha mostra só status e andamento, sem faróis (ficam na negociação). Por quê: a pessoa vê de relance o que depende dela, sem excesso de informação.
-2. **Negociação** — resumo em tópicos no topo; e-mail original recolhido (ao abrir, **trechos usados destacados**); logo abaixo, os textos para copiar, um bloco recolhido por destinatário (resposta ao fornecedor; memorando à Diretoria quando houver); cada condição com campos editáveis e uma bolinha por campo. Por quê: o operador vê o mínimo para decidir; o texto original está a um clique.
+2. **Negociação** — resumo em tópicos no topo; e-mail original recolhido (ao abrir, **trechos usados destacados**); logo abaixo, os textos para enviar, um bloco recolhido por destinatário (resposta ao fornecedor; memorando à Diretoria quando houver), gerados quando a pessoa clica em **Gerar texto**, sobre o estado atual; cada condição com campos editáveis e uma bolinha por campo. Por quê: o operador vê o mínimo para decidir; o texto original está a um clique.
 3. **Faróis** — 🟢 ok · 🟡 deduzido/atenção · 🔴 trava · ⚪ não se aplica. Agrupados em Leitura (IA), Cadastro, Política (um farol por regra, com o § da política) e Contrato do ERP.
 4. **Decisão** — vermelho trava; cada amarelo exige "Dar ciência" no próprio item; aprovação "como {você}" só se o perfil escolhido em "Quem você é" tem a alçada.
 5. **Texto suspeito** — só a marca "⚠ Texto suspeito · Escalado à Diretoria Comercial", sem expor o trecho nem o que ele pedia.
@@ -225,7 +225,7 @@ Investimento estimado: ~R$ 150–200 mil (fases 0–2). Retorno estimado: pagame
 
 **Regras que o sistema aplica:** teto de desconto por categoria (§4), alçada (§5), vigência até 12 meses e início não retroativo (§6), contrapartida da verba (§7), fornecedor ativo (§8), sem sobreposição com condição vigente (§9), origem por e-mail do fornecedor (§10).
 
-**O que ele não faz:** não aprova sozinho; não manda e-mail para o fornecedor (você copia o rascunho); não decide casos que a política não cobre — esses vão para **Escalar à Diretoria**.
+**O que ele não faz:** não aprova sozinho; não manda e-mail para o fornecedor (você abre "Resposta ao fornecedor", clica em **Gerar texto**, confere, copia e envia pelo seu e-mail; mudou algo na negociação, **Gerar de novo**); não decide casos que a política não cobre — esses vão para **Escalar à Diretoria**.
 
 **Quando algo dá errado**
 - *"Aguardando envio" há muito tempo:* o ERP está fora do ar; o sistema tenta de novo a cada minuto. Veja a linha do tempo.

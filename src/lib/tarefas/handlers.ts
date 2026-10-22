@@ -7,9 +7,8 @@ import type { TipoTarefa } from "@/db/schema";
 import referencia from "../../../data/leituras-referencia.json";
 import { extrair, FalhaIa, IaIndisponivel, iaConfigurada, redigir, verificar, MODELOS, type MaterialEmail, type RegistroIa } from "../agentes/agentes";
 import { dadosRedator } from "../agentes/entrada-redator";
+import { resumoPadrao } from "../agentes/textos-padrao";
 import { soDirigidas, type Extracao, type Redacao, type Verificacao } from "../agentes/schemas";
-import { fmtBRL, fmtData, fmtPct } from "../dominio/datas";
-import { CATEGORIA_LABEL, type Categoria } from "../dominio/tipos";
 import { classificar, erp } from "../erp/cliente";
 import { carregar, FalhaErp, obterSnapshot, paraCondicao, recalcularFarois, type LinhaNegociacao } from "../negociacao";
 import { extrato } from "../dominio/dataset";
@@ -181,30 +180,7 @@ async function verificarTarefa(t: Tarefa): Promise<Resultado> {
   return { mensagem: `${msgVerif} Faróis calculados. → ${suspeita ? "Escalado" : "Revisão humana"}.` };
 }
 
-// ---------- textos (Redator) ----------
-
-type FarolLinha = typeof s.farois.$inferSelect;
-
-function textosPadrao(neg: LinhaNegociacao, conds: (typeof s.condicoes.$inferSelect)[], fs: FarolLinha[]): Redacao {
-  const vermelhos = fs.filter((f) => f.cor === "vermelho");
-  const escalar = neg.status === "escalado" || fs.some((f) => f.acao === "escalar");
-  const lista = conds
-    .map((c) => `${c.titulo}: ${c.tipo === "DESCONTO_PERCENTUAL" ? fmtPct(c.percentual) : fmtBRL(c.valor)}${c.codCategoria ? ` em ${CATEGORIA_LABEL[c.codCategoria as Categoria]}` : ""}, ${fmtData(c.dataInicio)}–${fmtData(c.dataFim)}`)
-    .join("; ");
-  const resumo = [
-    ...conds.map((c) => `${c.titulo}: ${c.tipo === "DESCONTO_PERCENTUAL" ? fmtPct(c.percentual) : fmtBRL(c.valor)}, ${fmtData(c.dataInicio)} a ${fmtData(c.dataFim)}`),
-    ...[...new Set(vermelhos.map((f) => f.titulo))].slice(0, 3).map((t) => `Trava: ${t.toLowerCase()}`),
-    vermelhos.length ? "Corrija os itens em vermelho ou escale à Diretoria" : "Sem bloqueios: confira os amarelos e aprove na alçada indicada",
-  ];
-  const primeiro = neg.remetente.replace(/<.*>/, "").trim().split(" ")[0] || "";
-  const rascunho = vermelhos.length
-    ? `Olá, ${primeiro}! Recebemos a proposta e ela está em análise. Para seguirmos, precisamos confirmar alguns pontos; retornamos em breve com o que faltar.`
-    : `Olá, ${primeiro}! Recebemos a proposta e ela está em aprovação interna. Avisamos assim que estiver cadastrada.`;
-  const memorando = escalar
-    ? `Para: Diretoria Comercial\nAssunto: decisão necessária — ${neg.assunto}\n\n${lista}.\n\nMotivo: ${[neg.motivoSaida, ...fs.filter((f) => f.acao === "escalar").map((f) => f.detalhe)].filter(Boolean).join(" ")}\n\nOrigem: ${neg.messageId}`
-    : null;
-  return { resumo, rascunho_fornecedor: rascunho, memorando_diretoria: memorando };
-}
+// ---------- resumo (Redator); os textos para enviar são sob demanda na tela (D20) ----------
 
 async function redigirTarefa(t: Tarefa): Promise<Resultado> {
   const dados = await carregar(t.sessionId, t.negociacaoId);
@@ -232,14 +208,14 @@ async function redigirTarefa(t: Tarefa): Promise<Resultado> {
       if (e instanceof FalhaIa) await registrarIa(t, e.registro, "ia");
       // texto não é essencial: depois de 3 tentativas usa o padrão em vez de travar
       if (t.tentativas < 3 && !(e instanceof IaIndisponivel)) erroIa(e, t);
-      r = textosPadrao(neg, conds, farois);
+      r = { resumo: resumoPadrao(conds, farois) };
     }
-  } else r = textosPadrao(neg, conds, farois);
+  } else r = { resumo: resumoPadrao(conds, farois) };
   await db
     .update(s.negociacoes)
-    .set({ resumo: (Array.isArray(r.resumo) ? r.resumo : [r.resumo]).join("\n"), rascunhoFornecedor: r.rascunho_fornecedor, memorando: r.memorando_diretoria, textosOrigem: origem })
+    .set({ resumo: (Array.isArray(r.resumo) ? r.resumo : [r.resumo]).join("\n"), textosOrigem: origem })
     .where(eq(s.negociacoes.id, neg.id));
-  const msg = deCache ? `Textos do Redator: saída salva (${salvo?.modeloRedator ?? "IA"}), sem chamada nova.` : origem === "ia" ? `Textos escritos pelo Redator (${MODELOS.redator()}).` : "Textos padrão (sem IA).";
+  const msg = deCache ? `Resumo do Redator: saída salva (${salvo?.modeloRedator ?? "IA"}), sem chamada nova.` : origem === "ia" ? `Resumo escrito pelo Redator (${MODELOS.redator()}).` : "Resumo padrão (sem IA).";
   return { mensagem: msg };
 }
 

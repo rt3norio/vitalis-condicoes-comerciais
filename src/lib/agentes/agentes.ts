@@ -4,8 +4,9 @@
 import { createOpenRouter } from "@openrouter/ai-sdk-provider";
 import { generateText, NoObjectGeneratedError, Output } from "ai";
 import type { z } from "zod";
-import { PROMPT_EXTRATOR, PROMPT_GERADOR, PROMPT_REDATOR, PROMPT_VERIFICADOR } from "./prompts";
-import { schemaExtracao, schemaGeracao, schemaRedacao, schemaVerificacao, type Extracao, type Geracao, type Redacao, type Verificacao } from "./schemas";
+import { PROMPT_EXTRATOR, PROMPT_GERADOR, PROMPT_REDATOR, PROMPT_TEXTO_DIRETORIA, PROMPT_TEXTO_FORNECEDOR, PROMPT_VERIFICADOR } from "./prompts";
+import { schemaExtracao, schemaGeracao, schemaRedacao, schemaTexto, schemaVerificacao, type Extracao, type Geracao, type Redacao, type Texto, type Verificacao } from "./schemas";
+import type { DestinoTexto } from "./textos-padrao";
 
 export const iaConfigurada = () => !!process.env.OPENROUTER_API_KEY;
 
@@ -105,6 +106,10 @@ export const verificar = (m: MaterialEmail, leitura: Extracao): Promise<{ saida:
 
 export const redigir = (dados: unknown): Promise<{ saida: Redacao; modelo: string; registro: RegistroIa }> =>
   chamar("redator", schemaRedacao, PROMPT_REDATOR, `<DADOS>\n${JSON.stringify(dados, null, 1)}\n</DADOS>`, 0.2, 60_000);
+
+// botão "Gerar texto" (D20): mesmo agente, um texto por vez
+export const redigirTexto = (destino: DestinoTexto, dados: unknown): Promise<{ saida: Texto; modelo: string; registro: RegistroIa }> =>
+  chamar("redator", schemaTexto, destino === "fornecedor" ? PROMPT_TEXTO_FORNECEDOR : PROMPT_TEXTO_DIRETORIA, `<DADOS>\n${JSON.stringify(dados, null, 1)}\n</DADOS>`, 0.2, 60_000);
 
 export const gerarEmails = (n: number, contexto: { hoje: string; fornecedores: string[]; lojas: string[]; linhas: string[] }): Promise<{ saida: Geracao; modelo: string; registro: RegistroIa }> =>
   chamar(

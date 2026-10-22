@@ -13,6 +13,7 @@ import {
   editarCampo,
   encerrar,
   escolherAlternativa,
+  gerarTexto,
   reabrir,
   relerComIa,
 } from "@/app/acoes";
@@ -353,6 +354,16 @@ export function BotaoReler({ negId, disabled }: { negId: number; disabled?: bool
   return (
     <Button size="sm" variant="ghost" disabled={pend || disabled} onClick={() => start(async () => avisar(await relerComIa(negId)))}>
       Reler ao vivo com a IA
+    </Button>
+  );
+}
+
+// "Gerar texto" (D20): o Redator escreve na hora sobre o estado atual; "Gerar de novo" troca o texto
+export function BotaoGerarTexto({ negId, destino, jaTem = false }: { negId: number; destino: "fornecedor" | "diretoria"; jaTem?: boolean }) {
+  const [pend, start] = useTransition();
+  return (
+    <Button size="xs" variant={jaTem ? "outline" : "default"} disabled={pend} onClick={() => start(async () => avisar(await gerarTexto(negId, destino)))}>
+      {pend ? "Gerando… (até 1 min)" : jaTem ? "Gerar de novo" : "Gerar texto"}
     </Button>
   );
 }

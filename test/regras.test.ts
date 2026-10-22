@@ -144,3 +144,18 @@ describe("D1 — data real", () => {
     expect(cor(calcularFarois(conds[0], ctx(conds)), "POL-06b")).toBe("vermelho");
   });
 });
+
+describe("D18/D21 — texto suspeito: a proposta não segue", () => {
+  it("texto ao fornecedor pede novo e-mail e não cita o trecho; memorando pede validação", async () => {
+    const { textoPadrao, resumoPadrao } = await import("../src/lib/agentes/textos-padrao");
+    const { conds, email } = preparar("nutrivida");
+    const fs = [{ ...farolInstrucaoSuspeita(leituras.nutrivida.instrucoes_suspeitas), condicaoId: null }];
+    const neg = { status: "escalado", remetente: email.remetente, assunto: email.assunto, motivoSaida: "Texto suspeito no e-mail. Escalado à Diretoria Comercial.", messageId: email.messageId };
+    const forn = textoPadrao("fornecedor", neg, conds, fs);
+    expect(forn).toContain("nova proposta em um novo e-mail");
+    expect(forn).not.toMatch(/data|ajust|suspeit/i);
+    for (const i of leituras.nutrivida.instrucoes_suspeitas) expect(forn).not.toContain(i.trecho.slice(0, 20));
+    expect(textoPadrao("diretoria", neg, conds, fs)).toContain("valide este encaminhamento");
+    expect(resumoPadrao(conds, fs).at(-1)).toContain("novo contato do fornecedor");
+  });
+});
