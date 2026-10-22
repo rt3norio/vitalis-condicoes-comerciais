@@ -69,6 +69,7 @@ async function condicaoEditavel(condId: number) {
 async function depoisDeEditar(sid: string, negId: number) {
   await db.update(s.negociacoes).set({ atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
   await recalcularFarois(sid, negId);
+  await enfileirar(sid, negId, "redigir"); // resumo refeito dizendo o que mudou (D23)
   refresh();
 }
 
@@ -215,6 +216,7 @@ export async function aprovarCondicao(condId: number): Promise<RespostaAcao> {
     .set({ aprovador: { matricula: ap!.matricula, nome: ap!.nome, cargo: ap!.cargo }, aprovadaEm: new Date(), idempotencyKey: crypto.randomUUID() })
     .where(eq(s.condicoes.id, condId));
   await registrar(c.negociacaoId, `Aprovou "${c.titulo}" (alçada ${alcadaDe(c)})`);
+  await enfileirar(sid, c.negociacaoId, "redigir"); // D23
   // S25 (premissa P11): pacote só sobe quando todas as condições estiverem aprovadas
   const todas = await db.select({ a: s.condicoes.aprovadaEm }).from(s.condicoes).where(eq(s.condicoes.negociacaoId, c.negociacaoId));
   if (todas.every((x) => x.a)) {
@@ -237,6 +239,7 @@ export async function desfazerAprovacao(condId: number): Promise<RespostaAcao> {
   if (c.erpCodCondicao) return falha(`Esta condição já está gravada no ERP como ${c.erpCodCondicao}; não dá para desfazer aqui.`);
   await db.update(s.condicoes).set({ aprovador: null, aprovadaEm: null, idempotencyKey: null }).where(eq(s.condicoes.id, condId));
   await registrar(c.negociacaoId, `Desfez a aprovação de "${c.titulo}"`);
+  await enfileirar(sid, c.negociacaoId, "redigir"); // D23
   refresh();
   return ok("Aprovação desfeita.");
 }

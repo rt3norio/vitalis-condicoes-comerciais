@@ -67,6 +67,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
   const farolNeg = farois.filter((f) => f.condicaoId == null);
   const suspeita = farolNeg.find((f) => f.codigo === "LEI-09" && f.cor === "vermelho");
   const sugerirEscalar = farois.some((f) => f.acao === "escalar" && f.cor === "vermelho");
+  const resumoPendente = tempo.tarefas.some((t) => t.tipo === "redigir" && (t.status === "pendente" || t.status === "executando"));
 
   const evidencias = (leitura?.saidaExtrator.condicoes ?? []).flatMap((k) => [k.categoria, k.lojas, k.valor, k.data_inicio, k.data_fim, k.contrapartida].map((c) => c.trecho)).concat(leitura?.saidaExtrator.fornecedor.trecho ?? "");
   const pedacos = destacar(neg.corpo, evidencias.filter(Boolean));
@@ -77,7 +78,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
 
   return (
     <div className="grid gap-5">
-      {["recebido", "verificacao", "aguardando_envio"].includes(neg.status) && <AutoAtualizar />}
+      {(["recebido", "verificacao", "aguardando_envio"].includes(neg.status) || resumoPendente) && <AutoAtualizar />}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <Link href="/" className="text-sm text-teal-700 hover:underline">← Painel</Link>
@@ -117,7 +118,10 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
       )}
       {neg.resumo && (
         <div className="rounded-lg border bg-white px-4 py-3 text-sm">
-          <div className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">Resumo {neg.textosOrigem === "ia" ? "(Agente Redator)" : "(texto padrão)"}</div>
+          <div className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">
+            Resumo {neg.textosOrigem === "ia" ? "(Agente Redator)" : "(texto padrão)"}
+            {resumoPendente && <span className="ml-2 normal-case tracking-normal text-teal-700">atualizando com as alterações… (até 1 min)</span>}
+          </div>
           <ul className="list-disc space-y-0.5 pl-5">
             {neg.resumo.split("\n").filter(Boolean).map((t) => (
               <li key={t}>{t}</li>

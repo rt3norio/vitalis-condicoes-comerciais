@@ -15,8 +15,10 @@ const valor = (c: CondMin) => (c.tipo === "DESCONTO_PERCENTUAL" ? fmtPct(c.perce
 const lista = (conds: CondMin[]) =>
   conds.map((c) => `${c.titulo}: ${valor(c)}${c.codCategoria ? ` em ${CATEGORIA_LABEL[c.codCategoria as Categoria]}` : ""}, ${fmtData(c.dataInicio)}–${fmtData(c.dataFim)}`).join("; ");
 
-export function resumoPadrao(conds: CondMin[], fs: FarolMin[]): string[] {
+export function resumoPadrao(conds: CondMin[], fs: FarolMin[], alteracoes: string[] = []): string[] {
   const linhas = conds.map((c) => `${c.titulo}: ${valor(c)}, ${fmtData(c.dataInicio)} a ${fmtData(c.dataFim)}`);
+  // D23: o que pessoas mudaram depois da leitura (texto da linha do tempo, sem o nome)
+  if (alteracoes.length) linhas.push(`Alterado na revisão: ${alteracoes.slice(-3).map((a) => a.replace(/^[^:]*: /, "")).join("; ")}`);
   if (temTextoSuspeito(fs)) return [...linhas, "Texto suspeito no e-mail: escalado à Diretoria Comercial", "Esta proposta não segue: só com novo contato do fornecedor, por novo e-mail"];
   const vermelhos = fs.filter((f) => f.cor === "vermelho");
   return [

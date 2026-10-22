@@ -103,7 +103,7 @@ Cada etapa é uma **tarefa** gravada no banco e executada por um processo em seg
 |---|---|---|
 | **Extrator** | Lê e-mail e anexo; devolve cada campo com o **trecho de origem** e a **certeza** (escrito / deduzido / ausente); lista divergências entre corpo e anexo sem escolher | Ler texto livre é onde a IA ganha do humano em velocidade e consistência. |
 | **Verificador** | Confere, de forma independente, cada campo lido contra o e-mail original; concorda, duvida ou discorda | Uma segunda leitura pega erro da primeira. Teste real: com o valor apagado de propósito, o Verificador discordou citando "18% de desconto". |
-| **Redator** | Escreve o resumo para quem aprova (automático) e, quando a pessoa pede, a resposta ao fornecedor e o memorando à Diretoria sobre o estado atual da negociação | Texto para pessoas; não decide nada. |
+| **Redator** | Escreve o resumo para quem aprova (automático, refeito a cada alteração ou aprovação dizendo o que mudou em relação ao e-mail) e, quando a pessoa pede, a resposta ao fornecedor e o memorando à Diretoria sobre o estado atual da negociação | Texto para pessoas; não decide nada. |
 | *(Gerador)* | *Ferramenta da demo: escreve e-mails fictícios para teste* | *Fora do funil.* |
 
 Modelo atual: GLM-5.3 nos três (configurável por agente). **[A FAZER: comparar com outro modelo no Verificador para independência real]**

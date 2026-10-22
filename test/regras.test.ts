@@ -159,3 +159,13 @@ describe("D18/D21 — texto suspeito: a proposta não segue", () => {
     expect(resumoPadrao(conds, fs).at(-1)).toContain("novo contato do fornecedor");
   });
 });
+
+describe("D23 — resumo depois de alterar", () => {
+  it("resumo padrão diz o que mudou na revisão", async () => {
+    const { resumoPadrao } = await import("../src/lib/agentes/textos-padrao");
+    const { conds } = preparar("beta");
+    const r = resumoPadrao(conds, [], ['Marina Figueiredo (Diretora Comercial): Editou Início em "Desconto": 2026-10-01 → 2026-10-22']);
+    expect(r.join(" ")).toContain("Alterado na revisão: Editou Início");
+    expect(r.join(" ")).not.toContain("Marina");
+  });
+});

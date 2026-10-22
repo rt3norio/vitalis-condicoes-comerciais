@@ -11,7 +11,7 @@ import { resumoPadrao } from "../agentes/textos-padrao";
 import { soDirigidas, type Extracao, type Redacao, type Verificacao } from "../agentes/schemas";
 import { classificar, erp } from "../erp/cliente";
 import { carregar, FalhaErp, obterSnapshot, paraCondicao, recalcularFarois, type LinhaNegociacao } from "../negociacao";
-import { extrato } from "../dominio/dataset";
+import { capturaErp, extrato } from "../dominio/dataset";
 import { condicoesDaLeitura } from "../regras/condicoes-da-leitura";
 import { montarPayload, MOTIVO_TEXTO_SUSPEITO } from "../regras/farois";
 import { enfileirar, Permanente, Transitoria, type Resultado, type Tarefa } from "./fila";
@@ -186,25 +186,38 @@ async function verificarTarefa(t: Tarefa): Promise<Resultado> {
 
 // ---------- resumo (Redator); os textos para enviar são sob demanda na tela (D20) ----------
 
+// D23: o resumo é refeito depois de editar, escolher, substituir, aprovar e enviar, dizendo o que mudou em relação ao e-mail
+const ALTERACAO = /^(Editou|Aceitou a sugestão|Escolheu|Marcou|Desfez a substituição|Aprovou|Desfez a aprovação|Pacote completo)/;
+const nomeLoja = (cod: string) => (cod === "REDE" ? "toda a rede" : (capturaErp.lojas.find((l) => l.cod_loja === cod)?.nome.replace(/^DROG VITALIS\s+/i, "") ?? cod));
+
 async function redigirTarefa(t: Tarefa): Promise<Resultado> {
   const dados = await carregar(t.sessionId, t.negociacaoId);
   if (!dados) throw new Permanente("negociação não encontrada");
   const { neg, conds, farois, leitura } = dados;
+  const evs = await db.select({ por: s.eventos.por, d: s.eventos.descricao }).from(s.eventos).where(eq(s.eventos.negociacaoId, neg.id)).orderBy(s.eventos.id);
+  const alteracoes = evs.filter((e) => ALTERACAO.test(e.d)).map((e) => `${e.por}: ${e.d}`);
+  const entrada = {
+    ...dadosRedator(neg, conds, farois),
+    ...(alteracoes.length && {
+      alteracoes_na_revisao: alteracoes,
+      atual: conds.map((c) => ({ condicao: c.titulo, inicio: c.dataInicio, fim: c.dataFim, lojas: c.lojas.map(nomeLoja), aprovada_por: c.aprovador?.nome ?? null, gravada_no_erp: c.erpCodCondicao })),
+    }),
+  };
   let r: Redacao;
   let origem: "ia" | "padrao" = "padrao";
   let deCache = false;
   const salvo = usaSalvo(neg) ? cacheIa()[neg.chaveDataset!] : undefined;
-  // texto salvo só vale para a leitura salva: depois de "reler ao vivo" ele descreveria outra leitura
-  if (salvo?.redator && leitura?.origem === "cache" && neg.status === (salvo.statusRedator ?? "revisao")) {
+  // texto salvo só vale para a leitura salva e sem alteração humana: depois de "reler ao vivo" ou de editar, descreveria outra coisa
+  if (salvo?.redator && leitura?.origem === "cache" && !alteracoes.length && neg.status === (salvo.statusRedator ?? "revisao")) {
     // primeiro texto do dataset: saída salva do Redator, sem chamar a IA
     r = salvo.redator;
     origem = "ia";
     deCache = true;
     await registrarIa(t, salvo.chamadas?.redator, "cache", salvo.geradoEm ?? null);
-  } else if (iaConfigurada() && leitura?.origem === "ia") {
-    // Redator ao vivo só quando a leitura também foi ao vivo (e-mail novo ou "reler ao vivo")
+  } else if (iaConfigurada() && (leitura?.origem === "ia" || alteracoes.length)) {
+    // Redator ao vivo quando a leitura foi ao vivo (e-mail novo ou "reler ao vivo") ou quando uma pessoa alterou algo (D23)
     try {
-      const red = await redigir(dadosRedator(neg, conds, farois));
+      const red = await redigir(entrada);
       await registrarIa(t, red.registro, "ia");
       r = red.saida;
       origem = "ia";
@@ -212,9 +225,9 @@ async function redigirTarefa(t: Tarefa): Promise<Resultado> {
       if (e instanceof FalhaIa) await registrarIa(t, e.registro, "ia");
       // texto não é essencial: depois de 3 tentativas usa o padrão em vez de travar
       if (t.tentativas < 3 && !(e instanceof IaIndisponivel)) erroIa(e, t);
-      r = { resumo: resumoPadrao(conds, farois) };
+      r = { resumo: resumoPadrao(conds, farois, alteracoes) };
     }
-  } else r = { resumo: resumoPadrao(conds, farois) };
+  } else r = { resumo: resumoPadrao(conds, farois, alteracoes) };
   await db
     .update(s.negociacoes)
     .set({ resumo: (Array.isArray(r.resumo) ? r.resumo : [r.resumo]).join("\n"), textosOrigem: origem })
@@ -275,6 +288,7 @@ async function enviarErp(t: Tarefa): Promise<Resultado> {
     throw new Permanente(`ERP recusou ${c.titulo}: ${detalhe}`, r.status);
   }
   await db.update(s.negociacoes).set({ status: "enviado", alertaRevisao: null, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, neg.id));
+  await enfileirar(t.sessionId, neg.id, "redigir"); // resumo passa a dizer que foi cadastrada (D23)
   return { mensagem: `Enviado ao ERP: ${feitos.join(", ") || "nada pendente"}.`, httpStatus: 201 };
 }
 
