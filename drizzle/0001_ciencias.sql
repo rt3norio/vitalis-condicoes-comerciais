@@ -1,0 +1,1 @@
+ALTER TABLE `negociacoes` ADD `ciencias` text DEFAULT '{}' NOT NULL;

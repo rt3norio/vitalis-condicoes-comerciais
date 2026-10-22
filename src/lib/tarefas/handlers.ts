@@ -267,7 +267,7 @@ async function enviarErp(t: Tarefa): Promise<Resultado> {
 }
 
 async function voltarParaRevisao(negId: number, alerta: string, condicoesAfetadas: number[]) {
-  await db.update(s.negociacoes).set({ status: "revisao", alertaRevisao: alerta, conferidos: null, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
+  await db.update(s.negociacoes).set({ status: "revisao", alertaRevisao: alerta, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
   // condição com problema precisa ser reaprovada; nova aprovação gera nova Idempotency-Key
   for (const id of condicoesAfetadas)
     await db

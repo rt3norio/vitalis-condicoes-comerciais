@@ -12,10 +12,11 @@ import { alcada, APROVADORES } from "@/lib/dominio/politica";
 import { CATEGORIA_LABEL, CATEGORIAS, type Farol, type Grupo } from "@/lib/dominio/tipos";
 import { destacar } from "@/lib/destacar";
 import { carregar, paraCondicao, snapshotSalvo } from "@/lib/negociacao";
+import { amarelosSemCiencia, temCiencia } from "@/lib/regras/ciencia";
 import { FAROIS_DO_CAMPO, piorCor, podeAprovar } from "@/lib/regras/farois";
 import { sessaoAtual } from "@/lib/sessao";
 import { cn } from "@/lib/utils";
-import { AprovarCondicao, BotaoReabrir, BotaoReler, ConferirAmarelos, Copiar, EditorCondicao, Encerrar } from "./cliente";
+import { AprovarCondicao, BotaoCiencia, BotaoReabrir, BotaoReler, Copiar, EditorCondicao, Encerrar } from "./cliente";
 
 export default function Pagina(props: PageProps<"/negociacoes/[id]">) {
   return (
@@ -52,8 +53,6 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
   const emRevisao = neg.status === "revisao";
   const farolNeg = farois.filter((f) => f.condicaoId == null);
   const suspeita = farolNeg.find((f) => f.codigo === "LEI-09" && f.cor === "vermelho");
-  const amarelos = farois.filter((f) => f.cor === "amarelo").length;
-  const conferido = neg.conferidos ? `${neg.conferidos.por} em ${fmtDataHora(neg.conferidos.em)}` : null;
   const sugerirEscalar = farois.some((f) => f.acao === "escalar" && f.cor === "vermelho");
 
   const evidencias = (leitura?.saidaExtrator.condicoes ?? []).flatMap((k) => [k.categoria, k.lojas, k.valor, k.data_inicio, k.data_fim, k.contrapartida].map((c) => c.trecho)).concat(leitura?.saidaExtrator.fornecedor.trecho ?? "");
@@ -166,7 +165,9 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
             const fs = farois.filter((f) => f.condicaoId === c.id) as Farol[];
             const cond = paraCondicao(c);
             const a = alcada(c.tipo, c.percentual, c.valor);
-            const pa = podeAprovar(fs, APROVADORES.at(-1), cond, !!neg.conferidos);
+            const fsCond = farois.filter((f) => f.condicaoId === c.id);
+            const pendentesCiencia = amarelosSemCiencia(fsCond, neg.ciencias);
+            const pa = podeAprovar(fs, APROVADORES.at(-1), cond, pendentesCiencia.length === 0);
             const vermelhos = fs.filter((f) => f.cor === "vermelho");
             const substituir = fs.find((f) => f.codigo === "POL-09" && f.acao === "substituir");
             const candidato = substituir ? (substituir.detalhe.match(/COND-\d{3}/)?.[0] ?? null) : null;
@@ -208,7 +209,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                       Object.entries(FAROIS_DO_CAMPO).map(([campo, cods]) => {
                         const ordem = { vermelho: 0, amarelo: 1, verde: 2, cinza: 3 } as const;
                         const rel = fs.filter((f) => (cods as readonly string[]).includes(f.codigo) && f.cor !== "cinza").sort((x, y) => ordem[x.cor] - ordem[y.cor]);
-                        return [campo, { cor: piorCor(rel), itens: rel.map((f) => ({ cor: f.cor, titulo: f.titulo, detalhe: f.detalhe })) }];
+                        return [campo, { cor: piorCor(rel), itens: rel.map((f) => ({ cor: f.cor, titulo: f.titulo, detalhe: f.detalhe, ciente: temCiencia(neg.ciencias, { ...f, condicaoId: c.id }) })) }];
                       }),
                     )}
                     fornecedores={opcoesForn}
@@ -264,12 +265,38 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                       ))}
                     </ul>
                   )}
+                  {fsCond.some((f) => f.cor === "amarelo") && (
+                    <div className="rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2">
+                      <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-amber-800">
+                        Para dar ciência {pendentesCiencia.length ? `· faltam ${pendentesCiencia.length}` : "· tudo ciente ✓"}
+                      </div>
+                      <ul className="grid gap-1.5 text-sm">
+                        {fsCond
+                          .filter((f) => f.cor === "amarelo")
+                          .map((f) => {
+                            const ciente = temCiencia(neg.ciencias, f);
+                            const quando = neg.ciencias[`${f.codigo}#${c.id}`]?.em;
+                            return (
+                              <li key={f.codigo} className="flex items-start justify-between gap-3">
+                                <span className="flex gap-2">
+                                  <Ponto cor="amarelo" className="mt-1.5" />
+                                  <span className={cn(ciente && "text-zinc-500")}>
+                                    <b>{f.titulo}:</b> {f.detalhe}
+                                  </span>
+                                </span>
+                                <BotaoCiencia negId={neg.id} codigo={f.codigo} condicaoId={c.id} ciente={ciente} quando={ciente && quando ? fmtDataHora(quando) : null} desabilitado={!emRevisao || !!c.aprovadaEm} />
+                              </li>
+                            );
+                          })}
+                      </ul>
+                    </div>
+                  )}
                   <AprovarCondicao
                     condId={c.id}
                     emRevisao={emRevisao && !c.erpCodCondicao}
                     aprovada={c.aprovadaEm ? `Aprovada por ${c.aprovador?.nome} (${c.aprovador?.cargo}) em ${fmtDataHora(c.aprovadaEm)}${c.erpCodCondicao ? ` · gravada no ERP como ${c.erpCodCondicao}` : ""}` : null}
                     podeAgora={!vermelhos.length}
-                    motivo={pa.ok ? null : vermelhos.length ? "Resolva os itens em vermelho acima para liberar a aprovação." : pa.motivo.includes("Conferi") ? pa.motivo : null}
+                    motivo={pa.ok ? null : vermelhos.length ? "Resolva os itens em vermelho acima para liberar a aprovação." : pa.motivo.includes("ciência") ? pa.motivo : null}
                     aprovadores={APROVADORES.map((ap) => ({ valor: ap.matricula, rotulo: `${ap.nome} — ${ap.cargo}`, alcadaOk: a.nivel != null && ap.nivel >= a.nivel }))}
                   />
                 </div>
@@ -280,7 +307,6 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
           {emRevisao && conds.length > 0 && (
             <div className="grid gap-3 rounded-xl border bg-white px-4 py-3">
               <h2 className="text-sm font-semibold">Decisão sobre a negociação</h2>
-              <ConferirAmarelos negId={neg.id} n={amarelos} conferido={conferido} aprovadores={APROVADORES.map((a) => ({ valor: a.matricula, rotulo: a.nome }))} />
               <p className="text-xs text-zinc-500">
                 As condições deste e-mail sobem juntas para o ERP: o pacote só vai para “Aguardando envio” quando todas estiverem aprovadas (premissa P11). Aprovadores são uma lista fictícia (premissa P9).
               </p>

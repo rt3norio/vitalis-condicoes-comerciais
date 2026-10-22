@@ -122,6 +122,17 @@ describe("Divergência corpo × anexo por regra", () => {
   });
 });
 
+describe("Ciência por item amarelo", () => {
+  it("vale para o texto do farol; muda o texto, perde a ciência", async () => {
+    const { amarelosSemCiencia, chaveCiencia } = await import("../src/lib/regras/ciencia");
+    const f = { codigo: "CAD-02", condicaoId: 7, cor: "amarelo", detalhe: "Méier → LOJA-107" };
+    const c = { [chaveCiencia("CAD-02", 7)]: { em: "2026-10-22T10:00:00Z", detalhe: "Méier → LOJA-107" } };
+    expect(amarelosSemCiencia([f], c)).toHaveLength(0);
+    expect(amarelosSemCiencia([{ ...f, detalhe: "Méier, Tijuca → ..." }], c)).toHaveLength(1);
+    expect(amarelosSemCiencia([{ ...f, cor: "verde" }], {})).toHaveLength(0);
+  });
+});
+
 describe("D1 — data real", () => {
   it("com hoje = 22/10/2026 o início 01/10 fica vermelho (P1)", () => {
     const { conds, ctx } = preparar("beta", "2026-10-22");

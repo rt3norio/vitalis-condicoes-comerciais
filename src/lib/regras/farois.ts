@@ -296,7 +296,7 @@ export function podeAprovar(farois: Farol[], aprovador: Aprovador | undefined, c
   const vermelhos = farois.filter((f) => f.cor === "vermelho");
   if (vermelhos.length) return { ok: false, motivo: `Resolva antes: ${vermelhos.map((f) => f.titulo.toLowerCase()).join("; ")}.` };
   const amarelos = farois.filter((f) => f.cor === "amarelo");
-  if (amarelos.length && !conferido) return { ok: false, motivo: `Antes de aprovar, confira os itens amarelos e marque "Conferi".` };
+  if (amarelos.length && !conferido) return { ok: false, motivo: "Dê ciência em cada item amarelo antes de aprovar." };
   if (!aprovador) return { ok: false, motivo: "Escolha quem aprova." };
   const a = alcada(c.tipo, c.percentual, c.valor);
   if (a.nivel == null) return { ok: false, motivo: "Alçada indefinida." };

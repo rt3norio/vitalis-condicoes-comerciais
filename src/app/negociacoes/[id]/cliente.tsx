@@ -5,7 +5,8 @@ import { toast } from "sonner";
 import {
   aceitarSugestao,
   aprovarCondicao,
-  conferirAmarelos,
+  darCiencia,
+  desfazerCiencia,
   definirSubstituicao,
   desfazerAprovacao,
   editarCampo,
@@ -26,7 +27,7 @@ const inputCls =
   "h-8 w-full rounded-md border border-zinc-300 bg-white px-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 disabled:bg-zinc-100 disabled:text-zinc-500";
 
 type Opcao = { valor: string; rotulo: string };
-type ItemDica = { cor: Cor; titulo: string; detalhe: string };
+type ItemDica = { cor: Cor; titulo: string; detalhe: string; ciente?: boolean };
 type PontoCampo = { cor: Cor; itens: ItemDica[] };
 type Pontos = Partial<Record<"codFornecedor" | "codCategoria" | "valor" | "dataInicio" | "dataFim" | "lojas" | "contrapartida", PontoCampo>>;
 
@@ -193,6 +194,8 @@ function Campo({ rotulo, largo, ponto, children }: { rotulo: string; largo?: boo
 // "confira"/"resolver" com tooltip em tópicos: um item por regra ligada ao campo (pior cor primeiro)
 function DicaCampo({ ponto }: { ponto: PontoCampo }) {
   const vermelho = ponto.cor === "vermelho";
+  const amarelos = ponto.itens.filter((i) => i.cor === "amarelo");
+  const tudoCiente = !vermelho && amarelos.length > 0 && amarelos.every((i) => i.ciente);
   return (
     <Tooltip>
       <TooltipTrigger
@@ -202,12 +205,12 @@ function DicaCampo({ ponto }: { ponto: PontoCampo }) {
             aria-label={vermelho ? "Por que resolver: ver motivos" : "O que conferir: ver motivos"}
             className={cn(
               "inline-flex cursor-help items-center gap-0.5 rounded px-1 font-normal underline decoration-dotted underline-offset-2 hover:bg-zinc-100 focus-visible:outline-2",
-              vermelho ? "text-red-700" : "text-amber-700",
+              vermelho ? "text-red-700" : tudoCiente ? "text-emerald-700" : "text-amber-700",
             )}
           />
         }
       >
-        {vermelho ? "resolver" : "confira"}
+        {vermelho ? "resolver" : tudoCiente ? "✓ ciente" : "confira"}
         <span aria-hidden className="inline-grid size-3.5 place-items-center rounded-full border border-current text-[9px] font-bold leading-none no-underline">i</span>
       </TooltipTrigger>
       <TooltipContent side="top" align="start" className="block max-w-sm px-3 py-2 text-left">
@@ -217,6 +220,7 @@ function DicaCampo({ ponto }: { ponto: PontoCampo }) {
               <Ponto cor={it.cor} className="mt-1" />
               <span>
                 <b>{it.titulo}</b>
+                {it.cor === "amarelo" && <span className="ml-1 opacity-80">{it.ciente ? "· ✓ ciente" : "· falta dar ciência"}</span>}
                 <br />
                 <span className="opacity-80">{it.detalhe}</span>
               </span>
@@ -271,28 +275,23 @@ export function AprovarCondicao({
   );
 }
 
-export function ConferirAmarelos({ negId, n, conferido, aprovadores }: { negId: number; n: number; conferido: string | null; aprovadores: Opcao[] }) {
+export function BotaoCiencia({ negId, codigo, condicaoId, ciente, quando, desabilitado }: { negId: number; codigo: string; condicaoId: number; ciente: boolean; quando: string | null; desabilitado: boolean }) {
   const [pend, start] = useTransition();
-  const [ap, setAp] = useState("");
-  const [marcado, setMarcado] = useState(false);
-  if (!n) return null;
-  if (conferido) return <p className="text-sm text-emerald-800">✓ {n} item(ns) deduzido(s) conferido(s) por {conferido}.</p>;
+  if (ciente)
+    return (
+      <span className="flex shrink-0 items-center gap-2 text-xs text-emerald-700">
+        ✓ ciente{quando ? ` · ${quando}` : ""}
+        {!desabilitado && (
+          <button type="button" disabled={pend} className="text-zinc-500 underline" onClick={() => start(async () => avisar(await desfazerCiencia(negId, codigo, condicaoId)))}>
+            desfazer
+          </button>
+        )}
+      </span>
+    );
   return (
-    <div className="flex flex-wrap items-center gap-2 text-sm">
-      <label className="flex items-center gap-2">
-        <input type="checkbox" checked={marcado} onChange={(e) => setMarcado(e.target.checked)} />
-        Conferi os <b>{n}</b> itens amarelos (deduzidos ou de atenção) contra o e-mail
-      </label>
-      <select className={cn(inputCls, "w-auto")} value={ap} onChange={(e) => setAp(e.target.value)}>
-        <option value="">quem conferiu?</option>
-        {aprovadores.map((a) => (
-          <option key={a.valor} value={a.valor}>{a.rotulo}</option>
-        ))}
-      </select>
-      <Button size="sm" variant="outline" disabled={!marcado || !ap || pend} onClick={() => start(async () => avisar(await conferirAmarelos(negId, ap)))}>
-        Registrar conferência
-      </Button>
-    </div>
+    <Button size="xs" variant="outline" className="shrink-0 border-amber-300" disabled={pend || desabilitado} onClick={() => start(async () => avisar(await darCiencia(negId, codigo, condicaoId)))}>
+      {pend ? "Registrando…" : "Dar ciência"}
+    </Button>
   );
 }
 

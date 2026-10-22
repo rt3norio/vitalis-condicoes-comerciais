@@ -40,7 +40,9 @@ export const negociacoes = sqliteTable(
     rascunhoFornecedor: text("rascunho_fornecedor"),
     memorando: text("memorando"),
     textosOrigem: text("textos_origem").$type<"ia" | "padrao">(),
-    conferidos: text("conferidos", { mode: "json" }).$type<{ por: string; em: string; farois: string[] } | null>(),
+    conferidos: text("conferidos", { mode: "json" }).$type<{ por: string; em: string; farois: string[] } | null>(), // obsoleto (S31 antigo)
+    // ciência por item amarelo: chave "CODIGO#condicaoId" → quando e sobre qual texto do farol (vale enquanto o texto não muda)
+    ciencias: text("ciencias", { mode: "json" }).$type<Record<string, { em: string; detalhe: string }>>().notNull().default({}),
     motivoSaida: text("motivo_saida"),
     alertaRevisao: text("alerta_revisao"),
     atualizadoEm: ts("atualizado_em").notNull().$defaultFn(agora),

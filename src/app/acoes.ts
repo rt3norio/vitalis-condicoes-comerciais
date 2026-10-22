@@ -9,6 +9,7 @@ import { hoje, isISO } from "@/lib/dominio/datas";
 import { APROVADORES } from "@/lib/dominio/politica";
 import { CATEGORIA_LABEL, CATEGORIAS, type CampoCondicao } from "@/lib/dominio/tipos";
 import { carregar, paraCondicao, recalcularFarois } from "@/lib/negociacao";
+import { amarelosSemCiencia, chaveCiencia } from "@/lib/regras/ciencia";
 import { podeAprovar } from "@/lib/regras/farois";
 import { reiniciarSessao, sessaoAtual } from "@/lib/sessao";
 import { processarRodada } from "@/lib/tarefas/agendador";
@@ -33,9 +34,9 @@ async function condicaoEditavel(condId: number) {
   return { sid, c, dados } as const;
 }
 
-// Qualquer mudança invalida a conferência dos amarelos
+// Ciência é por item e vale para o texto do farol; o que a edição mudar perde a ciência sozinho (ver ciencia.ts)
 async function depoisDeEditar(sid: string, negId: number) {
-  await db.update(s.negociacoes).set({ conferidos: null, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
+  await db.update(s.negociacoes).set({ atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
   await recalcularFarois(sid, negId);
   refresh();
 }
@@ -111,19 +112,27 @@ export async function definirSubstituicao(condId: number, codCondicao: string | 
   return ok(codCondicao ? `Vai substituir ${codCondicao}.` : "Substituição desfeita.");
 }
 
-export async function conferirAmarelos(negId: number, matricula: string): Promise<RespostaAcao> {
+export async function darCiencia(negId: number, codigo: string, condicaoId: number | null): Promise<RespostaAcao> {
   const sid = await sessaoAtual();
   const dados = await carregar(sid, negId);
   if (!dados || dados.neg.status !== "revisao") return falha("Negociação não está em revisão.");
-  const ap = APROVADORES.find((a) => a.matricula === matricula);
-  if (!ap) return falha("Escolha quem está conferindo.");
-  const amarelos = dados.farois.filter((f) => f.cor === "amarelo").map((f) => `${f.codigo}${f.condicaoId ? `#${f.condicaoId}` : ""}`);
-  await db
-    .update(s.negociacoes)
-    .set({ conferidos: { por: `${ap.nome} (${ap.matricula})`, em: new Date().toISOString(), farois: amarelos } })
-    .where(eq(s.negociacoes.id, negId));
+  const f = dados.farois.find((x) => x.codigo === codigo && x.condicaoId === condicaoId);
+  if (!f || f.cor !== "amarelo") return falha("Este item não precisa de ciência.");
+  const ciencias = { ...dados.neg.ciencias, [chaveCiencia(codigo, condicaoId)]: { em: new Date().toISOString(), detalhe: f.detalhe } };
+  await db.update(s.negociacoes).set({ ciencias }).where(eq(s.negociacoes.id, negId));
   refresh();
-  return ok(`${amarelos.length} item(ns) deduzido(s) conferido(s) por ${ap.nome}.`);
+  return ok(`Ciência registrada: ${f.titulo}.`);
+}
+
+export async function desfazerCiencia(negId: number, codigo: string, condicaoId: number | null): Promise<RespostaAcao> {
+  const sid = await sessaoAtual();
+  const dados = await carregar(sid, negId);
+  if (!dados || dados.neg.status !== "revisao") return falha("Negociação não está em revisão.");
+  const ciencias = { ...dados.neg.ciencias };
+  delete ciencias[chaveCiencia(codigo, condicaoId)];
+  await db.update(s.negociacoes).set({ ciencias }).where(eq(s.negociacoes.id, negId));
+  refresh();
+  return ok("Ciência desfeita.");
 }
 
 export async function aprovarCondicao(condId: number, matricula: string): Promise<RespostaAcao> {
@@ -134,8 +143,9 @@ export async function aprovarCondicao(condId: number, matricula: string): Promis
   if (!dados || dados.neg.status !== "revisao") return falha("Negociação não está em revisão.");
   const { porCondicao } = await recalcularFarois(sid, c.negociacaoId);
   const ap = APROVADORES.find((a) => a.matricula === matricula);
-  const conferido = !!dados.neg.conferidos;
-  const pa = podeAprovar(porCondicao.get(c.id) ?? [], ap, paraCondicao(c), conferido);
+  const fsCond = (porCondicao.get(c.id) ?? []).map((f) => ({ ...f, condicaoId: c.id }));
+  const todosCientes = amarelosSemCiencia(fsCond, dados.neg.ciencias).length === 0;
+  const pa = podeAprovar(porCondicao.get(c.id) ?? [], ap, paraCondicao(c), todosCientes);
   if (!pa.ok) return falha(pa.motivo);
   await db
     .update(s.condicoes)
@@ -192,7 +202,7 @@ export async function relerComIa(negId: number): Promise<RespostaAcao> {
   const dados = await carregar(sid, negId);
   if (!dados || !["recebido", "verificacao", "revisao"].includes(dados.neg.status)) return falha("Só relê antes da aprovação.");
   if (dados.conds.some((c) => c.aprovadaEm)) return falha("Há condição aprovada; desfaça antes de reler.");
-  await db.update(s.negociacoes).set({ status: "recebido", forcarLeituraIa: true, conferidos: null, alertaRevisao: null, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
+  await db.update(s.negociacoes).set({ status: "recebido", forcarLeituraIa: true, ciencias: {}, alertaRevisao: null, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
   await enfileirar(sid, negId, "ler_email");
   refresh();
   return ok("Nova leitura ao vivo pela IA na próxima rodada.");
