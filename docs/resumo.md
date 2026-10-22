@@ -81,4 +81,4 @@ Cada decisão, com contexto, opções e consequência, está na seção 08 do do
 
 ## Próximos passos
 
-O ponto mais importante agora é sentar ao lado de um analista comercial, ver o que olha em cada e-mail e entender, junto, como tornar a ferramenta mais natural no dia a dia. Depois, validar os pontos acima com a área, fazer um piloto (Outlook, SAP de testes e um time comercial) e ir para produção no Azure, com login da empresa e aviso ao aprovador no Teams.
+O ponto mais importante agora é sentar ao lado de um analista comercial e ver o que olha em cada e-mail, que dados busca no ERP e como os obtém. Com isso, entender junto como tornar a ferramenta mais natural no dia a dia e trazer esses dados para ela, a ponto de não ser preciso abrir o ERP para consultar nada. Com todo o contexto na tela, a decisão fica melhor. Depois, validar os pontos acima com a área, fazer um piloto (Outlook, SAP de testes e um time comercial) e ir para produção no Azure, com login da empresa e aviso ao aprovador no Teams.
