@@ -1,5 +1,5 @@
-# Fly.io — preparado, ainda não implantado (deploy só com autorização).
-# Antes do primeiro deploy:
+# Fly.io: implantado em 22/10/2026 em https://vitalis-condicoes.fly.dev (app vitalis-condicoes, volume dados, região gru).
+# Para recriar do zero:
 #   fly apps create <nome>          (e troque `app` abaixo)
 #   fly volumes create dados --region gru --size 1
 #   fly secrets set OPENROUTER_API_KEY=...

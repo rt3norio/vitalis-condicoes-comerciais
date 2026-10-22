@@ -6,7 +6,7 @@ O e-mail do fornecedor vira condição gravada no ERP, com uma pessoa decidindo 
 
 **E-mail → IA lê → segunda IA confere → regras fixas (hardcoded) da política e do ERP → pessoa com alçada aprova → ERP**
 
-Solução: [A PREENCHER: link da solução] · Vídeo: [A PREENCHER: link do vídeo] · Documento completo: entrega.pdf
+Solução: [vitalis-condicoes.fly.dev](https://vitalis-condicoes.fly.dev) · Vídeo: [A PREENCHER: link do vídeo] · Documento completo: entrega.pdf
 
 ## O que a solução garante
 
