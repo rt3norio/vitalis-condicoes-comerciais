@@ -26,11 +26,11 @@ p:has(> em:only-child) { break-inside: avoid; break-before: avoid; }
 em.legenda, p > em:only-child { color: #52525b; font-size: 9pt; }
 hr { display: none; }
 
-@page { size: A4; margin: 12mm 20mm; }
-body { font-size: 10pt; line-height: 1.4; }
+@page { size: A4; margin: 12mm 19mm; }
+body { font-size: 9.6pt; line-height: 1.38; }
 h1 { font-size: 20pt; margin-bottom: 2pt; }
 h1 + p { font-size: 9pt; margin-top: 0; }
-h2 { break-before: auto; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 1.2pt; border-bottom: 0.6pt solid #99f6e4; margin: 12pt 0 4pt; padding-bottom: 2pt; }
+h2 { break-before: auto; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 1.2pt; border-bottom: 0.6pt solid #99f6e4; margin: 10pt 0 4pt; padding-bottom: 2pt; }
 p strong:only-child { display: block; font-size: 11pt; color: #0f766e; margin: 6pt 0; }
 ul, ol { padding-left: 16pt; margin: 4pt 0; }
 li { margin: 2pt 0; }
@@ -46,18 +46,19 @@ li { margin: 2pt 0; }
 <p>Solução: <a href="https://vitalis-condicoes.fly.dev">vitalis-condicoes.fly.dev</a> · Vídeo: [A PREENCHER: link do vídeo] · Documento completo: entrega.pdf</p>
 <h2>O que a solução garante</h2>
 <ul>
-<li>Nada vai ao ERP sem a aprovação de uma pessoa com alçada, e quem não tem a alçada só vê.</li>
-<li>Quando o ERP cai, o sistema tenta de novo sozinho e nunca grava a mesma condição duas vezes. Num teste, o ERP falhou 4 vezes seguidas e a condição foi gravada na 5ª tentativa.</li>
+<li>Nada vai ao ERP sem a aprovação de uma pessoa com alçada.</li>
+<li>Quando o ERP cai, o sistema tenta de novo sozinho e nunca grava duas vezes. Num teste, o ERP falhou 4 vezes e a condição foi gravada na 5ª tentativa.</li>
 <li>Cada campo mostra o trecho do e-mail de onde veio. O que foi deduzido precisa da ciência de alguém antes da aprovação, com nome e hora.</li>
 </ul>
 <h2>Onde usa IA e onde não</h2>
-<p>A IA lê o e-mail e a planilha, uma segunda IA confere essa leitura, e a IA também escreve o resumo e as respostas ao fornecedor. Teto, alçada, vigência, sobreposição e fornecedor ativo (POL-COM-004) são conferidos por regras fixas (hardcoded) no sistema, sem IA, e quem aprova é sempre uma pessoa.</p>
+<p>A IA lê o e-mail e a planilha, uma segunda IA confere a leitura e a IA escreve o resumo e as respostas. Teto, alçada, vigência, sobreposição e fornecedor ativo (POL-COM-004) são regras fixas (hardcoded) no sistema, sem IA, e quem aprova é sempre uma pessoa.</p>
 <h2>Decisões de desenho</h2>
 <ol>
-<li>Cada etapa é uma tarefa que roda a cada minuto. Se falha, a falha fica registrada e a tarefa roda de novo na rodada seguinte.</li>
+<li>Cada etapa é uma tarefa que roda a cada minuto; se falha, fica registrada e roda de novo na rodada seguinte.</li>
 <li>Um e-mail que tenta comandar o sistema é marcado e escalado à Diretoria. Aquela proposta não segue: o fornecedor precisa mandar outra.</li>
-<li>Escolhi o modelo por teste. O GLM-5.3 custa cerca de US$ 0,006 por e-mail; os modelos mais baratos que testei erraram a leitura.</li>
-<li>Tudo fica gravado (cada tarefa, falha e nova tentativa, quem deu ciência, editou ou aprovou, e cada chamada de IA com o que recebeu e devolveu) e aparece em &quot;Detalhes para auditoria&quot;, recolhido, para não atrapalhar quem decide.</li>
+<li>Escolhi o modelo por teste: o GLM-5.3 custa cerca de US$ 0,006 por e-mail, e os mais baratos que testei erraram a leitura.</li>
+<li>Tudo fica gravado (tarefas, falhas, novas tentativas, quem deu ciência, editou ou aprovou, e cada chamada de IA com o que recebeu e devolveu) e aparece em &quot;Detalhes para auditoria&quot;, recolhido.</li>
+<li>A hierarquia segue a alçada: quem não tem a alçada de uma condição só vê (não edita, não dá ciência, não aprova). Escalar ou recusar o e-mail inteiro pede a maior alçada do pacote; desconto vedado fica com a Diretoria (§11).</li>
 </ol>
 <h2>Para validar com a área</h2>
 <div class="colunas">
@@ -79,5 +80,5 @@ li { margin: 2pt 0; }
 </div>
 
 <h2>Próximos passos</h2>
-<p>Primeiro, validar os pontos acima com a área. Depois, um piloto com a caixa do Outlook, o SAP de testes e um time comercial. Por fim, a produção no Azure, com login da empresa e aviso ao aprovador no Teams.</p>
+<p>Validar os pontos acima com a área, fazer um piloto (Outlook, SAP de testes e um time comercial) e ir para produção no Azure, com login da empresa e aviso ao aprovador no Teams.</p>
 </body></html>

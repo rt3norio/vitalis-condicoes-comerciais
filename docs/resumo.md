@@ -10,20 +10,21 @@ Solução: [vitalis-condicoes.fly.dev](https://vitalis-condicoes.fly.dev) · Ví
 
 ## O que a solução garante
 
-- Nada vai ao ERP sem a aprovação de uma pessoa com alçada, e quem não tem a alçada só vê.
-- Quando o ERP cai, o sistema tenta de novo sozinho e nunca grava a mesma condição duas vezes. Num teste, o ERP falhou 4 vezes seguidas e a condição foi gravada na 5ª tentativa.
+- Nada vai ao ERP sem a aprovação de uma pessoa com alçada.
+- Quando o ERP cai, o sistema tenta de novo sozinho e nunca grava duas vezes. Num teste, o ERP falhou 4 vezes e a condição foi gravada na 5ª tentativa.
 - Cada campo mostra o trecho do e-mail de onde veio. O que foi deduzido precisa da ciência de alguém antes da aprovação, com nome e hora.
 
 ## Onde usa IA e onde não
 
-A IA lê o e-mail e a planilha, uma segunda IA confere essa leitura, e a IA também escreve o resumo e as respostas ao fornecedor. Teto, alçada, vigência, sobreposição e fornecedor ativo (POL-COM-004) são conferidos por regras fixas (hardcoded) no sistema, sem IA, e quem aprova é sempre uma pessoa.
+A IA lê o e-mail e a planilha, uma segunda IA confere a leitura e a IA escreve o resumo e as respostas. Teto, alçada, vigência, sobreposição e fornecedor ativo (POL-COM-004) são regras fixas (hardcoded) no sistema, sem IA, e quem aprova é sempre uma pessoa.
 
 ## Decisões de desenho
 
-1. Cada etapa é uma tarefa que roda a cada minuto. Se falha, a falha fica registrada e a tarefa roda de novo na rodada seguinte.
+1. Cada etapa é uma tarefa que roda a cada minuto; se falha, fica registrada e roda de novo na rodada seguinte.
 2. Um e-mail que tenta comandar o sistema é marcado e escalado à Diretoria. Aquela proposta não segue: o fornecedor precisa mandar outra.
-3. Escolhi o modelo por teste. O GLM-5.3 custa cerca de US$ 0,006 por e-mail; os modelos mais baratos que testei erraram a leitura.
-4. Tudo fica gravado (cada tarefa, falha e nova tentativa, quem deu ciência, editou ou aprovou, e cada chamada de IA com o que recebeu e devolveu) e aparece em "Detalhes para auditoria", recolhido, para não atrapalhar quem decide.
+3. Escolhi o modelo por teste: o GLM-5.3 custa cerca de US$ 0,006 por e-mail, e os mais baratos que testei erraram a leitura.
+4. Tudo fica gravado (tarefas, falhas, novas tentativas, quem deu ciência, editou ou aprovou, e cada chamada de IA com o que recebeu e devolveu) e aparece em "Detalhes para auditoria", recolhido.
+5. A hierarquia segue a alçada: quem não tem a alçada de uma condição só vê (não edita, não dá ciência, não aprova). Escalar ou recusar o e-mail inteiro pede a maior alçada do pacote; desconto vedado fica com a Diretoria (§11).
 
 ## Para validar com a área
 
@@ -46,4 +47,4 @@ A IA lê o e-mail e a planilha, uma segunda IA confere essa leitura, e a IA tamb
 
 ## Próximos passos
 
-Primeiro, validar os pontos acima com a área. Depois, um piloto com a caixa do Outlook, o SAP de testes e um time comercial. Por fim, a produção no Azure, com login da empresa e aviso ao aprovador no Teams.
+Validar os pontos acima com a área, fazer um piloto (Outlook, SAP de testes e um time comercial) e ir para produção no Azure, com login da empresa e aviso ao aprovador no Teams.
