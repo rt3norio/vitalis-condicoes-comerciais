@@ -6,7 +6,7 @@ import { db, schema as s } from "@/db";
 import { gerarEmails, iaConfigurada } from "@/lib/agentes/agentes";
 import { capturaErp, parseEml } from "@/lib/dominio/dataset";
 import { hoje, isISO } from "@/lib/dominio/datas";
-import { PERFIS, veEscalados } from "@/lib/dominio/politica";
+import { alcada, PERFIS, veEscalados } from "@/lib/dominio/politica";
 import { CATEGORIA_LABEL, CATEGORIAS, type CampoCondicao } from "@/lib/dominio/tipos";
 import { carregar, paraCondicao, recalcularFarois } from "@/lib/negociacao";
 import { amarelosSemCiencia, chaveCiencia } from "@/lib/regras/ciencia";
@@ -30,6 +30,25 @@ const ok = (mensagem: string): RespostaAcao => ({ ok: true, mensagem });
 const falha = (mensagem: string): RespostaAcao => ({ ok: false, mensagem });
 
 const LIMITE_EMAILS_POR_SESSAO = 5;
+
+// Linha do tempo: toda ação humana fica registrada com quem e quando
+async function registrar(negId: number, descricao: string) {
+  const p = await perfilAtual();
+  await db.insert(s.eventos).values({ negociacaoId: negId, por: `${p.nome} (${p.cargo})`, descricao });
+}
+
+const ROTULO_CAMPO: Record<string, string> = {
+  codFornecedor: "Fornecedor",
+  codCategoria: "Categoria",
+  lojas: "Lojas",
+  percentual: "Desconto (%)",
+  valor: "Verba (R$)",
+  dataInicio: "Início",
+  dataFim: "Fim",
+  contrapartida: "Contrapartida",
+};
+const alcadaDe = (c: { tipo: "DESCONTO_PERCENTUAL" | "VERBA_EXPOSICAO"; percentual: number | null; valor: number | null }) => alcada(c.tipo, c.percentual, c.valor).label;
+const mostrar = (v: unknown) => (v == null || v === "" ? "vazio" : Array.isArray(v) ? v.join(", ") : String(v));
 const LIMITE_CARACTERES = 20_000;
 
 async function condicaoEditavel(condId: number) {
@@ -84,6 +103,9 @@ export async function editarCampo(condId: number, campo: keyof typeof MAPA, valo
   const pk = MAPA[campo];
   const prov = { ...c.proveniencia, [pk]: { ...(c.proveniencia[pk] ?? { certeza: "ausente", trecho: "" }), ajustado: true, sugestaoAceita: false } };
   await db.update(s.condicoes).set({ ...set, proveniencia: prov }).where(eq(s.condicoes.id, condId));
+  const antes = (c as Record<string, unknown>)[campo];
+  const depois = (set as Record<string, unknown>)[campo];
+  await registrar(c.negociacaoId, `Editou ${ROTULO_CAMPO[campo] ?? campo} em "${c.titulo}": ${mostrar(antes)} → ${mostrar(depois)}`);
   await depoisDeEditar(sid, c.negociacaoId);
   return ok("Campo atualizado.");
 }
@@ -97,6 +119,7 @@ export async function aceitarSugestao(condId: number, campo: "dataFim" | "dataIn
   if (!sug || !isISO(sug.valor)) return falha("Sem sugestão para este campo.");
   const prov = { ...c.proveniencia, [pk]: { ...c.proveniencia[pk]!, ajustado: true, sugestaoAceita: true } };
   await db.update(s.condicoes).set({ [campo]: sug.valor, proveniencia: prov }).where(eq(s.condicoes.id, condId));
+  await registrar(c.negociacaoId, `Aceitou a sugestão de ${ROTULO_CAMPO[campo]} em "${c.titulo}": ${sug.valor} (${sug.motivo})`);
   await depoisDeEditar(sid, c.negociacaoId);
   return ok("Sugestão aplicada (continua amarela: é premissa).");
 }
@@ -110,6 +133,8 @@ export async function escolherAlternativa(condId: number, valor: number): Promis
     .update(s.condicoes)
     .set({ [c.tipo === "DESCONTO_PERCENTUAL" ? "percentual" : "valor"]: valor, proveniencia: prov })
     .where(eq(s.condicoes.id, condId));
+  const opcoes = (c.proveniencia.valor?.alternativas ?? []).map((a) => `${a.valor} (${a.origem})`).join(" × ");
+  await registrar(c.negociacaoId, `Escolheu ${valor} em "${c.titulo}" entre ${opcoes}`);
   await depoisDeEditar(sid, c.negociacaoId);
   return ok("Valor escolhido.");
 }
@@ -118,6 +143,7 @@ export async function definirSubstituicao(condId: number, codCondicao: string | 
   const r = await condicaoEditavel(condId);
   if ("erro" in r) return falha(r.erro!);
   await db.update(s.condicoes).set({ codCondicaoSubstituida: codCondicao }).where(eq(s.condicoes.id, condId));
+  await registrar(r.c.negociacaoId, codCondicao ? `Marcou "${r.c.titulo}" para substituir ${codCondicao}` : `Desfez a substituição em "${r.c.titulo}"`);
   await depoisDeEditar(r.sid, r.c.negociacaoId);
   return ok(codCondicao ? `Vai substituir ${codCondicao}.` : "Substituição desfeita.");
 }
@@ -131,6 +157,7 @@ export async function darCiencia(negId: number, codigo: string, condicaoId: numb
   const por = (await perfilAtual()).nome;
   const ciencias = { ...dados.neg.ciencias, [chaveCiencia(codigo, condicaoId)]: { em: new Date().toISOString(), detalhe: f.detalhe, por } };
   await db.update(s.negociacoes).set({ ciencias }).where(eq(s.negociacoes.id, negId));
+  await registrar(negId, `Deu ciência: ${f.titulo} — ${f.detalhe}`);
   refresh();
   return ok(`Ciência registrada: ${f.titulo}.`);
 }
@@ -147,6 +174,7 @@ export async function darCienciaItens(negId: number, condicaoId: number, codigos
   const ciencias = { ...dados.neg.ciencias };
   for (const f of alvo) ciencias[chaveCiencia(f.codigo, condicaoId)] = { em, detalhe: f.detalhe, por };
   await db.update(s.negociacoes).set({ ciencias }).where(eq(s.negociacoes.id, negId));
+  for (const f of alvo) await registrar(negId, `Deu ciência: ${f.titulo} — ${f.detalhe}`);
   refresh();
   return ok(`Ciência registrada: ${alvo.map((f) => f.titulo).join("; ")}.`);
 }
@@ -158,6 +186,8 @@ export async function desfazerCiencia(negId: number, codigo: string, condicaoId:
   const ciencias = { ...dados.neg.ciencias };
   delete ciencias[chaveCiencia(codigo, condicaoId)];
   await db.update(s.negociacoes).set({ ciencias }).where(eq(s.negociacoes.id, negId));
+  const fd = dados.farois.find((x) => x.codigo === codigo && x.condicaoId === condicaoId);
+  await registrar(negId, `Desfez a ciência: ${fd?.titulo ?? codigo}`);
   refresh();
   return ok("Ciência desfeita.");
 }
@@ -179,11 +209,13 @@ export async function aprovarCondicao(condId: number): Promise<RespostaAcao> {
     .update(s.condicoes)
     .set({ aprovador: { matricula: ap!.matricula, nome: ap!.nome, cargo: ap!.cargo }, aprovadaEm: new Date(), idempotencyKey: crypto.randomUUID() })
     .where(eq(s.condicoes.id, condId));
+  await registrar(c.negociacaoId, `Aprovou "${c.titulo}" (alçada ${alcadaDe(c)})`);
   // S25 (premissa P11): pacote só sobe quando todas as condições estiverem aprovadas
   const todas = await db.select({ a: s.condicoes.aprovadaEm }).from(s.condicoes).where(eq(s.condicoes.negociacaoId, c.negociacaoId));
   if (todas.every((x) => x.a)) {
     await db.update(s.negociacoes).set({ status: "aguardando_envio", alertaRevisao: null, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, c.negociacaoId));
     await enfileirar(sid, c.negociacaoId, "enviar_erp");
+    await registrar(c.negociacaoId, "Pacote completo aprovado: entrou na fila de envio ao ERP");
     refresh();
     return ok("Pacote aprovado. Entrou na fila de envio ao ERP (próxima rodada).");
   }
@@ -199,6 +231,7 @@ export async function desfazerAprovacao(condId: number): Promise<RespostaAcao> {
   if (!dados || dados.neg.status !== "revisao") return falha("Só dá para desfazer na revisão.");
   if (c.erpCodCondicao) return falha(`Esta condição já está gravada no ERP como ${c.erpCodCondicao}; não dá para desfazer aqui.`);
   await db.update(s.condicoes).set({ aprovador: null, aprovadaEm: null, idempotencyKey: null }).where(eq(s.condicoes.id, condId));
+  await registrar(c.negociacaoId, `Desfez a aprovação de "${c.titulo}"`);
   refresh();
   return ok("Aprovação desfeita.");
 }
@@ -213,6 +246,7 @@ export async function encerrar(negId: number, destino: "recusado" | "escalado", 
     .update(s.negociacoes)
     .set({ status: destino, motivoSaida: `${motivo.trim().slice(0, 500)} — ${destino === "escalado" ? "escalado" : "recusado"} por ${quem.nome} (${quem.cargo})`, encerradoPor: quem.matricula, atualizadoEm: new Date() })
     .where(eq(s.negociacoes.id, negId));
+  await registrar(negId, `${destino === "escalado" ? "Escalou à Diretoria" : "Recusou"}: ${motivo.trim().slice(0, 300)}`);
   await enfileirar(sid, negId, "redigir");
   refresh();
   return ok(destino === "recusado" ? "Recusada." : "Escalada à Diretoria.");
@@ -226,6 +260,7 @@ export async function reabrir(negId: number): Promise<RespostaAcao> {
   if (dados.farois.some((f) => f.codigo === "LEI-09" && f.cor === "vermelho")) return falha("Texto suspeito no e-mail: não pode ser reaberto na tela. Encaminhe à Diretoria Comercial.");
   await db.update(s.negociacoes).set({ status: "revisao", motivoSaida: null, encerradoPor: null, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
   await recalcularFarois(sid, negId);
+  await registrar(negId, "Reabriu para revisão");
   refresh();
   return ok("Reaberta para revisão.");
 }
@@ -237,6 +272,7 @@ export async function relerComIa(negId: number): Promise<RespostaAcao> {
   if (dados.conds.some((c) => c.aprovadaEm)) return falha("Há condição aprovada; desfaça antes de reler.");
   await db.update(s.negociacoes).set({ status: "recebido", forcarLeituraIa: true, ciencias: {}, alertaRevisao: null, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
   await enfileirar(sid, negId, "ler_email");
+  await registrar(negId, "Pediu nova leitura ao vivo pela IA");
   refresh();
   return ok("Nova leitura ao vivo pela IA na próxima rodada.");
 }

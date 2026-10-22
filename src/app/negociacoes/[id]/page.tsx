@@ -295,7 +295,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
 
           <details className="group rounded-xl border border-dashed bg-white/60">
             <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-2.5 text-sm text-zinc-600">
-              <span className="font-medium">Detalhes para auditoria · faróis, observações da IA e linha do tempo</span>
+              <span className="font-medium">Detalhes para auditoria · faróis, observações da IA e linha do tempo (quem fez o quê)</span>
               <span className="text-teal-700 group-open:hidden">abrir ▾</span>
               <span className="hidden text-teal-700 group-open:inline">recolher ▴</span>
             </summary>
@@ -351,15 +351,27 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                 );
               })}
               <div>
-                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-600">Linha do tempo</div>
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-600">Linha do tempo · sistema e pessoas (ciência, escolhas, edições, aprovações, escalonamentos)</div>
                 <ol className="grid gap-1.5 text-xs">
-                  {tempo.tentativas.map((t) => (
-                    <li key={t.id} className="flex gap-2">
-                      <Ponto cor={t.resultado === "ok" ? "verde" : t.resultado === "transitorio" ? "amarelo" : "vermelho"} className="mt-1" />
-                      <span className="w-28 shrink-0 tabular-nums text-zinc-500">{fmtDataHora(t.inicio)}</span>
+                  {tempo.itens.map((it) => (
+                    <li key={it.chave} className={cn("flex gap-2", it.cor === "pessoa" && "rounded bg-teal-50/60 py-0.5")}>
+                      {it.cor === "pessoa" ? (
+                        <span aria-label="ação de pessoa" className="mt-0.5 grid size-3.5 shrink-0 place-items-center rounded-full bg-teal-700 text-[8px] font-bold text-white">P</span>
+                      ) : (
+                        <Ponto cor={it.cor as "verde" | "amarelo" | "vermelho"} className="mt-1" />
+                      )}
+                      <span className="w-28 shrink-0 tabular-nums text-zinc-500">{fmtDataHora(it.em)}</span>
                       <span>
-                        <b>{TAREFA[t.tipo]}</b> · tentativa {t.n}
-                        {t.httpStatus ? ` · HTTP ${t.httpStatus}` : ""} — {t.mensagem}
+                        {it.tarefa ? (
+                          <>
+                            <b>{TAREFA[it.tarefa]}</b> · tentativa {it.n}
+                            {it.http ? ` · HTTP ${it.http}` : ""} — {it.texto}
+                          </>
+                        ) : (
+                          <>
+                            <b>{it.quem}</b> — {it.texto}
+                          </>
+                        )}
                       </span>
                     </li>
                   ))}
@@ -374,7 +386,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                         </span>
                       </li>
                     ))}
-                  {!tempo.tentativas.length && !tempo.tarefas.length && <li className="text-zinc-500">Nada ainda.</li>}
+                  {!tempo.itens.length && !tempo.tarefas.length && <li className="text-zinc-500">Nada ainda.</li>}
                 </ol>
               </div>
               <p className="text-xs text-zinc-500">

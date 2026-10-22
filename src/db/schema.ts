@@ -135,6 +135,15 @@ export const tentativas = sqliteTable("tentativas", {
   mensagem: text("mensagem").notNull(),
 });
 
+// Ações humanas para a linha do tempo (ciência, aprovação, escolhas, edições, escalar/recusar...)
+export const eventos = sqliteTable('eventos', {
+  id: integer('id').primaryKey({ autoIncrement: true }),
+  negociacaoId: integer('negociacao_id').notNull(),
+  em: ts('em').notNull().$defaultFn(agora),
+  por: text('por').notNull(),
+  descricao: text('descricao').notNull(),
+});
+
 // ---------- ERP simulado ----------
 export const erpFornecedores = sqliteTable(
   "erp_fornecedores",

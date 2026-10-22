@@ -60,6 +60,7 @@ export async function reiniciarSessao(sid: string) {
     await db.delete(s.leituras).where(inArray(s.leituras.negociacaoId, negs));
     await db.delete(s.farois).where(inArray(s.farois.negociacaoId, negs));
     await db.delete(s.tentativas).where(inArray(s.tentativas.negociacaoId, negs));
+    await db.delete(s.eventos).where(inArray(s.eventos.negociacaoId, negs));
   }
   await db.delete(s.tarefas).where(eq(s.tarefas.sessionId, sid));
   await db.delete(s.negociacoes).where(eq(s.negociacoes.sessionId, sid));

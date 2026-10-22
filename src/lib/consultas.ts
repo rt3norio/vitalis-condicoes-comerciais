@@ -48,7 +48,13 @@ export async function usoErpUltimoMinuto(sid: string) {
 export async function linhaDoTempo(negId: number) {
   const ts = await db.select().from(s.tentativas).where(eq(s.tentativas.negociacaoId, negId)).orderBy(desc(s.tentativas.inicio));
   const tarefas = await db.select().from(s.tarefas).where(eq(s.tarefas.negociacaoId, negId));
-  return { tentativas: ts.map((t) => ({ ...t, tipo: tarefas.find((x) => x.id === t.tarefaId)?.tipo ?? "?" })), tarefas };
+  const evs = await db.select().from(s.eventos).where(eq(s.eventos.negociacaoId, negId)).orderBy(desc(s.eventos.em));
+  // uma lista só, mais recente primeiro: tarefas do sistema + ações de pessoas
+  const itens = [
+    ...ts.map((t) => ({ chave: `t${t.id}`, em: t.inicio, quem: "Sistema", cor: t.resultado === "ok" ? "verde" : t.resultado === "transitorio" ? "amarelo" : "vermelho", tarefa: tarefas.find((x) => x.id === t.tarefaId)?.tipo ?? "?", n: t.n, http: t.httpStatus, texto: t.mensagem })),
+    ...evs.map((e) => ({ chave: `e${e.id}`, em: e.em, quem: e.por, cor: "pessoa", tarefa: null, n: null, http: null, texto: e.descricao })),
+  ].sort((x, y) => y.em.getTime() - x.em.getTime());
+  return { tentativas: ts.map((t) => ({ ...t, tipo: tarefas.find((x) => x.id === t.tarefaId)?.tipo ?? "?" })), tarefas, itens };
 }
 
 export async function estadoErp(sid: string) {
