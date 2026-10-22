@@ -19,13 +19,15 @@ import { Ponto } from "@/components/farol";
 import type { Cor } from "@/lib/dominio/tipos";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 const inputCls =
   "h-8 w-full rounded-md border border-zinc-300 bg-white px-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 disabled:bg-zinc-100 disabled:text-zinc-500";
 
 type Opcao = { valor: string; rotulo: string };
-type PontoCampo = { cor: Cor; dica: string };
+type ItemDica = { cor: Cor; titulo: string; detalhe: string };
+type PontoCampo = { cor: Cor; itens: ItemDica[] };
 type Pontos = Partial<Record<"codFornecedor" | "codCategoria" | "valor" | "dataInicio" | "dataFim" | "lojas" | "contrapartida", PontoCampo>>;
 
 export type DadosEditor = {
@@ -178,14 +180,51 @@ function EditorLojas({ d, lojas, dis, onSalvar }: { d: DadosEditor; lojas: Opcao
 function Campo({ rotulo, largo, ponto, children }: { rotulo: string; largo?: boolean; ponto?: PontoCampo; children: React.ReactNode }) {
   return (
     <div className={cn("grid content-start gap-1", largo && "sm:col-span-2")}>
-      <span className="flex items-center gap-1.5 text-xs font-medium text-zinc-500" title={ponto?.dica}>
+      <span className="flex items-center gap-1.5 text-xs font-medium text-zinc-500">
         {ponto && ponto.cor !== "cinza" && <Ponto cor={ponto.cor} />}
         {rotulo}
-        {ponto?.cor === "amarelo" && <span className="font-normal text-amber-700">· confira</span>}
-        {ponto?.cor === "vermelho" && <span className="font-normal text-red-700">· resolver</span>}
+        {ponto && (ponto.cor === "amarelo" || ponto.cor === "vermelho") && <DicaCampo ponto={ponto} />}
       </span>
       {children}
     </div>
+  );
+}
+
+// "confira"/"resolver" com tooltip em tópicos: um item por regra ligada ao campo (pior cor primeiro)
+function DicaCampo({ ponto }: { ponto: PontoCampo }) {
+  const vermelho = ponto.cor === "vermelho";
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={
+          <button
+            type="button"
+            aria-label={vermelho ? "Por que resolver: ver motivos" : "O que conferir: ver motivos"}
+            className={cn(
+              "inline-flex cursor-help items-center gap-0.5 rounded px-1 font-normal underline decoration-dotted underline-offset-2 hover:bg-zinc-100 focus-visible:outline-2",
+              vermelho ? "text-red-700" : "text-amber-700",
+            )}
+          />
+        }
+      >
+        {vermelho ? "resolver" : "confira"}
+        <span aria-hidden className="inline-grid size-3.5 place-items-center rounded-full border border-current text-[9px] font-bold leading-none no-underline">i</span>
+      </TooltipTrigger>
+      <TooltipContent side="top" align="start" className="block max-w-sm px-3 py-2 text-left">
+        <ul className="grid gap-1.5">
+          {ponto.itens.map((it) => (
+            <li key={it.titulo} className="flex gap-2">
+              <Ponto cor={it.cor} className="mt-1" />
+              <span>
+                <b>{it.titulo}</b>
+                <br />
+                <span className="opacity-80">{it.detalhe}</span>
+              </span>
+            </li>
+          ))}
+        </ul>
+      </TooltipContent>
+    </Tooltip>
   );
 }
 

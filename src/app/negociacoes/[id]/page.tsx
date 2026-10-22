@@ -206,8 +206,9 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                     }}
                     pontos={Object.fromEntries(
                       Object.entries(FAROIS_DO_CAMPO).map(([campo, cods]) => {
-                        const rel = fs.filter((f) => (cods as readonly string[]).includes(f.codigo) && f.cor !== "cinza");
-                        return [campo, { cor: piorCor(rel), dica: rel.map((f) => `${f.codigo} ${f.titulo}: ${f.detalhe}`).join(" | ") }];
+                        const ordem = { vermelho: 0, amarelo: 1, verde: 2, cinza: 3 } as const;
+                        const rel = fs.filter((f) => (cods as readonly string[]).includes(f.codigo) && f.cor !== "cinza").sort((x, y) => ordem[x.cor] - ordem[y.cor]);
+                        return [campo, { cor: piorCor(rel), itens: rel.map((f) => ({ cor: f.cor, titulo: f.titulo, detalhe: f.detalhe })) }];
                       }),
                     )}
                     fornecedores={opcoesForn}
