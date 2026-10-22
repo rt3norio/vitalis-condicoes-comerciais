@@ -59,8 +59,8 @@ function farolVerificador(c: Condicao, v: ChecagemVerificador[] | null): Farol {
   const minhas = v.filter((x) => x.condicao === c.ordem && !c.proveniencia[x.campo]?.ajustado);
   const discorda = minhas.filter((x) => x.veredito === "discorda");
   const duvida = minhas.filter((x) => x.veredito === "duvida");
-  if (discorda.length) return { ...base, cor: "vermelho", detalhe: `Discorda: ${discorda.map((x) => `${x.campo} — ${x.comentario}`).join("; ")}` };
-  if (duvida.length) return { ...base, cor: "amarelo", detalhe: `Dúvida: ${duvida.map((x) => `${x.campo} — ${x.comentario}`).join("; ")}` };
+  if (discorda.length) return { ...base, cor: "vermelho", detalhe: `Discorda: ${discorda.map((x) => `${x.campo} (${x.comentario})`).join("; ")}` };
+  if (duvida.length) return { ...base, cor: "amarelo", detalhe: `Dúvida: ${duvida.map((x) => `${x.campo} (${x.comentario})`).join("; ")}` };
   return { ...base, cor: "verde", detalhe: "Concorda com todos os campos." };
 }
 
@@ -69,8 +69,8 @@ function farolCadastroFornecedor(c: Condicao, ctx: ContextoFarois): Farol {
   const base = { codigo: "CAD-01", grupo: "Cadastro" as const, titulo: "Fornecedor existe no ERP" };
   const f = ctx.fornecedores.find((x) => x.cod_fornecedor === c.codFornecedor);
   if (!c.codFornecedor || !f) return { ...base, cor: "vermelho", detalhe: c.proveniencia.fornecedor?.resolucao ?? "Fornecedor não encontrado no ERP." };
-  if (c.proveniencia.fornecedor?.ajustado) return { ...base, cor: "verde", detalhe: `${f.cod_fornecedor} ${f.razao_social} — selecionado na revisão.` };
-  return { ...base, cor: "amarelo", detalhe: c.proveniencia.fornecedor?.resolucao ?? `${f.cod_fornecedor} ${f.razao_social} — inferido.` };
+  if (c.proveniencia.fornecedor?.ajustado) return { ...base, cor: "verde", detalhe: `${f.cod_fornecedor} ${f.razao_social}, selecionado na revisão.` };
+  return { ...base, cor: "amarelo", detalhe: c.proveniencia.fornecedor?.resolucao ?? `${f.cod_fornecedor} ${f.razao_social}, inferido.` };
 }
 
 function farolCadastroLojas(c: Condicao, ctx: ContextoFarois): Farol {
@@ -88,8 +88,8 @@ function farolCadastroLojas(c: Condicao, ctx: ContextoFarois): Farol {
 function farolCadastroCategoria(c: Condicao): Farol {
   const base = { codigo: "CAD-03", grupo: "Cadastro" as const, titulo: "Categoria existe no ERP" };
   if (!c.codCategoria) return { ...base, cor: "vermelho", detalhe: c.proveniencia.categoria?.resolucao ?? "Sem categoria correspondente." };
-  if (c.proveniencia.categoria?.ajustado) return { ...base, cor: "verde", detalhe: `${CATEGORIA_LABEL[c.codCategoria]} — selecionada na revisão.` };
-  return { ...base, cor: "amarelo", detalhe: c.proveniencia.categoria?.resolucao ?? `${c.codCategoria} — inferida do nome comercial.` };
+  if (c.proveniencia.categoria?.ajustado) return { ...base, cor: "verde", detalhe: `${CATEGORIA_LABEL[c.codCategoria]}, selecionada na revisão.` };
+  return { ...base, cor: "amarelo", detalhe: c.proveniencia.categoria?.resolucao ?? `${c.codCategoria}, inferida do nome comercial.` };
 }
 
 // ---------- Política ----------
@@ -152,7 +152,7 @@ function faroisPolitica(c: Condicao, ctx: ContextoFarois): Farol[] {
     if (!isISO(c.dataInicio) || !isISO(c.dataFim)) out.push({ ...b, cor: "vermelho", detalhe: "Início e fim precisam estar definidos." });
     else if (c.dataFim < c.dataInicio) out.push({ ...b, cor: "vermelho", detalhe: "Fim anterior ao início." });
     else if (c.dataFim > fimMaximo(c.dataInicio, VIGENCIA_MAX_MESES))
-      out.push({ ...b, cor: "vermelho", detalhe: `${fmtData(c.dataInicio)}–${fmtData(c.dataFim)} passa de 12 meses (máximo ${fmtData(fimMaximo(c.dataInicio, VIGENCIA_MAX_MESES))}).` });
+      out.push({ ...b, cor: "vermelho", detalhe: `${fmtData(c.dataInicio)} a ${fmtData(c.dataFim)} passa de 12 meses (máximo ${fmtData(fimMaximo(c.dataInicio, VIGENCIA_MAX_MESES))}).` });
     else out.push({ ...b, cor: "verde", detalhe: `${fmtData(c.dataInicio)} a ${fmtData(c.dataFim)}.` });
   }
   {
@@ -205,7 +205,7 @@ function faroisPolitica(c: Condicao, ctx: ContextoFarois): Farol[] {
         ...b,
         cor: "vermelho",
         acao: semDecisao.length === 1 ? "substituir" : undefined,
-        detalhe: `Já existe ${semDecisao.map((k) => `${k.cod_condicao} (${fmtValor(k)}, ${fmtData(k.data_inicio)}–${fmtData(k.data_fim)}, ${k.lojas.length} loja(s))`).join("; ")}. Substitua ou ajuste período/lojas.${divergencias.length ? ` Atenção: ${divergencias.join("; ")}.` : ""}`,
+        detalhe: `Já existe ${semDecisao.map((k) => `${k.cod_condicao} (${fmtValor(k)}, ${fmtData(k.data_inicio)} a ${fmtData(k.data_fim)}, ${k.lojas.length} loja(s))`).join("; ")}. Substitua ou ajuste período/lojas.${divergencias.length ? ` Atenção: ${divergencias.join("; ")}.` : ""}`,
       });
     else if (irmasConflito.length) out.push({ ...b, cor: "vermelho", detalhe: "Duas condições do mesmo tipo neste e-mail cobrem as mesmas lojas e datas." });
     else if (divergencias.length) out.push({ ...b, cor: "amarelo", detalhe: `Substitui ${c.codCondicaoSubstituida} (encerra em ${fmtData(addDias(c.dataInicio!, -1))}). ${divergencias.join("; ")}. Confirme com quem alterou.` });

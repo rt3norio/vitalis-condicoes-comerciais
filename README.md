@@ -11,15 +11,15 @@ pnpm dev                     # http://localhost:3000
 pnpm test                    # faróis (Cadastro/Política) e contrato do ERP
 ```
 
-Banco: SQLite em `.data/app.db` (criado e migrado sozinho). Sem chave de IA, os 4 e-mails do dataset usam uma leitura de referência feita à mão, rotulada assim na tela.
+O banco é SQLite, em `.data/app.db`, criado e migrado sozinho. Sem chave de IA, os 4 e-mails do dataset usam uma leitura de referência feita à mão, e a tela avisa que é manual.
 
-Com chave, gere o cache real da IA para os 4 e-mails: `pnpm gerar-cache-ia` (grava `data/leituras-ia-cache.json`, já incluído no repositório). Reiniciar a demo usa esse cache e não chama a IA.
+Com chave, `pnpm gerar-cache-ia` gera o cache real da IA para os 4 e-mails e grava `data/leituras-ia-cache.json`, que já está no repositório. Reiniciar a demo usa esse cache e não chama a IA.
 
-E-mails de teste: `pnpm gerar-exemplos 6` escreve e-mails fictícios em `data/exemplos/` (para colar/subir pela tela) e mostra como cada um seria lido. Na tela, o botão **Gerar novos e-mails (IA)** faz o mesmo direto no funil.
+Para e-mails de teste, `pnpm gerar-exemplos 6` escreve e-mails fictícios em `data/exemplos/` (para colar ou subir pela tela) e mostra como cada um seria lido. Na tela, o botão **Gerar novos e-mails (IA)** faz o mesmo direto no funil.
 
 ## Como funciona
 
-Cada e-mail é uma **negociação** que passa por um funil. Toda etapa é uma **tarefa** gravada no banco e executada em segundo plano por um agendador (a cada 60 s, ou "Processar agora"). Falha transitória (IA fora, ERP 503/429) fica registrada e tenta de novo na próxima rodada.
+Cada e-mail é uma negociação que passa por um funil. Cada etapa é uma tarefa gravada no banco e executada em segundo plano por um agendador, a cada 60 s ou quando alguém clica em "Processar agora". Uma falha transitória (IA fora, ERP 503/429) fica registrada, e a tarefa tenta de novo na rodada seguinte.
 
 ```
 Recebido ──ler_email──▶ Verificação ──verificar──▶ Revisão humana ──aprovar──▶ Aguardando envio ──enviar_erp──▶ Enviado
@@ -28,39 +28,39 @@ Recebido ──ler_email──▶ Verificação ──verificar──▶ Revisã
 
 | Etapa | Quem faz | IA? |
 |---|---|---|
-| Ler e-mail | Agente Extrator: campos + trecho de origem + certeza | Sim |
+| Ler e-mail | Agente Extrator: campos, trecho de origem e certeza | Sim |
 | Nome → código do ERP | Regra fixa (`src/lib/regras/resolver.ts`) | Não |
-| Conferir leitura | Agente Verificador, independente | Sim |
+| Conferir leitura | Agente Verificador, que lê o e-mail de forma independente | Sim |
 | Faróis de Cadastro, Política, Contrato | Regra fixa (`src/lib/regras/farois.ts`) | Não |
 | Resumo e rascunhos | Agente Redator (texto padrão se a IA falhar) | Sim |
 | Aprovar | Pessoa com alçada | Não |
 | Enviar ao ERP | Tarefa HTTP com Idempotency-Key | Não |
 
-Faróis: 🟢 ok · 🟡 deduzido/atenção (exige "Dar ciência" em cada item) · 🔴 trava · ⚪ não se aplica (só Política). Catálogo em `docs/desenho.md`.
+Faróis: 🟢 ok · 🟡 deduzido/atenção (exige "Dar ciência" em cada item) · 🔴 trava · ⚪ não se aplica (só Política). O catálogo completo está em `docs/desenho.md`.
 
-ERP simulado: `/api/v1/{fornecedores,lojas,condicoes}`, mesmo contrato do `mock_erp` (10 req/min, ~20% de 503, idempotência). Cada sessão do navegador tem o seu.
+ERP simulado: `/api/v1/{fornecedores,lojas,condicoes}`, com o mesmo contrato do `mock_erp` (10 req/min, ~20% de 503, idempotência). Cada sessão do navegador tem o seu.
 
 ## Estrutura
 
-- `src/lib/regras/` motor de faróis, resolução de nomes, contrato do ERP (puro, testado)
-- `src/lib/agentes/` prompts, schemas Zod e chamadas dos 3 agentes (AI SDK + OpenRouter)
-- `src/lib/tarefas/` fila, handlers e agendador
-- `src/lib/erp/` ERP simulado (servidor) e cliente HTTP
-- `src/db/` schema Drizzle (SQLite/libsql) · `drizzle/` migrações
-- `src/app/` telas e Server Actions
+- `src/lib/regras/`: motor de faróis, resolução de nomes e contrato do ERP (código puro, com testes)
+- `src/lib/agentes/`: prompts, schemas Zod e chamadas dos 3 agentes (AI SDK + OpenRouter)
+- `src/lib/tarefas/`: fila, handlers e agendador
+- `src/lib/erp/`: ERP simulado (servidor) e cliente HTTP
+- `src/db/`: schema Drizzle (SQLite/libsql) · `drizzle/`: migrações
+- `src/app/`: telas e Server Actions
 
 ## Documentação (`docs/`)
 
-- `entrega-pdf.md` fonte do PDF de entrega (10 seções), `resumo.md` resumo de 1 página: `pnpm gerar-pdf` e `pnpm gerar-pdf resumo`
-- `registro-alteracoes.md` toda mudança e decisão, com o porquê
-- `desenho.md` funil, faróis, telas · `decisoes-stack.md` stack e arquitetura
-- `pendencias-negocio.md` dúvidas de negócio · `duvidas-do-caminho.md` dúvidas surgidas na construção
+- `entrega-pdf.md`: fonte do PDF de entrega (10 seções). `resumo.md`: resumo de 1 página. Os PDFs saem de `pnpm gerar-pdf` e `pnpm gerar-pdf resumo`
+- `registro-alteracoes.md`: cada mudança e decisão, com o porquê
+- `desenho.md`: funil, faróis e telas · `decisoes-stack.md`: stack e arquitetura
+- `pendencias-negocio.md`: dúvidas de negócio · `duvidas-do-caminho.md`: dúvidas que surgiram durante a construção
 
 ## Deploy (Fly.io)
 
-Preparado em `Dockerfile` e `fly.toml` (máquina sempre ligada, volume em `/data`). Ainda não implantado.
+`Dockerfile` e `fly.toml` estão prontos (máquina sempre ligada, volume em `/data`). O app ainda não foi implantado.
 
 ## Dentro e fora do escopo
 
-Dentro: funil completo, 3 agentes, faróis, aprovação por alçada, envio resiliente ao ERP simulado, novo e-mail colado/.eml.
+Dentro: funil completo, 3 agentes, faróis, aprovação por alçada, envio resiliente ao ERP simulado, novo e-mail colado ou em .eml.
 Fora: caixa de entrada real (IMAP), autenticação, envio de e-mail ao fornecedor, ERP real, limpeza de sessões antigas.

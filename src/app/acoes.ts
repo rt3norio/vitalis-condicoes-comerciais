@@ -163,7 +163,7 @@ export async function darCiencia(negId: number, codigo: string, condicaoId: numb
   const por = (await perfilAtual()).nome;
   const ciencias = { ...dados.neg.ciencias, [chaveCiencia(codigo, condicaoId)]: { em: new Date().toISOString(), detalhe: f.detalhe, por } };
   await db.update(s.negociacoes).set({ ciencias }).where(eq(s.negociacoes.id, negId));
-  await registrar(negId, `Deu ciência: ${f.titulo} — ${f.detalhe}`);
+  await registrar(negId, `Deu ciência em "${f.titulo}": ${f.detalhe}`);
   refresh();
   return ok(`Ciência registrada: ${f.titulo}.`);
 }
@@ -180,7 +180,7 @@ export async function darCienciaItens(negId: number, condicaoId: number, codigos
   const ciencias = { ...dados.neg.ciencias };
   for (const f of alvo) ciencias[chaveCiencia(f.codigo, condicaoId)] = { em, detalhe: f.detalhe, por };
   await db.update(s.negociacoes).set({ ciencias }).where(eq(s.negociacoes.id, negId));
-  for (const f of alvo) await registrar(negId, `Deu ciência: ${f.titulo} — ${f.detalhe}`);
+  for (const f of alvo) await registrar(negId, `Deu ciência em "${f.titulo}": ${f.detalhe}`);
   refresh();
   return ok(`Ciência registrada: ${alvo.map((f) => f.titulo).join("; ")}.`);
 }
@@ -252,7 +252,7 @@ export async function encerrar(negId: number, destino: "recusado" | "escalado", 
   const quem = await perfilAtual();
   await db
     .update(s.negociacoes)
-    .set({ status: destino, motivoSaida: `${motivo.trim().slice(0, 500)} — ${destino === "escalado" ? "escalado" : "recusado"} por ${quem.nome} (${quem.cargo})`, encerradoPor: quem.matricula, atualizadoEm: new Date() })
+    .set({ status: destino, motivoSaida: `${motivo.trim().slice(0, 500)} (${destino === "escalado" ? "escalado" : "recusado"} por ${quem.nome}, ${quem.cargo})`, encerradoPor: quem.matricula, atualizadoEm: new Date() })
     .where(eq(s.negociacoes.id, negId));
   await registrar(negId, `${destino === "escalado" ? "Escalou à Diretoria" : "Recusou"}: ${motivo.trim().slice(0, 300)}`);
   await enfileirar(sid, negId, "redigir");
@@ -265,7 +265,7 @@ export async function reabrir(negId: number): Promise<RespostaAcao> {
   const dados = await carregar(sid, negId);
   if (!dados || !["escalado", "recusado"].includes(dados.neg.status)) return falha("Só reabre o que foi escalado ou recusado.");
   if (dados.neg.status === "escalado" && !veEscalados(await perfilAtual())) return falha("Só a Diretoria ou o Comitê reabrem um caso escalado.");
-  if (dados.farois.some((f) => f.codigo === "LEI-09" && f.cor === "vermelho")) return falha("Texto suspeito: escalado à Diretoria Comercial, sem reabertura na tela.");
+  if (dados.farois.some((f) => f.codigo === "LEI-09" && f.cor === "vermelho")) return falha("Texto suspeito: o caso foi escalado à Diretoria Comercial e não pode ser reaberto aqui.");
   await db.update(s.negociacoes).set({ status: "revisao", motivoSaida: null, encerradoPor: null, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
   await recalcularFarois(sid, negId);
   await registrar(negId, "Reabriu para revisão");
@@ -368,7 +368,7 @@ export async function novoEmail(form: FormData): Promise<RespostaAcao> {
   await db.update(s.sessoes).set({ emailsColados: (sess?.emailsColados ?? 0) + 1 }).where(eq(s.sessoes.id, sid));
   await enfileirar(sid, neg.id, "ler_email");
   refresh();
-  return ok("E-mail recebido. Será lido na próxima rodada.");
+  return ok("E-mail recebido. A IA lê na próxima rodada.");
 }
 
 const LIMITE_GERACOES_POR_SESSAO = 3;

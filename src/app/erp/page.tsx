@@ -23,7 +23,7 @@ async function Erp() {
       <div>
         <h1 className="text-xl font-semibold">ERP simulado</h1>
         <p className="mt-1 text-sm text-zinc-500">
-          Reproduz o contrato do mock_erp (POST /condicoes com Idempotency-Key, limite de 10 chamadas/min, ~1 em 5 chamadas com 503). Cada sessão tem o seu; parte da captura de 30/09/2026 08:15.
+          Reproduz o contrato do mock_erp (POST /condicoes com Idempotency-Key, limite de 10 chamadas/min, ~1 em 5 chamadas com 503). Cada sessão tem o seu ERP, que começa na captura de 30/09/2026 08:15.
         </p>
       </div>
       <div className="overflow-x-auto rounded-xl border bg-white">
@@ -44,7 +44,7 @@ async function Erp() {
                 <td className="px-3 py-2 text-xs">{c.tipo === "DESCONTO_PERCENTUAL" ? "Desconto" : "Verba"}</td>
                 <td className="px-3 py-2 tabular-nums">{c.tipo === "DESCONTO_PERCENTUAL" ? fmtPct(c.percentual) : fmtBRL(c.valor)}</td>
                 <td className="px-3 py-2 text-xs">{c.lojas.join(", ")}</td>
-                <td className="px-3 py-2 whitespace-nowrap">{fmtData(c.data_inicio)} – {fmtData(c.data_fim)}</td>
+                <td className="px-3 py-2 whitespace-nowrap">{fmtData(c.data_inicio)} a {fmtData(c.data_fim)}</td>
                 <td className="px-3 py-2 text-xs">{c.status}</td>
                 <td className="px-3 py-2 text-xs text-zinc-500">{c.alterado_por ? `${c.alterado_por} · ${fmtDataHora(c.ultima_alteracao)}` : "—"}</td>
               </tr>

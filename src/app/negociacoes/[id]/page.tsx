@@ -347,11 +347,11 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                         {it.tarefa ? (
                           <>
                             <b>{TAREFA[it.tarefa]}</b> · tentativa {it.n}
-                            {it.http ? ` · HTTP ${it.http}` : ""} — {it.texto}
+                            {it.http ? ` · HTTP ${it.http}` : ""}: {it.texto}
                           </>
                         ) : (
                           <>
-                            <b>{it.quem}</b> — {it.texto}
+                            <b>{it.quem}</b>: {it.texto}
                           </>
                         )}
                       </span>
@@ -373,7 +373,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
               </div>
               <AuditoriaIa chamadas={tempo.ia} semIa={leitura?.origem === "referencia_manual" ? "Nenhuma chamada de IA: leitura de referência manual (IA não configurada neste ambiente)." : null} />
               <p className="text-xs text-zinc-500">
-                Premissas: as condições deste e-mail sobem juntas para o ERP (P11); aprovadores são uma lista fictícia (P9); escalados só são vistos pela Diretoria/Comitê e por quem escalou.
+                Premissas: as condições deste e-mail sobem juntas para o ERP (P11); aprovadores são uma lista fictícia (P9); só a Diretoria/Comitê e quem escalou veem os escalados.
                 {leitura && ` Leitura: ${ORIGEM_LEITURA[leitura.origem].rotulo}${leitura.modeloExtrator ? ` (${leitura.modeloExtrator})` : ""}.`}
               </p>
             </div>

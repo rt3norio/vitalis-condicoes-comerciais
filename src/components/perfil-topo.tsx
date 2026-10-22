@@ -6,5 +6,5 @@ import { SeletorPerfil } from "./seletor-perfil";
 
 export async function PerfilTopo() {
   const p = await perfilAtual();
-  return <SeletorPerfil atual={p.matricula} perfis={PERFIS.map((x) => ({ matricula: x.matricula, rotulo: `${x.nome} — ${x.cargo}` }))} />;
+  return <SeletorPerfil atual={p.matricula} perfis={PERFIS.map((x) => ({ matricula: x.matricula, rotulo: x.nome.startsWith(x.cargo) ? x.nome : `${x.nome} (${x.cargo})` }))} />;
 }

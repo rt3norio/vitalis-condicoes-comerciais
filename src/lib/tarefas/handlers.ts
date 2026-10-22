@@ -181,7 +181,7 @@ async function verificarTarefa(t: Tarefa): Promise<Resultado> {
     await db.update(s.negociacoes).set({ status: "revisao", atualizadoEm: new Date() }).where(eq(s.negociacoes.id, neg.id));
   }
   await enfileirar(t.sessionId, neg.id, "redigir");
-  return { mensagem: `${msgVerif} Faróis calculados. → ${suspeita ? "Escalado" : "Revisão humana"}.` };
+  return { mensagem: `${msgVerif} Faróis calculados. Segue para ${suspeita ? "Escalado" : "Revisão humana"}.` };
 }
 
 // ---------- resumo (Redator); os textos para enviar são sob demanda na tela (D20) ----------
@@ -282,7 +282,7 @@ async function enviarErp(t: Tarefa): Promise<Resultado> {
     const parcial = [...gravadas.map((g) => `${g.titulo} → ${g.erpCodCondicao}`), ...feitos];
     await voltarParaRevisao(
       neg.id,
-      `${parcial.length ? `GRAVADO PARCIALMENTE (${parcial.join(", ")}). ` : ""}ERP recusou "${c.titulo}": ${detalhe}.`,
+      `${parcial.length ? `Gravado parcialmente (${parcial.join(", ")}). ` : ""}ERP recusou "${c.titulo}": ${detalhe}.`,
       [c.id],
     );
     throw new Permanente(`ERP recusou ${c.titulo}: ${detalhe}`, r.status);

@@ -63,7 +63,7 @@ export function EditorCondicao({ d, negId, fornecedores, categorias, lojas, pont
     <div className={cn("grid gap-3 sm:grid-cols-2", pend && "opacity-70")}>
       <Campo rotulo="Fornecedor (ERP)" ponto={pontos.codFornecedor} ciencia={ciencia}>
         <select key={`f-${d.codFornecedor}`} className={inputCls} defaultValue={d.codFornecedor ?? ""} disabled={dis} onChange={(e) => salvar("codFornecedor", e.target.value)}>
-          <option value="">— escolha —</option>
+          <option value="">Escolha…</option>
           {fornecedores.map((o) => (
             <option key={o.valor} value={o.valor}>{o.rotulo}</option>
           ))}
@@ -71,7 +71,7 @@ export function EditorCondicao({ d, negId, fornecedores, categorias, lojas, pont
       </Campo>
       <Campo rotulo="Categoria (ERP)" ponto={pontos.codCategoria} ciencia={ciencia}>
         <select key={`c-${d.codCategoria}`} className={inputCls} defaultValue={d.codCategoria ?? ""} disabled={dis} onChange={(e) => salvar("codCategoria", e.target.value)}>
-          <option value="">— escolha —</option>
+          <option value="">Escolha…</option>
           {categorias.map((o) => (
             <option key={o.valor} value={o.valor}>{o.rotulo}</option>
           ))}

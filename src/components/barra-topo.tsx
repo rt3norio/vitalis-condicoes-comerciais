@@ -73,7 +73,7 @@ function NovoEmail() {
       <DialogContent className="sm:max-w-xl">
         <DialogHeader>
           <DialogTitle>Novo e-mail de fornecedor</DialogTitle>
-          <DialogDescription>Cole o texto (com ou sem cabeçalho) ou envie um arquivo .eml. A leitura é feita pela IA na próxima rodada.</DialogDescription>
+          <DialogDescription>Cole o texto (com ou sem cabeçalho) ou envie um arquivo .eml. A IA lê o e-mail na próxima rodada.</DialogDescription>
         </DialogHeader>
         <form
           ref={form}

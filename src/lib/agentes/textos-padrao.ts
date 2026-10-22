@@ -13,13 +13,13 @@ export const temTextoSuspeito = (fs: FarolMin[]) => fs.some((f) => f.codigo === 
 
 const valor = (c: CondMin) => (c.tipo === "DESCONTO_PERCENTUAL" ? fmtPct(c.percentual) : fmtBRL(c.valor));
 const lista = (conds: CondMin[]) =>
-  conds.map((c) => `${c.titulo}: ${valor(c)}${c.codCategoria ? ` em ${CATEGORIA_LABEL[c.codCategoria as Categoria]}` : ""}, ${fmtData(c.dataInicio)}–${fmtData(c.dataFim)}`).join("; ");
+  conds.map((c) => `${c.titulo}: ${valor(c)}${c.codCategoria ? ` em ${CATEGORIA_LABEL[c.codCategoria as Categoria]}` : ""}, ${fmtData(c.dataInicio)} a ${fmtData(c.dataFim)}`).join("; ");
 
 export function resumoPadrao(conds: CondMin[], fs: FarolMin[], alteracoes: string[] = []): string[] {
   const linhas = conds.map((c) => `${c.titulo}: ${valor(c)}, ${fmtData(c.dataInicio)} a ${fmtData(c.dataFim)}`);
   // D23: o que pessoas mudaram depois da leitura (texto da linha do tempo, sem o nome)
   if (alteracoes.length) linhas.push(`Alterado na revisão: ${alteracoes.slice(-3).map((a) => a.replace(/^[^:]*: /, "")).join("; ")}`);
-  if (temTextoSuspeito(fs)) return [...linhas, "Texto suspeito no e-mail: escalado à Diretoria Comercial", "Esta proposta não segue: só com novo contato do fornecedor, por novo e-mail"];
+  if (temTextoSuspeito(fs)) return [...linhas, "Texto suspeito no e-mail: escalado à Diretoria Comercial", "Esta proposta não segue; só um novo contato do fornecedor, por novo e-mail, abre outra negociação"];
   const vermelhos = fs.filter((f) => f.cor === "vermelho");
   return [
     ...linhas,
@@ -35,7 +35,7 @@ export function textoPadrao(destino: DestinoTexto, neg: NegMin, conds: CondMin[]
     const caminho = suspeito
       ? "\n\nEsta proposta não segue. O caminho é um novo contato do fornecedor, por novo e-mail, que entra no fluxo normal. Pedimos que a Diretoria valide este encaminhamento."
       : "";
-    return `Para: Diretoria Comercial\nAssunto: decisão necessária — ${neg.assunto}\n\n${lista(conds)}.\n\nMotivo: ${motivo}${caminho}\n\nOrigem: ${neg.messageId ?? "—"}`;
+    return `Para: Diretoria Comercial\nAssunto: ${neg.assunto} (decisão necessária)\n\n${lista(conds)}.\n\nMotivo: ${motivo}${caminho}\n\nOrigem: ${neg.messageId ?? "não informada"}`;
   }
   const primeiro = neg.remetente.replace(/<.*>/, "").trim().split(" ")[0] || "";
   // texto suspeito: não cita nem comenta o texto, não pede ajuste desta proposta (D13, D18)

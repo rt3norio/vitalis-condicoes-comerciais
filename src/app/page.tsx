@@ -53,7 +53,7 @@ async function Painel({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
 
       {!ia && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-sm text-amber-900">
-          IA não configurada neste ambiente: os 4 e-mails do dataset usam uma <b>leitura de referência feita à mão</b> e o Verificador não roda. E-mails novos ficam em “Recebido” até a IA ser configurada.
+          IA não configurada neste ambiente: os 4 e-mails do dataset usam uma leitura de referência feita à mão e o Verificador não roda. E-mails novos ficam em “Recebido” até a IA ser configurada.
         </div>
       )}
 
