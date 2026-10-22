@@ -14,7 +14,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "gerar-cache-ia": "tsx --env-file-if-exists=.env.local scripts/gerar-cache-ia.ts",
-    "gerar-exemplos": "tsx --env-file-if-exists=.env.local scripts/gerar-exemplos.ts"
+    "gerar-exemplos": "tsx --env-file-if-exists=.env.local scripts/gerar-exemplos.ts",
+    "gerar-pdf": "tsx scripts/gerar-pdf.ts"
   },
   "dependencies": {
     "@base-ui/react": "^1.9.0",
@@ -42,6 +43,7 @@
     "drizzle-kit": "^0.31.11",
     "eslint": "^9",
     "eslint-config-next": "16.4.2",
+    "marked": "15.0.12",
     "tailwindcss": "^4",
     "tsx": "^4.23.15",
     "typescript": "^5",
