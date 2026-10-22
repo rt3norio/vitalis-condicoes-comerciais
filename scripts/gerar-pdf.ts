@@ -1,7 +1,6 @@
-// Gera o PDF de entrega (F3): docs/entrega-pdf.md → docs/entrega.html → docs/entrega.pdf (Chrome sem interface).
+// Gera o PDF de entrega (F3, F17): docs/resumo.md (2 páginas, para a pessoa ler) + docs/entrega-pdf.md (documento
+// completo, para leitura por IA) → docs/entrega.html → docs/entrega.pdf (Chrome sem interface). Uso: pnpm gerar-pdf
 // Os anexos de prompts, formatos de saída e conferências saem direto do código, para o documento bater com o entregue.
-// Uso: pnpm gerar-pdf            (documento completo)
-//      pnpm gerar-pdf resumo     (docs/resumo.md → docs/resumo.pdf: 1 página, para a pessoa ler; F6)
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -93,28 +92,33 @@ function anexoConferencias() {
   return `| Grupo | Conferência | Política | Quem confere |\n|---|---|---|---|\n${linhas.join("\n")}`;
 }
 
-const resumo = process.argv[2] === "resumo";
-let md = fs.readFileSync(path.join(DOCS, resumo ? "resumo.md" : "entrega-pdf.md"), "utf8");
-if (!resumo) md = md.replace("<!-- ANEXO:PROMPTS -->", anexoPrompts()).replace("<!-- ANEXO:CONFERENCIAS -->", anexoConferencias());
+const mdResumo = fs.readFileSync(path.join(DOCS, "resumo.md"), "utf8");
+const mdCompleto = fs
+  .readFileSync(path.join(DOCS, "entrega-pdf.md"), "utf8")
+  .replace("<!-- ANEXO:PROMPTS -->", anexoPrompts())
+  .replace("<!-- ANEXO:CONFERENCIAS -->", anexoConferencias());
 
-// resumo de 1 página: só texto, muito espaço em branco, sem quebra de página por seção
+// resumo (págs. 1 e 2): só texto, muito espaço em branco, sem quebra de página por seção
 const CSS_RESUMO = `
-@page { size: A4; margin: 15mm 20mm; }
-body { font-size: 10pt; line-height: 1.42; }
-h1 { font-size: 20pt; margin-bottom: 2pt; }
-h1 + p { font-size: 9pt; margin-top: 0; }
-h2 { break-before: auto; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 1.2pt; border-bottom: 0.6pt solid #99f6e4; margin: 10pt 0 4pt; padding-bottom: 2pt; }
-p strong:only-child { display: block; font-size: 11pt; color: #0f766e; margin: 6pt 0; }
-ul, ol { padding-left: 16pt; margin: 4pt 0; }
-li { margin: 3pt 0; }
-h3 { font-size: 9.5pt; color: #0f766e; margin: 8pt 0 2pt; }
-.colunas ol, .colunas ul { columns: 2; column-gap: 16pt; font-size: 8.8pt; line-height: 1.35; margin: 2pt 0; }
-.colunas li { break-inside: avoid; margin: 0 0 3pt; }`;
+@page resumo { size: A4; margin: 15mm 20mm; }
+.resumo { page: resumo; font-size: 10pt; line-height: 1.42; }
+.resumo h1 { font-size: 20pt; margin-bottom: 2pt; }
+.resumo h1 + p { font-size: 9pt; margin-top: 0; }
+.resumo blockquote { font-size: 9.5pt; margin: 6pt 0; padding: 4pt 9pt; }
+.resumo h2 { break-before: auto; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 1.2pt; border-bottom: 0.6pt solid #99f6e4; margin: 10pt 0 4pt; padding-bottom: 2pt; }
+.resumo p strong:only-child { display: block; font-size: 11pt; color: #0f766e; margin: 6pt 0; }
+.resumo ul, .resumo ol { padding-left: 16pt; margin: 4pt 0; }
+.resumo li { margin: 3pt 0; }
+.resumo h3 { font-size: 9.5pt; color: #0f766e; margin: 8pt 0 2pt; }
+.resumo .colunas ol, .resumo .colunas ul { columns: 2; column-gap: 16pt; font-size: 8.8pt; line-height: 1.35; margin: 2pt 0; }
+.resumo .colunas li { break-inside: avoid; margin: 0 0 3pt; }
+.completo { break-before: page; }`;
 
 const renderer = new marked.Renderer();
 const codigoPadrao = renderer.code.bind(renderer);
 renderer.code = (t) => (t.lang === "mermaid" ? `<div class="figura"><pre class="mermaid">${t.text}</pre></div>` : codigoPadrao(t));
-const corpo = marked.parse(md, { renderer, gfm: true }) as string;
+const paraHtml = (md: string) => marked.parse(md, { renderer, gfm: true }) as string;
+const corpo = `<section class="resumo">${paraHtml(mdResumo)}</section>\n<section class="completo">${paraHtml(mdCompleto)}</section>`;
 
 const html = `<!doctype html>
 <html lang="pt-BR"><head><meta charset="utf-8"><title>Vitalis · Cadastro de condições comerciais com IA</title>
@@ -143,14 +147,14 @@ p:has(> img) { break-after: avoid; }
 p:has(> em:only-child) { break-inside: avoid; break-before: avoid; }
 em.legenda, p > em:only-child { color: #52525b; font-size: 9pt; }
 hr { display: none; }
-${resumo ? CSS_RESUMO : ""}
+${CSS_RESUMO}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
 <script>mermaid.initialize({ startOnLoad: true, theme: "neutral", flowchart: { htmlLabels: true, useMaxWidth: true } });</script>
 </head><body>${corpo}</body></html>`;
 
-const arqHtml = path.join(DOCS, resumo ? "resumo.html" : "entrega.html");
-const arqPdf = path.join(DOCS, resumo ? "resumo.pdf" : "entrega.pdf");
+const arqHtml = path.join(DOCS, "entrega.html");
+const arqPdf = path.join(DOCS, "entrega.pdf");
 fs.writeFileSync(arqHtml, html);
 execFileSync(CHROME, ["--headless=new", "--disable-gpu", "--no-pdf-header-footer", "--virtual-time-budget=20000", `--print-to-pdf=${arqPdf}`, pathToFileURL(arqHtml).href], { stdio: "ignore" });
 console.log(`PDF: ${arqPdf} (${Math.round(fs.statSync(arqPdf).size / 1024)} KB)`);

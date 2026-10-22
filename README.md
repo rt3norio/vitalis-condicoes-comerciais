@@ -51,7 +51,7 @@ ERP simulado: `/api/v1/{fornecedores,lojas,condicoes}`, com o mesmo contrato do 
 
 ## Documentação (`docs/`)
 
-- `entrega-pdf.md`: fonte do PDF de entrega (10 seções). `resumo.md`: resumo de 1 página. Os PDFs saem de `pnpm gerar-pdf` e `pnpm gerar-pdf resumo`
+- `resumo.md` (págs. 1 e 2, para leitura humana) + `entrega-pdf.md` (documento completo, 10 seções e anexos, para leitura por IA): fontes do PDF único de entrega, `docs/entrega.pdf`, gerado por `pnpm gerar-pdf`
 - `registro-alteracoes.md`: cada mudança e decisão, com o porquê
 - `desenho.md`: funil, faróis e telas · `decisoes-stack.md`: stack e arquitetura
 - `pendencias-negocio.md`: dúvidas de negócio · `duvidas-do-caminho.md`: dúvidas que surgiram durante a construção

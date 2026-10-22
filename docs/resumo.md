@@ -2,11 +2,13 @@
 
 Vitalis · Case AI Builder (Pareto) · 22/10/2026 · [A PREENCHER: nome e e-mail do autor]
 
+> Estas duas primeiras páginas foram revisadas para leitura humana e trazem os pontos mais importantes, para avaliar por leitura direta. O restante do documento, a partir da página 3, é longo e detalhado e deve ser lido por IA.
+
 O e-mail do fornecedor vira condição gravada no ERP, com uma pessoa decidindo no meio.
 
 **E-mail → IA lê → segunda IA confere → regras fixas (hardcoded) da política e do ERP → pessoa com alçada aprova → ERP**
 
-Solução: [vitalis-condicoes.fly.dev](https://vitalis-condicoes.fly.dev) · Vídeo: [A PREENCHER: link do vídeo] · Documento completo: entrega.pdf
+Solução: [vitalis-condicoes.fly.dev](https://vitalis-condicoes.fly.dev) · Vídeo: [A PREENCHER: link do vídeo]
 
 ## O que a solução garante
 

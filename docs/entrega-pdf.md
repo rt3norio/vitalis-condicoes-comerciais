@@ -1,6 +1,4 @@
-# Cadastro de condições comerciais com IA
-
-Vitalis · Case técnico AI Builder (Pareto) · 22/10/2026 · [A PREENCHER: nome e e-mail do autor]
+# Documento completo
 
 > Solução (link público): [vitalis-condicoes.fly.dev](https://vitalis-condicoes.fly.dev) · Vídeo (até 3 min): [A PREENCHER: link do vídeo] · Código: repositório privado, disponível sob pedido.
 >
