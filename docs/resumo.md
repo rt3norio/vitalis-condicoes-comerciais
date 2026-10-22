@@ -18,11 +18,12 @@ Solução: [A PREENCHER: link da solução] · Vídeo: [A PREENCHER: link do ví
 
 A IA lê o e-mail e a planilha, uma segunda IA confere essa leitura, e a IA também escreve o resumo e as respostas ao fornecedor. Teto, alçada, vigência, sobreposição e fornecedor ativo (POL-COM-004) são conferidos por regras fixas (hardcoded) no sistema, sem IA, e quem aprova é sempre uma pessoa.
 
-## Três decisões de desenho
+## Decisões de desenho
 
 1. Cada etapa é uma tarefa que roda a cada minuto. Se falha, a falha fica registrada e a tarefa roda de novo na rodada seguinte.
 2. Um e-mail que tenta comandar o sistema é marcado e escalado à Diretoria. Aquela proposta não segue: o fornecedor precisa mandar outra.
 3. Escolhi o modelo por teste. O GLM-5.3 custa cerca de US$ 0,006 por e-mail; os modelos mais baratos que testei erraram a leitura.
+4. Tudo fica gravado (cada tarefa, falha e nova tentativa, quem deu ciência, editou ou aprovou, e cada chamada de IA com o que recebeu e devolveu) e aparece em "Detalhes para auditoria", recolhido, para não atrapalhar quem decide.
 
 ## Para validar com a área
 

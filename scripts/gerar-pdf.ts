@@ -99,8 +99,8 @@ if (!resumo) md = md.replace("<!-- ANEXO:PROMPTS -->", anexoPrompts()).replace("
 
 // resumo de 1 página: só texto, muito espaço em branco, sem quebra de página por seção
 const CSS_RESUMO = `
-@page { size: A4; margin: 15mm 20mm; }
-body { font-size: 10pt; line-height: 1.45; }
+@page { size: A4; margin: 12mm 20mm; }
+body { font-size: 10pt; line-height: 1.4; }
 h1 { font-size: 20pt; margin-bottom: 2pt; }
 h1 + p { font-size: 9pt; margin-top: 0; }
 h2 { break-before: auto; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 1.2pt; border-bottom: 0.6pt solid #99f6e4; margin: 12pt 0 4pt; padding-bottom: 2pt; }
@@ -138,6 +138,8 @@ code { font-family: Consolas, monospace; font-size: 0.92em; }
 .figura svg { max-height: 118mm; width: auto !important; max-width: 100% !important; }
 img { max-width: 100%; border: 0.6pt solid #d4d4d8; border-radius: 4pt; break-inside: avoid; }
 p:has(> img) { break-inside: avoid; text-align: center; margin-bottom: 2pt; }
+p:has(> img) { break-after: avoid; }
+p:has(> em:only-child) { break-inside: avoid; break-before: avoid; }
 em.legenda, p > em:only-child { color: #52525b; font-size: 9pt; }
 hr { display: none; }
 ${resumo ? CSS_RESUMO : ""}

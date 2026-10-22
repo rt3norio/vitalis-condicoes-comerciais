@@ -194,9 +194,13 @@ Quem usa é a analista comercial que confere e corrige, e o aprovador com alçad
 
 *Depois de corrigir e aprovar, o resumo é refeito: diz o que mudou em relação ao e-mail (de → para, e quem mudou) e quem aprovou. A condição mostra o código gravado no ERP.*
 
-![Auditoria](img/auditoria.png)
+![Histórico](img/historico.png)
 
-*Detalhes para auditoria, no fim e recolhidos: a linha do tempo de quem fez o quê (sistema e pessoas) e cada chamada da IA, com o que recebeu e o que devolveu. Neste caso, o ERP respondeu "em manutenção" 4 vezes seguidas; o sistema tentou de novo sozinho e gravou na 5ª tentativa.*
+*Histórico, em Detalhes para auditoria (no fim da tela, recolhido). Cada passo do sistema e cada ação de pessoa ficam gravados, com nome, cargo e hora, do mais recente para o mais antigo. Neste caso: a leitura e a verificação usaram a saída salva da IA; Carlos Duarte (Gerente) editou o início de 2026-10-01 para 2026-10-23 e marcou a substituição da COND-003; Renata Alves (Analista) deu ciência nos 5 itens amarelos, cada um com o texto que ela viu; Carlos aprovou na alçada da Gerência; na 1ª tentativa de envio o ERP respondeu "em manutenção" (HTTP 503, em amarelo) e o sistema gravou sozinho na 2ª tentativa (HTTP 201, COND-011); o resumo foi refeito duas vezes.*
+
+![Auditoria da IA](img/auditoria-ia.png)
+
+*Auditoria da IA, logo abaixo do histórico, rodada por rodada. Cada chamada mostra o que o agente recebeu (aqui, o e-mail da Beta), as instruções, os parâmetros, as ferramentas usadas (nenhuma) e o que ele devolveu, com tempo e volume de texto. "Saída salva" indica a leitura real da IA gravada uma vez para os e-mails do exemplo.*
 
 ![ERP simulado](img/erp.png)
 
@@ -239,6 +243,7 @@ Vídeo (até 3 min): [A PREENCHER: link do vídeo]
 | Resumo | Ficava velho depois de correções | fixo × refeito | Refeito a cada correção, aprovação e envio, dizendo o que mudou em relação ao e-mail | A pessoa vê de relance o que foi alterado e por quem |
 | ERP antes da IA | A leitura depende do cadastro do ERP | IA primeiro × ERP primeiro | ERP primeiro | Com o ERP fora, nenhuma leitura é jogada fora e a falha aparece com o nome certo |
 | Quem aprova | Login está fora do escopo | login × seletor "Quem você é" | Seletor no topo, sem senha | Aprovação, ciência e escalonamento ficam no nome escolhido; escalado só aparece para Diretoria e Comitê |
+| Histórico | O case pede saber o que foi suposto e quem respondeu; o ERP e a IA falham | só o resultado × tudo registrado | Gravar cada tarefa, tentativa, falha, ação de pessoa (ciência, edição, escolha, aprovação) e chamada de IA, e mostrar tudo em "Detalhes para auditoria", recolhido no fim da tela | Qualquer pessoa reconstrói o caso depois; quem decide não vê esse volume no dia a dia |
 | Envio parcial | O ERP não grava duas condições de uma vez | sem alternativa | Reconfere tudo antes do 1º envio; uma recusa volta à revisão com o que foi gravado | O envio parcial vira exceção visível |
 | Hospedagem | O agendador precisa rodar a cada minuto | Vercel × Fly.io | Fly.io, uma máquina | Simples e barato, sem redundância |
 | Custo da demonstração | Link público, dezenas de visitantes | IA ao vivo × leitura salva | Os 4 e-mails do exemplo usam a leitura real gravada uma vez | Reiniciar não gasta; a IA roda ao vivo só quando o visitante pede |

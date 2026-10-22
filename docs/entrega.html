@@ -21,6 +21,8 @@ code { font-family: Consolas, monospace; font-size: 0.92em; }
 .figura svg { max-height: 118mm; width: auto !important; max-width: 100% !important; }
 img { max-width: 100%; border: 0.6pt solid #d4d4d8; border-radius: 4pt; break-inside: avoid; }
 p:has(> img) { break-inside: avoid; text-align: center; margin-bottom: 2pt; }
+p:has(> img) { break-after: avoid; }
+p:has(> em:only-child) { break-inside: avoid; break-before: avoid; }
 em.legenda, p > em:only-child { color: #52525b; font-size: 9pt; }
 hr { display: none; }
 
@@ -369,8 +371,10 @@ hr { display: none; }
 <p><em>Texto suspeito. A tela mostra só a marca e o encaminhamento, sem expor o trecho nem o que ele pedia. O resumo diz que a proposta não segue, e a resposta ao fornecedor, gerada na hora, pede uma nova proposta em um novo e-mail, sem comentar o texto.</em></p>
 <p><img src="img/beta-enviado.png" alt="Depois de corrigir e aprovar"></p>
 <p><em>Depois de corrigir e aprovar, o resumo é refeito: diz o que mudou em relação ao e-mail (de → para, e quem mudou) e quem aprovou. A condição mostra o código gravado no ERP.</em></p>
-<p><img src="img/auditoria.png" alt="Auditoria"></p>
-<p><em>Detalhes para auditoria, no fim e recolhidos: a linha do tempo de quem fez o quê (sistema e pessoas) e cada chamada da IA, com o que recebeu e o que devolveu. Neste caso, o ERP respondeu &quot;em manutenção&quot; 4 vezes seguidas; o sistema tentou de novo sozinho e gravou na 5ª tentativa.</em></p>
+<p><img src="img/historico.png" alt="Histórico"></p>
+<p><em>Histórico, em Detalhes para auditoria (no fim da tela, recolhido). Cada passo do sistema e cada ação de pessoa ficam gravados, com nome, cargo e hora, do mais recente para o mais antigo. Neste caso: a leitura e a verificação usaram a saída salva da IA; Carlos Duarte (Gerente) editou o início de 2026-10-01 para 2026-10-23 e marcou a substituição da COND-003; Renata Alves (Analista) deu ciência nos 5 itens amarelos, cada um com o texto que ela viu; Carlos aprovou na alçada da Gerência; na 1ª tentativa de envio o ERP respondeu &quot;em manutenção&quot; (HTTP 503, em amarelo) e o sistema gravou sozinho na 2ª tentativa (HTTP 201, COND-011); o resumo foi refeito duas vezes.</em></p>
+<p><img src="img/auditoria-ia.png" alt="Auditoria da IA"></p>
+<p><em>Auditoria da IA, logo abaixo do histórico, rodada por rodada. Cada chamada mostra o que o agente recebeu (aqui, o e-mail da Beta), as instruções, os parâmetros, as ferramentas usadas (nenhuma) e o que ele devolveu, com tempo e volume de texto. &quot;Saída salva&quot; indica a leitura real da IA gravada uma vez para os e-mails do exemplo.</em></p>
 <p><img src="img/erp.png" alt="ERP simulado"></p>
 <p><em>ERP (simulado): a condição nova da Beta gravada (13%, de 23/10/2026 a 31/03/2027) e a COND-003 encerrada na véspera, como pede a substituição.</em></p>
 <p>Para a pessoa não precisar de treinamento, a tela:</p>
@@ -503,6 +507,13 @@ hr { display: none; }
 <td>login × seletor &quot;Quem você é&quot;</td>
 <td>Seletor no topo, sem senha</td>
 <td>Aprovação, ciência e escalonamento ficam no nome escolhido; escalado só aparece para Diretoria e Comitê</td>
+</tr>
+<tr>
+<td>Histórico</td>
+<td>O case pede saber o que foi suposto e quem respondeu; o ERP e a IA falham</td>
+<td>só o resultado × tudo registrado</td>
+<td>Gravar cada tarefa, tentativa, falha, ação de pessoa (ciência, edição, escolha, aprovação) e chamada de IA, e mostrar tudo em &quot;Detalhes para auditoria&quot;, recolhido no fim da tela</td>
+<td>Qualquer pessoa reconstrói o caso depois; quem decide não vê esse volume no dia a dia</td>
 </tr>
 <tr>
 <td>Envio parcial</td>
