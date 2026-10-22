@@ -82,16 +82,33 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
       </div>
 
       {suspeita && (
-        <div role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
-          <b>Instrução dirigida ao sistema encontrada no e-mail.</b> O texto foi ignorado e a negociação foi escalada sem liberação na tela. {suspeita.detalhe}
-        </div>
+        <section role="alert" className="overflow-hidden rounded-xl border border-red-300 bg-white">
+          <div className="flex flex-wrap items-center gap-2 bg-red-600 px-4 py-2 text-sm font-semibold text-white">
+            <span aria-hidden>⚠</span> Texto suspeito encontrado
+            <span className="ml-auto rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium">Escalado à Diretoria · sem liberação na tela</span>
+          </div>
+          <div className="grid gap-3 px-4 py-3 text-sm">
+            {neg.instrucoesSuspeitas.map((i) => (
+              <div key={i.trecho} className="grid gap-2">
+                <blockquote className="rounded-md border-l-4 border-red-500 bg-red-50 px-3 py-2 font-mono text-[13px] text-red-900">“{i.trecho}”</blockquote>
+                <p><b>O que o texto pedia:</b> {i.motivo}</p>
+              </div>
+            ))}
+            <p>
+              <b>O que o sistema fez:</b> ignorou o texto, não aprovou nem gravou nada, e escalou a negociação à Diretoria Comercial. Um fornecedor não pode aprovar a própria condição; a IA não tem como mudar status nem aprovação.
+            </p>
+            <p className="text-zinc-600">
+              <b>O que fazer:</b> encaminhar à Diretoria (memorando abaixo). Não responda ao fornecedor sobre o texto suspeito antes da orientação.
+            </p>
+          </div>
+        </section>
       )}
       {neg.alertaRevisao && emRevisao && (
         <div role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
           <b>Voltou para revisão:</b> {neg.alertaRevisao}
         </div>
       )}
-      {neg.motivoSaida && ["escalado", "recusado"].includes(neg.status) && (
+      {neg.motivoSaida && ["escalado", "recusado"].includes(neg.status) && !suspeita && (
         <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-orange-200 bg-orange-50 px-4 py-3 text-sm text-orange-900">
           <span><b>{neg.status === "escalado" ? "Escalado" : "Recusado"}:</b> {neg.motivoSaida}</span>
           {!suspeita && <BotaoReabrir negId={neg.id} />}
@@ -126,7 +143,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
           <div className="border-t">
             <pre className="max-h-[60vh] overflow-auto whitespace-pre-wrap px-4 py-3 font-mono text-[13px] leading-relaxed">
               {pedacos.map((p, i) =>
-                p.tipo === "normal" ? <span key={i}>{p.texto}</span> : <mark key={i} className={p.tipo === "suspeito" ? "rounded bg-red-200 px-0.5" : "rounded bg-yellow-100 px-0.5"}>{p.texto}</mark>,
+                p.tipo === "normal" ? <span key={i}>{p.texto}</span> : <mark key={i} title={p.tipo === "suspeito" ? "Texto suspeito: ignorado pelo sistema" : "Trecho usado como evidência"} className={p.tipo === "suspeito" ? "rounded bg-red-200 px-0.5 outline outline-1 outline-red-400" : "rounded bg-yellow-100 px-0.5"}>{p.texto}</mark>,
               )}
             </pre>
             {neg.anexos.map((a) => (
@@ -135,7 +152,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                 <TabelaCsv texto={a.texto} />
               </div>
             ))}
-            <p className="border-t px-4 py-2 text-xs text-zinc-500">Destaque amarelo: trecho usado como evidência. Vermelho: texto tentando comandar o sistema.</p>
+            <p className="border-t px-4 py-2 text-xs text-zinc-500">Destaque amarelo: trecho usado como evidência. Vermelho: texto suspeito (tentando comandar o sistema).</p>
           </div>
         </details>
 

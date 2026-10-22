@@ -14,7 +14,7 @@ import { classificar, erp } from "../erp/cliente";
 import { carregar, FalhaErp, obterSnapshot, paraCondicao, recalcularFarois, type LinhaNegociacao } from "../negociacao";
 import { extrato } from "../dominio/dataset";
 import { condicoesDaLeitura } from "../regras/condicoes-da-leitura";
-import { montarPayload } from "../regras/farois";
+import { montarPayload, MOTIVO_TEXTO_SUSPEITO } from "../regras/farois";
 import { enfileirar, Permanente, Transitoria, type Resultado, type Tarefa } from "./fila";
 
 const MAX_TENTATIVAS_IA = 5;
@@ -126,7 +126,7 @@ async function verificarTarefa(t: Tarefa): Promise<Resultado> {
     try {
       const r = await verificar(material(neg), leitura.saidaExtrator);
       await db.update(s.leituras).set({ saidaVerificador: r.saida, modeloVerificador: r.modelo }).where(eq(s.leituras.id, leitura.id));
-      // o Verificador também procura instrução suspeita: soma às do Extrator
+      // o Verificador também procura texto suspeito: soma ao que o Extrator achou
       const todas = [...neg.instrucoesSuspeitas, ...soDirigidas(r.saida.instrucoes_suspeitas).filter((x) => !neg.instrucoesSuspeitas.some((y) => y.trecho === x.trecho))];
       await db.update(s.negociacoes).set({ instrucoesSuspeitas: todas }).where(eq(s.negociacoes.id, neg.id));
       msgVerif = `Verificador (${r.modelo}): ${r.saida.checagens.filter((c) => c.veredito !== "concorda").length} ponto(s) de dúvida/discordância.`;
@@ -146,7 +146,7 @@ async function verificarTarefa(t: Tarefa): Promise<Resultado> {
   if (suspeita) {
     await db
       .update(s.negociacoes)
-      .set({ status: "escalado", motivoSaida: "E-mail contém instrução dirigida ao sistema (S33). Escalado à Diretoria Comercial (premissa P12).", atualizadoEm: new Date() })
+      .set({ status: "escalado", motivoSaida: MOTIVO_TEXTO_SUSPEITO, atualizadoEm: new Date() })
       .where(eq(s.negociacoes.id, neg.id));
   } else {
     await db.update(s.negociacoes).set({ status: "revisao", atualizadoEm: new Date() }).where(eq(s.negociacoes.id, neg.id));

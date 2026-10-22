@@ -273,11 +273,21 @@ export function calcularFarois(c: Condicao, ctx: ContextoFarois): Farol[] {
   ];
 }
 
+// Texto suspeito = trecho do e-mail tentando comandar o sistema (pular regra, revisão ou aprovação). S33.
+export const MOTIVO_TEXTO_SUSPEITO =
+  "Texto suspeito no e-mail: tentativa de comandar o sistema (pular regras ou aprovação). Escalado à Diretoria Comercial, sem liberação na tela.";
+
 // LEI-09 é da negociação inteira (o e-mail), não de uma condição
 export function farolInstrucaoSuspeita(instrucoes: { trecho: string; motivo: string }[]): Farol {
-  const base = { codigo: "LEI-09", grupo: "Leitura" as const, titulo: "E-mail sem instrução dirigida ao sistema" };
-  if (!instrucoes.length) return { ...base, cor: "verde", detalhe: "Nenhum texto tentando comandar o processamento." };
-  return { ...base, cor: "vermelho", acao: "escalar", detalhe: `Encontrado: ${instrucoes.map((i) => `“${i.trecho}”`).join(" ")}. Texto ignorado; negociação escalada sem liberação (S33).` };
+  const base = { codigo: "LEI-09", grupo: "Leitura" as const, titulo: "Sem texto suspeito no e-mail" };
+  if (!instrucoes.length) return { ...base, cor: "verde", detalhe: "Nenhum texto tentando comandar o sistema." };
+  return {
+    ...base,
+    titulo: "Texto suspeito encontrado",
+    cor: "vermelho",
+    acao: "escalar",
+    detalhe: `${instrucoes.map((i) => `“${i.trecho}”`).join(" ")} Ignorado: nada foi aprovado nem gravado; negociação escalada sem liberação.`,
+  };
 }
 
 export type ResultadoAprovacao = { ok: true } | { ok: false; motivo: string };

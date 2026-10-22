@@ -180,7 +180,7 @@ export async function reabrir(negId: number): Promise<RespostaAcao> {
   const sid = await sessaoAtual();
   const dados = await carregar(sid, negId);
   if (!dados || !["escalado", "recusado"].includes(dados.neg.status)) return falha("Só reabre o que foi escalado ou recusado.");
-  if (dados.farois.some((f) => f.codigo === "LEI-09" && f.cor === "vermelho")) return falha("Instrução suspeita no e-mail: sem liberação na tela (S33).");
+  if (dados.farois.some((f) => f.codigo === "LEI-09" && f.cor === "vermelho")) return falha("Texto suspeito no e-mail: não pode ser reaberto na tela. Encaminhe à Diretoria Comercial.");
   await db.update(s.negociacoes).set({ status: "revisao", motivoSaida: null, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
   await recalcularFarois(sid, negId);
   refresh();

@@ -93,7 +93,16 @@ async function Painel({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
                     <span className="text-zinc-400">—</span>
                   )}
                 </td>
-                <td className="px-4 py-3"><StatusBadge status={l.status} /></td>
+                <td className="px-4 py-3">
+                  <div className="flex flex-col items-start gap-1">
+                    <StatusBadge status={l.status} />
+                    {l.instrucoesSuspeitas.length > 0 && (
+                      <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-medium text-white" title="O e-mail tem texto tentando comandar o sistema; foi ignorado">
+                        ⚠ texto suspeito
+                      </span>
+                    )}
+                  </div>
+                </td>
                 <td className="max-w-[11rem] px-4 py-3 text-xs text-zinc-600">
                   {l.tarefa ? (
                     <span className={cn(l.tarefa.erro && "text-amber-700")}>
