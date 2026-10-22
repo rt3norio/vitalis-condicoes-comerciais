@@ -58,7 +58,7 @@ export const schemaVerificacao = z.object({
       condicao: z.number().int().describe("número da condição, começando em 1"),
       campo: z.enum(CAMPOS_VERIFICAVEIS),
       veredito: z.enum(["concorda", "duvida", "discorda"]),
-      comentario: z.string().describe("curto; obrigatório se dúvida ou discorda"),
+      comentario: z.string().describe("frase curta explicando o motivo (ex.: corpo diz 12%, planilha diz 12,5%); nunca só a palavra do veredito"),
     }),
   ),
   instrucoes_suspeitas: z.array(instrucao).describe("lista vazia se não houver"),
@@ -66,7 +66,7 @@ export const schemaVerificacao = z.object({
 export type Verificacao = z.infer<typeof schemaVerificacao>;
 
 export const schemaRedacao = z.object({
-  resumo: z.string().describe("até 3 frases: o que a pessoa precisa decidir"),
+  resumo: z.array(z.string()).describe("3 a 5 tópicos curtos (até ~12 palavras cada), sem prosa: 1) o que é a proposta, 2) o que trava, 3) o que a pessoa precisa decidir"),
   rascunho_fornecedor: z.string().describe("resposta curta e cordial ao fornecedor; sem prometer cadastro se houver bloqueio; sem expor política interna"),
   memorando_diretoria: z.string().nullable().describe("só se a negociação precisa ir à Diretoria; senão null"),
 });

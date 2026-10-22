@@ -2,7 +2,7 @@
 import Link from "next/link";
 import { Suspense } from "react";
 import { AutoAtualizar, BotoesTopo, ProximaRodada } from "@/components/barra-topo";
-import { ContagemCores, StatusBadge } from "@/components/farol";
+import { FaixaFarois, StatusBadge } from "@/components/farol";
 import { iaConfigurada } from "@/lib/agentes/agentes";
 import { listarNegociacoes, usoErpUltimoMinuto } from "@/lib/consultas";
 import { fmtData, fmtDataHora, hoje } from "@/lib/dominio/datas";
@@ -77,18 +77,28 @@ async function Painel({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
                   <Link href={`/negociacoes/${l.id}`} className="hover:underline">{l.remetente.replace(/<.*>/, "").trim() || l.dominio}</Link>
                   <div className="text-xs font-normal text-zinc-500">@{l.dominio || "?"}</div>
                 </td>
-                <td className="max-w-xs truncate px-4 py-3">
+                <td className="max-w-[15rem] truncate px-4 py-3" title={l.assunto}>
                   <Link href={`/negociacoes/${l.id}`} className="hover:underline">{l.assunto}</Link>
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-zinc-600">{fmtDataHora(l.recebidoEm)}</td>
                 <td className="px-4 py-3 tabular-nums">{l.nCondicoes ? `${l.nAprovadas}/${l.nCondicoes} aprovadas` : "—"}</td>
-                <td className="px-4 py-3"><ContagemCores {...l.cores} /></td>
+                <td className="px-4 py-3">
+                  {l.faixas.length ? (
+                    <div className="grid gap-1.5">
+                      {l.faixas.map((f, i) => (
+                        <FaixaFarois key={i} farois={f} tamanho="sm" />
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="text-zinc-400">—</span>
+                  )}
+                </td>
                 <td className="px-4 py-3"><StatusBadge status={l.status} /></td>
-                <td className="px-4 py-3 text-xs text-zinc-600">
+                <td className="max-w-[11rem] px-4 py-3 text-xs text-zinc-600">
                   {l.tarefa ? (
                     <span className={cn(l.tarefa.erro && "text-amber-700")}>
                       {TAREFA_LABEL[l.tarefa.tipo]}
-                      {l.tarefa.erro ? ` · tentativa ${l.tarefa.tent} falhou, tenta de novo às ${fmtDataHora(l.tarefa.prox).split(" ")[1]}` : " · na fila"}
+                      {l.tarefa.erro ? ` · falhou, nova tentativa ${fmtDataHora(l.tarefa.prox).split(" ")[1]}` : " · na fila"}
                     </span>
                   ) : l.status === "revisao" ? (
                     <span className="text-violet-700">aguardando decisão</span>
@@ -106,6 +116,11 @@ async function Painel({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
           </tbody>
         </table>
       </div>
+      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
+        <span>Como ler as bolinhas (sempre na mesma ordem, uma faixa por condição):</span>
+        <FaixaFarois farois={[]} rotulos tamanho="sm" />
+        <span>· passe o mouse para ver cada regra</span>
+      </p>
       <p className="text-xs text-zinc-500">
         Cada linha é um e-mail (uma negociação). Ela anda sozinha de Recebido até Revisão; só uma pessoa com alçada move para Aguardando envio. O envio ao ERP também é uma tarefa em segundo plano, que tenta de novo se o ERP falhar.
       </p>

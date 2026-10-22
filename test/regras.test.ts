@@ -110,6 +110,18 @@ describe("Nutrivida — inativo e instrução suspeita", () => {
   it("LEI-09 vermelho", () => expect(farolInstrucaoSuspeita(leituras.nutrivida.instrucoes_suspeitas).cor).toBe("vermelho"));
 });
 
+describe("Divergência corpo × anexo por regra", () => {
+  it("IA lista só a versão do anexo: ainda vira divergência com as duas opções", () => {
+    const ex = structuredClone(leituras.gama);
+    ex.condicoes[0].valor.alternativas = [{ valor: 12.5, origem: "planilha anexa", trecho: "12,5%" }];
+    const email = emailsDataset.find((e) => e.chave === "gama")!;
+    const [d] = condicoesDaLeitura(ex, email.dominio, capturaErp.fornecedores, capturaErp.lojas);
+    expect(d.proveniencia.valor?.alternativas?.map((a) => a.valor)).toEqual([12, 12.5]);
+    const { ctx } = preparar("gama");
+    expect(cor(calcularFarois({ ...d, id: 1 } as Condicao, ctx([])), "LEI-04")).toBe("vermelho");
+  });
+});
+
 describe("D1 — data real", () => {
   it("com hoje = 22/10/2026 o início 01/10 fica vermelho (P1)", () => {
     const { conds, ctx } = preparar("beta", "2026-10-22");

@@ -284,14 +284,39 @@ export type ResultadoAprovacao = { ok: true } | { ok: false; motivo: string };
 
 export function podeAprovar(farois: Farol[], aprovador: Aprovador | undefined, c: Condicao, conferido: boolean): ResultadoAprovacao {
   const vermelhos = farois.filter((f) => f.cor === "vermelho");
-  if (vermelhos.length) return { ok: false, motivo: `Resolva antes: ${vermelhos.map((f) => f.codigo).join(", ")}.` };
+  if (vermelhos.length) return { ok: false, motivo: `Resolva antes: ${vermelhos.map((f) => f.titulo.toLowerCase()).join("; ")}.` };
   const amarelos = farois.filter((f) => f.cor === "amarelo");
-  if (amarelos.length && !conferido) return { ok: false, motivo: `Marque "Conferi os ${amarelos.length} itens deduzidos".` };
+  if (amarelos.length && !conferido) return { ok: false, motivo: `Antes de aprovar, confira os itens amarelos e marque "Conferi".` };
   if (!aprovador) return { ok: false, motivo: "Escolha quem aprova." };
   const a = alcada(c.tipo, c.percentual, c.valor);
   if (a.nivel == null) return { ok: false, motivo: "Alçada indefinida." };
   if (aprovador.nivel < a.nivel) return { ok: false, motivo: `${aprovador.nome} (${aprovador.cargo}) não tem alçada: exige ${a.label}.` };
   return { ok: true };
+}
+
+// Ordem fixa da faixa de bolinhas: a mesma posição é sempre a mesma regra, em todas as telas.
+export const ORDEM_FAROIS: { grupo: Farol["grupo"]; rotulo: string; codigos: string[] }[] = [
+  { grupo: "Leitura", rotulo: "Leitura", codigos: ["LEI-01", "LEI-02", "LEI-03", "LEI-04", "LEI-05", "LEI-06", "LEI-07", "LEI-08"] },
+  { grupo: "Cadastro", rotulo: "Cadastro", codigos: ["CAD-01", "CAD-02", "CAD-03"] },
+  { grupo: "Política", rotulo: "Política", codigos: ["POL-04", "POL-05", "POL-06a", "POL-06b", "POL-07", "POL-08", "POL-09", "POL-10"] },
+  { grupo: "Contrato do ERP", rotulo: "ERP", codigos: ["ERP-01"] },
+];
+
+// Quais faróis falam de cada campo editável (bolinha ao lado do campo = a pior cor entre eles)
+export const FAROIS_DO_CAMPO = {
+  codFornecedor: ["LEI-01", "CAD-01", "POL-08", "POL-10"],
+  codCategoria: ["LEI-02", "CAD-03"],
+  valor: ["LEI-04", "POL-04", "POL-05"],
+  dataInicio: ["LEI-05", "POL-06b"],
+  dataFim: ["LEI-06", "POL-06a"],
+  lojas: ["LEI-03", "CAD-02", "POL-09"],
+  contrapartida: ["LEI-07", "POL-07"],
+} as const;
+
+const PESO: Record<Farol["cor"], number> = { vermelho: 3, amarelo: 2, verde: 1, cinza: 0 };
+
+export function piorCor(fs: Pick<Farol, "cor">[]): Farol["cor"] {
+  return fs.reduce<Farol["cor"]>((acc, f) => (PESO[f.cor] > PESO[acc] ? f.cor : acc), "cinza");
 }
 
 export const contarCores = (farois: Farol[]) => ({

@@ -15,6 +15,8 @@ import {
   relerComIa,
 } from "@/app/acoes";
 import { avisar } from "@/components/barra-topo";
+import { Ponto } from "@/components/farol";
+import type { Cor } from "@/lib/dominio/tipos";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { cn } from "@/lib/utils";
@@ -23,6 +25,8 @@ const inputCls =
   "h-8 w-full rounded-md border border-zinc-300 bg-white px-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 disabled:bg-zinc-100 disabled:text-zinc-500";
 
 type Opcao = { valor: string; rotulo: string };
+type PontoCampo = { cor: Cor; dica: string };
+type Pontos = Partial<Record<"codFornecedor" | "codCategoria" | "valor" | "dataInicio" | "dataFim" | "lojas" | "contrapartida", PontoCampo>>;
 
 export type DadosEditor = {
   id: number;
@@ -43,7 +47,7 @@ export type DadosEditor = {
   bloqueado: boolean;
 };
 
-export function EditorCondicao({ d, fornecedores, categorias, lojas }: { d: DadosEditor; fornecedores: Opcao[]; categorias: Opcao[]; lojas: Opcao[] }) {
+export function EditorCondicao({ d, fornecedores, categorias, lojas, pontos = {} }: { d: DadosEditor; fornecedores: Opcao[]; categorias: Opcao[]; lojas: Opcao[]; pontos?: Pontos }) {
   const [pend, start] = useTransition();
   const salvar = (campo: Parameters<typeof editarCampo>[1], valor: string | string[] | null) => start(async () => avisar(await editarCampo(d.id, campo, valor)));
   const dis = d.bloqueado || pend;
@@ -51,7 +55,7 @@ export function EditorCondicao({ d, fornecedores, categorias, lojas }: { d: Dado
   const valorAtual = d.tipo === "DESCONTO_PERCENTUAL" ? d.percentual : d.valor;
   return (
     <div className={cn("grid gap-3 sm:grid-cols-2", pend && "opacity-70")}>
-      <Campo rotulo="Fornecedor (ERP)">
+      <Campo rotulo="Fornecedor (ERP)" ponto={pontos.codFornecedor}>
         <select key={`f-${d.codFornecedor}`} className={inputCls} defaultValue={d.codFornecedor ?? ""} disabled={dis} onChange={(e) => salvar("codFornecedor", e.target.value)}>
           <option value="">— escolha —</option>
           {fornecedores.map((o) => (
@@ -59,7 +63,7 @@ export function EditorCondicao({ d, fornecedores, categorias, lojas }: { d: Dado
           ))}
         </select>
       </Campo>
-      <Campo rotulo="Categoria (ERP)">
+      <Campo rotulo="Categoria (ERP)" ponto={pontos.codCategoria}>
         <select key={`c-${d.codCategoria}`} className={inputCls} defaultValue={d.codCategoria ?? ""} disabled={dis} onChange={(e) => salvar("codCategoria", e.target.value)}>
           <option value="">— escolha —</option>
           {categorias.map((o) => (
@@ -67,7 +71,7 @@ export function EditorCondicao({ d, fornecedores, categorias, lojas }: { d: Dado
           ))}
         </select>
       </Campo>
-      <Campo rotulo={d.tipo === "DESCONTO_PERCENTUAL" ? "Desconto (%)" : "Verba (R$, total)"}>
+      <Campo rotulo={d.tipo === "DESCONTO_PERCENTUAL" ? "Desconto (%)" : "Verba (R$, total)"} ponto={pontos.valor}>
         {d.alternativas && (
           <div className="mb-1.5 grid gap-1">
             {d.alternativas.map((a) => (
@@ -89,10 +93,10 @@ export function EditorCondicao({ d, fornecedores, categorias, lojas }: { d: Dado
         <input key={`v-${valorAtual}`} className={inputCls} type="number" step="0.01" min="0" defaultValue={valorAtual ?? ""} disabled={dis} onBlur={(e) => e.target.value !== String(valorAtual ?? "") && salvar(campoValor, e.target.value)} />
       </Campo>
       <div className="grid grid-cols-2 gap-2">
-        <Campo rotulo="Início">
+        <Campo rotulo="Início" ponto={pontos.dataInicio}>
           <input key={`i-${d.dataInicio}`} className={inputCls} type="date" defaultValue={d.dataInicio ?? ""} disabled={dis} onBlur={(e) => e.target.value !== (d.dataInicio ?? "") && salvar("dataInicio", e.target.value)} />
         </Campo>
-        <Campo rotulo="Fim">
+        <Campo rotulo="Fim" ponto={pontos.dataFim}>
           <input key={`e-${d.dataFim}`} className={inputCls} type="date" defaultValue={d.dataFim ?? ""} disabled={dis} onBlur={(e) => e.target.value !== (d.dataFim ?? "") && salvar("dataFim", e.target.value)} />
           {d.sugestaoFim && !d.dataFim && (
             <button type="button" disabled={dis} className="mt-1 text-left text-xs text-teal-700 underline" onClick={() => start(async () => avisar(await aceitarSugestao(d.id, "dataFim")))}>
@@ -101,10 +105,10 @@ export function EditorCondicao({ d, fornecedores, categorias, lojas }: { d: Dado
           )}
         </Campo>
       </div>
-      <Campo rotulo="Lojas" largo>
+      <Campo rotulo="Lojas" largo ponto={pontos.lojas}>
         <EditorLojas d={d} lojas={lojas} dis={dis} onSalvar={(v) => salvar("lojas", v)} />
       </Campo>
-      <Campo rotulo={d.tipo === "VERBA_EXPOSICAO" ? "Contrapartida (obrigatória em verba)" : "Contrapartida"} largo>
+      <Campo rotulo={d.tipo === "VERBA_EXPOSICAO" ? "Contrapartida (obrigatória em verba)" : "Contrapartida"} largo ponto={pontos.contrapartida}>
         <Textarea key={`t-${d.contrapartida}`} rows={2} defaultValue={d.contrapartida} disabled={dis} className="text-sm" onBlur={(e) => e.target.value !== d.contrapartida && salvar("contrapartida", e.target.value)} />
       </Campo>
       {(d.substituirCandidato || d.codCondicaoSubstituida) && (
@@ -171,10 +175,15 @@ function EditorLojas({ d, lojas, dis, onSalvar }: { d: DadosEditor; lojas: Opcao
   );
 }
 
-function Campo({ rotulo, largo, children }: { rotulo: string; largo?: boolean; children: React.ReactNode }) {
+function Campo({ rotulo, largo, ponto, children }: { rotulo: string; largo?: boolean; ponto?: PontoCampo; children: React.ReactNode }) {
   return (
     <div className={cn("grid content-start gap-1", largo && "sm:col-span-2")}>
-      <span className="text-xs font-medium text-zinc-500">{rotulo}</span>
+      <span className="flex items-center gap-1.5 text-xs font-medium text-zinc-500" title={ponto?.dica}>
+        {ponto && ponto.cor !== "cinza" && <Ponto cor={ponto.cor} />}
+        {rotulo}
+        {ponto?.cor === "amarelo" && <span className="font-normal text-amber-700">· confira</span>}
+        {ponto?.cor === "vermelho" && <span className="font-normal text-red-700">· resolver</span>}
+      </span>
       {children}
     </div>
   );

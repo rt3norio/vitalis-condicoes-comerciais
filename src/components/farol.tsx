@@ -1,5 +1,6 @@
 import type { Cor, Status } from "@/lib/dominio/tipos";
 import { STATUS_LABEL } from "@/lib/dominio/tipos";
+import { ORDEM_FAROIS } from "@/lib/regras/farois";
 import { cn } from "@/lib/utils";
 
 const COR: Record<Cor, string> = {
@@ -21,6 +22,36 @@ export function ContagemCores({ verde, amarelo, vermelho }: { verde: number; ama
       <span className="inline-flex items-center gap-1"><Ponto cor="vermelho" />{vermelho}</span>
       <span className="inline-flex items-center gap-1"><Ponto cor="amarelo" />{amarelo}</span>
       <span className="inline-flex items-center gap-1"><Ponto cor="verde" />{verde}</span>
+    </span>
+  );
+}
+
+type FarolMin = { codigo: string; cor: Cor; titulo: string; detalhe: string };
+
+// Faixa de bolinhas em ordem fixa (ORDEM_FAROIS): cada posição é sempre a mesma regra, para o olho aprender o padrão.
+export function FaixaFarois({ farois, rotulos = false, tamanho = "md" }: { farois: FarolMin[]; rotulos?: boolean; tamanho?: "sm" | "md" }) {
+  const porCodigo = new Map(farois.map((f) => [f.codigo, f]));
+  const sm = tamanho === "sm";
+  const dot = sm ? "size-2" : "size-3";
+  return (
+    <span className={cn("inline-flex flex-nowrap items-end whitespace-nowrap", sm ? "gap-x-1.5" : "gap-x-3")}>
+      {ORDEM_FAROIS.map((g) => (
+        <span key={g.grupo} className="inline-flex flex-col items-start gap-0.5">
+          <span className={cn("inline-flex items-center", sm ? "gap-0.5" : "gap-1")}>
+            {g.codigos.map((cod) => {
+              const f = porCodigo.get(cod);
+              return (
+                <span
+                  key={cod}
+                  title={f ? `${cod} · ${f.titulo}: ${f.detalhe}` : `${cod} · sem dado`}
+                  className={cn("inline-block shrink-0 rounded-full", dot, f ? COR[f.cor] : "bg-zinc-200 ring-1 ring-inset ring-zinc-300")}
+                />
+              );
+            })}
+          </span>
+          {rotulos && <span className="text-[10px] uppercase tracking-wide text-zinc-400">{g.rotulo}</span>}
+        </span>
+      ))}
     </span>
   );
 }

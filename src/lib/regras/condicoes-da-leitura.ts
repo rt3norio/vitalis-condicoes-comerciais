@@ -10,7 +10,17 @@ type CampoLido = Extracao["condicoes"][number]["categoria"] | Extracao["condicoe
 
 function prov(c: CampoLido): Proveniencia {
   const p: Proveniencia = { certeza: c.certeza, trecho: c.trecho };
-  if (c.alternativas?.length > 1) p.alternativas = c.alternativas.map((a) => ({ valor: a.valor as string | number, origem: a.origem, trecho: a.trecho }));
+  // Divergência por regra: basta uma alternativa com valor diferente do lido. O modelo às vezes lista só a
+  // versão do anexo; o valor do corpo entra como opção para a pessoa escolher entre as duas.
+  const mesmo = (a: unknown) => JSON.stringify(a) === JSON.stringify(c.valor);
+  const outras = (c.alternativas ?? []).filter((a) => !mesmo(a.valor));
+  if (outras.length && c.valor != null) {
+    const doCorpo = (c.alternativas ?? []).find((a) => mesmo(a.valor)) ?? { valor: c.valor, origem: "corpo do e-mail", trecho: c.trecho };
+    const vistas = new Set<string>();
+    p.alternativas = [doCorpo, ...outras]
+      .filter((a) => !vistas.has(JSON.stringify(a.valor)) && vistas.add(JSON.stringify(a.valor)))
+      .map((a) => ({ valor: a.valor as string | number, origem: a.origem, trecho: a.trecho }));
+  }
   if (c.sugestao) p.sugestao = { valor: c.sugestao.valor as string | number, motivo: c.sugestao.motivo };
   return p;
 }

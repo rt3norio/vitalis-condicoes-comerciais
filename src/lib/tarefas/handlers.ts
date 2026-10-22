@@ -165,9 +165,11 @@ function textosPadrao(neg: LinhaNegociacao, conds: (typeof s.condicoes.$inferSel
   const lista = conds
     .map((c) => `${c.titulo}: ${c.tipo === "DESCONTO_PERCENTUAL" ? fmtPct(c.percentual) : fmtBRL(c.valor)}${c.codCategoria ? ` em ${CATEGORIA_LABEL[c.codCategoria as Categoria]}` : ""}, ${fmtData(c.dataInicio)}–${fmtData(c.dataFim)}`)
     .join("; ");
-  const resumo = vermelhos.length
-    ? `${conds.length} condição(ões): ${lista}. Travado por ${[...new Set(vermelhos.map((f) => f.titulo.toLowerCase()))].slice(0, 3).join(", ")}.`
-    : `${conds.length} condição(ões): ${lista}. Sem bloqueios; confira os itens amarelos e aprove na alçada indicada.`;
+  const resumo = [
+    ...conds.map((c) => `${c.titulo}: ${c.tipo === "DESCONTO_PERCENTUAL" ? fmtPct(c.percentual) : fmtBRL(c.valor)}, ${fmtData(c.dataInicio)} a ${fmtData(c.dataFim)}`),
+    ...[...new Set(vermelhos.map((f) => f.titulo))].slice(0, 3).map((t) => `Trava: ${t.toLowerCase()}`),
+    vermelhos.length ? "Corrija os itens em vermelho ou escale à Diretoria" : "Sem bloqueios: confira os amarelos e aprove na alçada indicada",
+  ];
   const primeiro = neg.remetente.replace(/<.*>/, "").trim().split(" ")[0] || "";
   const rascunho = vermelhos.length
     ? `Olá, ${primeiro}! Recebemos a proposta e ela está em análise. Para seguirmos, precisamos confirmar alguns pontos; retornamos em breve com o que faltar.`
@@ -203,7 +205,7 @@ async function redigirTarefa(t: Tarefa): Promise<Resultado> {
   } else r = textosPadrao(neg, conds, farois);
   await db
     .update(s.negociacoes)
-    .set({ resumo: r.resumo, rascunhoFornecedor: r.rascunho_fornecedor, memorando: r.memorando_diretoria, textosOrigem: origem })
+    .set({ resumo: (Array.isArray(r.resumo) ? r.resumo : [r.resumo]).join("\n"), rascunhoFornecedor: r.rascunho_fornecedor, memorando: r.memorando_diretoria, textosOrigem: origem })
     .where(eq(s.negociacoes.id, neg.id));
   const msg = deCache ? `Textos do Redator: saída salva (${salvo?.modeloRedator ?? "IA"}), sem chamada nova.` : origem === "ia" ? `Textos escritos pelo Redator (${MODELOS.redator()}).` : "Textos padrão (sem IA).";
   return { mensagem: msg };

@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { Suspense } from "react";
 import { AutoAtualizar } from "@/components/barra-topo";
-import { Ponto, StatusBadge } from "@/components/farol";
+import { FaixaFarois, Ponto, StatusBadge } from "@/components/farol";
 import { iaConfigurada } from "@/lib/agentes/agentes";
 import { linhaDoTempo } from "@/lib/consultas";
 import { capturaErp } from "@/lib/dominio/dataset";
@@ -12,7 +12,7 @@ import { alcada, APROVADORES } from "@/lib/dominio/politica";
 import { CATEGORIA_LABEL, CATEGORIAS, type Farol, type Grupo } from "@/lib/dominio/tipos";
 import { destacar } from "@/lib/destacar";
 import { carregar, paraCondicao, snapshotSalvo } from "@/lib/negociacao";
-import { podeAprovar } from "@/lib/regras/farois";
+import { FAROIS_DO_CAMPO, piorCor, podeAprovar } from "@/lib/regras/farois";
 import { sessaoAtual } from "@/lib/sessao";
 import { cn } from "@/lib/utils";
 import { AprovarCondicao, BotaoReabrir, BotaoReler, ConferirAmarelos, Copiar, EditorCondicao, Encerrar } from "./cliente";
@@ -104,15 +104,26 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
       )}
       {neg.resumo && (
         <div className="rounded-lg border bg-white px-4 py-3 text-sm">
-          <span className="mr-2 text-xs font-medium uppercase tracking-wide text-zinc-500">Resumo {neg.textosOrigem === "ia" ? "(Agente Redator)" : "(texto padrão)"}</span>
-          {neg.resumo}
+          <div className="mb-1 text-xs font-medium uppercase tracking-wide text-zinc-500">Resumo {neg.textosOrigem === "ia" ? "(Agente Redator)" : "(texto padrão)"}</div>
+          <ul className="list-disc space-y-0.5 pl-5">
+            {neg.resumo.split("\n").filter(Boolean).map((t) => (
+              <li key={t}>{t}</li>
+            ))}
+          </ul>
         </div>
       )}
 
-      <div className="grid gap-5 lg:grid-cols-[minmax(0,5fr)_minmax(0,7fr)]">
-        <section className="grid content-start gap-3 lg:sticky lg:top-4 lg:self-start">
-          <div className="rounded-xl border bg-white">
-            <div className="border-b px-4 py-2.5 text-sm font-medium">E-mail do fornecedor</div>
+      <div className="grid gap-5">
+        <details className="group rounded-xl border bg-white">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-2.5 text-sm">
+            <span className="font-medium">
+              E-mail original do fornecedor
+              {neg.anexos.length > 0 && <span className="ml-2 font-normal text-zinc-500">+ {neg.anexos.length} anexo(s)</span>}
+            </span>
+            <span className="text-teal-700 group-open:hidden">Ver e-mail original ▾</span>
+            <span className="hidden text-teal-700 group-open:inline">Recolher ▴</span>
+          </summary>
+          <div className="border-t">
             <pre className="max-h-[60vh] overflow-auto whitespace-pre-wrap px-4 py-3 font-mono text-[13px] leading-relaxed">
               {pedacos.map((p, i) =>
                 p.tipo === "normal" ? <span key={i}>{p.texto}</span> : <mark key={i} className={p.tipo === "suspeito" ? "rounded bg-red-200 px-0.5" : "rounded bg-yellow-100 px-0.5"}>{p.texto}</mark>,
@@ -124,9 +135,9 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                 <TabelaCsv texto={a.texto} />
               </div>
             ))}
+            <p className="border-t px-4 py-2 text-xs text-zinc-500">Destaque amarelo: trecho usado como evidência. Vermelho: texto tentando comandar o sistema.</p>
           </div>
-          <p className="text-xs text-zinc-500">Amarelo: trecho usado como evidência. Vermelho: texto tentando comandar o sistema.</p>
-        </section>
+        </details>
 
         <section className="grid content-start gap-4">
           {!conds.length && (
@@ -144,7 +155,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
             const candidato = substituir ? (substituir.detalhe.match(/COND-\d{3}/)?.[0] ?? null) : null;
             return (
               <article key={c.id} className="rounded-xl border bg-white">
-                <header className="flex flex-wrap items-center justify-between gap-2 border-b px-4 py-2.5">
+                <header className="flex flex-wrap items-center justify-between gap-x-4 gap-y-2 border-b px-4 py-2.5">
                   <h2 className="font-medium">
                     {c.ordem}. {c.titulo}
                     <span className="ml-2 text-sm font-normal text-zinc-500">{c.tipo === "DESCONTO_PERCENTUAL" ? fmtPct(c.percentual) : fmtBRL(c.valor)}</span>
@@ -176,11 +187,28 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                       substituirCandidato: candidato,
                       bloqueado: !emRevisao || !!c.aprovadaEm,
                     }}
+                    pontos={Object.fromEntries(
+                      Object.entries(FAROIS_DO_CAMPO).map(([campo, cods]) => {
+                        const rel = fs.filter((f) => (cods as readonly string[]).includes(f.codigo) && f.cor !== "cinza");
+                        return [campo, { cor: piorCor(rel), dica: rel.map((f) => `${f.codigo} ${f.titulo}: ${f.detalhe}`).join(" | ") }];
+                      }),
+                    )}
                     fornecedores={opcoesForn}
                     categorias={opcoesCat}
                     lojas={opcoesLojas}
                   />
-                  <div className="grid gap-3 sm:grid-cols-2">
+                  <details className="group rounded-lg border border-zinc-200">
+                    <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 px-3 py-2">
+                      <FaixaFarois farois={fs} rotulos />
+                      <span className="text-xs text-teal-700">
+                        <span className="group-open:hidden">
+                          {vermelhos.length ? `${vermelhos.length} trava(m) · ` : ""}
+                          {fs.filter((f) => f.cor === "amarelo").length} atenção · ver detalhe ▾
+                        </span>
+                        <span className="hidden group-open:inline">recolher ▴</span>
+                      </span>
+                    </summary>
+                  <div className="grid gap-3 border-t px-3 py-3 sm:grid-cols-2">
                     {GRUPOS.map(({ g, dono }) => {
                       const doGrupo = fs.filter((f) => f.grupo === g);
                       if (!doGrupo.length) return null;
@@ -207,12 +235,23 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                       );
                     })}
                   </div>
+                  </details>
+                  {vermelhos.length > 0 && (
+                    <ul className="grid gap-0.5 text-sm text-red-700">
+                      {vermelhos.map((f) => (
+                        <li key={f.codigo} className="flex gap-2">
+                          <Ponto cor="vermelho" className="mt-1.5" />
+                          <span><b>{f.titulo}:</b> {f.detalhe}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
                   <AprovarCondicao
                     condId={c.id}
                     emRevisao={emRevisao && !c.erpCodCondicao}
                     aprovada={c.aprovadaEm ? `Aprovada por ${c.aprovador?.nome} (${c.aprovador?.cargo}) em ${fmtDataHora(c.aprovadaEm)}${c.erpCodCondicao ? ` · gravada no ERP como ${c.erpCodCondicao}` : ""}` : null}
                     podeAgora={!vermelhos.length}
-                    motivo={pa.ok ? null : vermelhos.length ? `Trava: ${vermelhos.map((f) => f.codigo).join(", ")}.` : pa.motivo.includes("Conferi") ? pa.motivo : null}
+                    motivo={pa.ok ? null : vermelhos.length ? "Resolva os itens em vermelho acima para liberar a aprovação." : pa.motivo.includes("Conferi") ? pa.motivo : null}
                     aprovadores={APROVADORES.map((ap) => ({ valor: ap.matricula, rotulo: `${ap.nome} — ${ap.cargo}`, alcadaOk: a.nivel != null && ap.nivel >= a.nivel }))}
                   />
                 </div>
