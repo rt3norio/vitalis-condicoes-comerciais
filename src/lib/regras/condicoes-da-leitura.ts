@@ -3,7 +3,7 @@
 import type { Extracao } from "../agentes/schemas";
 import type { ErpFornecedor, ErpLoja } from "../dominio/dataset";
 import { isISO } from "../dominio/datas";
-import type { CampoCondicao, Condicao, Proveniencia } from "../dominio/tipos";
+import type { CampoCondicao, Categoria, Condicao, Proveniencia } from "../dominio/tipos";
 import { resolverCategoria, resolverFornecedor, resolverLojas } from "./resolver";
 
 type CampoLido = Extracao["condicoes"][number]["categoria"] | Extracao["condicoes"][number]["valor"] | Extracao["condicoes"][number]["lojas"];
@@ -17,10 +17,22 @@ function prov(c: CampoLido): Proveniencia {
 
 export type CondicaoNova = Omit<Condicao, "id">;
 
-export function condicoesDaLeitura(ex: Extracao, dominio: string, fornecedores: ErpFornecedor[], lojas: ErpLoja[]): CondicaoNova[] {
+type Historico = { cod_fornecedor: string; cod_categoria: string }[];
+
+export function condicoesDaLeitura(ex: Extracao, dominio: string, fornecedores: ErpFornecedor[], lojas: ErpLoja[], historico: Historico = []): CondicaoNova[] {
   const forn = resolverFornecedor(ex.fornecedor.valor, dominio, fornecedores);
+  const diretas = ex.condicoes.map((k) => resolverCategoria(k.categoria.valor));
+  // Reserva, sempre por regra e sempre amarela: categoria de outra condição do mesmo e-mail;
+  // senão, a única categoria que o fornecedor já teve no ERP.
+  const doHistorico = [...new Set(historico.filter((h) => h.cod_fornecedor === forn.valor).map((h) => h.cod_categoria))];
   return ex.condicoes.map((k, i) => {
-    const cat = resolverCategoria(k.categoria.valor);
+    let cat = diretas[i];
+    if (!cat.valor) {
+      const irma = diretas.find((d) => d.valor);
+      if (irma?.valor) cat = { valor: irma.valor, como: "inferido", detalhe: `"${k.categoria.valor ?? ""}" não indica a linha; usei ${irma.valor}, da outra condição deste e-mail.` };
+      else if (doHistorico.length === 1)
+        cat = { valor: doHistorico[0] as Categoria, como: "inferido", detalhe: `"${k.categoria.valor ?? ""}" não indica a linha; usei ${doHistorico[0]}, única categoria do fornecedor no ERP.` };
+    }
     const rl = resolverLojas(k.lojas.valor ?? [], lojas);
     const p: Partial<Record<CampoCondicao, Proveniencia>> = {
       fornecedor: { ...prov(ex.fornecedor), mencao: ex.fornecedor.valor ?? "", resolucao: forn.detalhe },

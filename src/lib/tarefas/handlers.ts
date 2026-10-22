@@ -6,12 +6,13 @@ import { db, schema as s } from "@/db";
 import type { TipoTarefa } from "@/db/schema";
 import referencia from "../../../data/leituras-referencia.json";
 import { extrair, IaIndisponivel, iaConfigurada, redigir, verificar, MODELOS, type MaterialEmail } from "../agentes/agentes";
-import type { Extracao, Redacao, Verificacao } from "../agentes/schemas";
+import { dadosRedator } from "../agentes/entrada-redator";
+import { soDirigidas, type Extracao, type Redacao, type Verificacao } from "../agentes/schemas";
 import { fmtBRL, fmtData, fmtPct } from "../dominio/datas";
-import { alcada } from "../dominio/politica";
 import { CATEGORIA_LABEL, type Categoria } from "../dominio/tipos";
 import { classificar, erp } from "../erp/cliente";
 import { carregar, FalhaErp, obterSnapshot, paraCondicao, recalcularFarois, type LinhaNegociacao } from "../negociacao";
+import { extrato } from "../dominio/dataset";
 import { condicoesDaLeitura } from "../regras/condicoes-da-leitura";
 import { montarPayload } from "../regras/farois";
 import { enfileirar, Permanente, Transitoria, type Resultado, type Tarefa } from "./fila";
@@ -20,7 +21,7 @@ const MAX_TENTATIVAS_IA = 5;
 
 // Saídas reais da IA salvas para os 4 e-mails do dataset (S36). Gerado por `pnpm gerar-cache-ia` com chave.
 const CAMINHO_CACHE = path.join(process.cwd(), "data", "leituras-ia-cache.json");
-type ItemCache = { extrator: Extracao; verificador: Verificacao | null; modeloExtrator: string; modeloVerificador: string | null };
+type ItemCache = { extrator: Extracao; verificador: Verificacao | null; redator?: Redacao; statusRedator?: string; modeloExtrator: string; modeloVerificador: string | null; modeloRedator?: string };
 function cacheIa(): Record<string, ItemCache> {
   try {
     return JSON.parse(fs.readFileSync(CAMINHO_CACHE, "utf8"));
@@ -29,7 +30,17 @@ function cacheIa(): Record<string, ItemCache> {
   }
 }
 
-const material = (n: LinhaNegociacao): MaterialEmail => ({ corpo: n.corpo, remetente: n.remetente, assunto: n.assunto, anexos: n.anexos });
+const material = (n: LinhaNegociacao): MaterialEmail => ({
+  corpo: n.corpo,
+  remetente: n.remetente,
+  assunto: n.assunto,
+  data: n.recebidoEm.toLocaleString("pt-BR", { timeZone: "America/Sao_Paulo" }),
+  anexos: n.anexos,
+});
+
+// Dataset nunca chama a IA ao vivo por visitante: usa a saída salva (ou a referência manual). IA ao vivo só
+// para e-mail novo (gerado/colado) ou quando alguém pede "reler ao vivo".
+const usaSalvo = (n: LinhaNegociacao) => !!n.chaveDataset && !n.forcarLeituraIa;
 
 function erroIa(e: unknown, t: Tarefa): never {
   if (e instanceof IaIndisponivel) throw new Transitoria(`${e.message}. Tenta de novo em 5 min.`, 300);
@@ -58,16 +69,16 @@ async function lerEmail(t: Tarefa): Promise<Resultado> {
   let verificador: Verificacao | null = null;
   let modeloExtrator: string | null = null;
   let modeloVerificador: string | null = null;
-  const doCache = neg.chaveDataset && !neg.forcarLeituraIa ? cacheIa()[neg.chaveDataset] : undefined;
+  const doCache = usaSalvo(neg) ? cacheIa()[neg.chaveDataset!] : undefined;
   if (doCache) {
     origem = "cache";
     saida = doCache.extrator;
     verificador = doCache.verificador;
     modeloExtrator = doCache.modeloExtrator;
     modeloVerificador = doCache.modeloVerificador;
-  } else if (neg.chaveDataset && !neg.forcarLeituraIa && !iaConfigurada()) {
+  } else if (usaSalvo(neg)) {
     origem = "referencia_manual"; // C1: sem chave, leitura de referência rotulada como manual
-    saida = (referencia as unknown as Record<string, Extracao>)[neg.chaveDataset];
+    saida = (referencia as unknown as Record<string, Extracao>)[neg.chaveDataset!];
   } else {
     try {
       const r = await extrair(material(neg));
@@ -85,7 +96,7 @@ async function lerEmail(t: Tarefa): Promise<Resultado> {
   } catch (e) {
     erroErp(e);
   }
-  const novas = condicoesDaLeitura(saida, neg.dominio, snap.fornecedores, snap.lojas);
+  const novas = condicoesDaLeitura(saida, neg.dominio, snap.fornecedores, snap.lojas, [...snap.condicoes, ...extrato]);
   const [leitura] = await db
     .insert(s.leituras)
     .values({ negociacaoId: neg.id, origem, modeloExtrator, modeloVerificador, saidaExtrator: saida, saidaVerificador: verificador })
@@ -95,7 +106,7 @@ async function lerEmail(t: Tarefa): Promise<Resultado> {
   if (novas.length) await db.insert(s.condicoes).values(novas.map((c) => ({ ...c, negociacaoId: neg.id })));
   await db
     .update(s.negociacoes)
-    .set({ status: "verificacao", leituraAtualId: leitura.id, instrucoesSuspeitas: saida.instrucoes_suspeitas, forcarLeituraIa: false, atualizadoEm: new Date() })
+    .set({ status: "verificacao", leituraAtualId: leitura.id, instrucoesSuspeitas: soDirigidas(saida.instrucoes_suspeitas), forcarLeituraIa: false, atualizadoEm: new Date() })
     .where(eq(s.negociacoes.id, neg.id));
   await enfileirar(t.sessionId, neg.id, "verificar");
   const rotulo = { ia: `IA (${modeloExtrator})`, cache: `saída salva da IA (${modeloExtrator})`, referencia_manual: "leitura de referência manual (IA não configurada)" }[origem];
@@ -111,12 +122,12 @@ async function verificarTarefa(t: Tarefa): Promise<Resultado> {
 
   let msgVerif = "Verificador não executado (IA não configurada).";
   if (leitura.saidaVerificador) msgVerif = `Verificação salva (${leitura.modeloVerificador}).`;
-  else if (iaConfigurada()) {
+  else if (iaConfigurada() && leitura.origem === "ia") {
     try {
       const r = await verificar(material(neg), leitura.saidaExtrator);
       await db.update(s.leituras).set({ saidaVerificador: r.saida, modeloVerificador: r.modelo }).where(eq(s.leituras.id, leitura.id));
       // o Verificador também procura instrução suspeita: soma às do Extrator
-      const todas = [...neg.instrucoesSuspeitas, ...r.saida.instrucoes_suspeitas.filter((x) => !neg.instrucoesSuspeitas.some((y) => y.trecho === x.trecho))];
+      const todas = [...neg.instrucoesSuspeitas, ...soDirigidas(r.saida.instrucoes_suspeitas).filter((x) => !neg.instrucoesSuspeitas.some((y) => y.trecho === x.trecho))];
       await db.update(s.negociacoes).set({ instrucoesSuspeitas: todas }).where(eq(s.negociacoes.id, neg.id));
       msgVerif = `Verificador (${r.modelo}): ${r.saida.checagens.filter((c) => c.veredito !== "concorda").length} ponto(s) de dúvida/discordância.`;
     } catch (e) {
@@ -145,6 +156,7 @@ async function verificarTarefa(t: Tarefa): Promise<Resultado> {
 }
 
 // ---------- textos (Redator) ----------
+
 type FarolLinha = typeof s.farois.$inferSelect;
 
 function textosPadrao(neg: LinhaNegociacao, conds: (typeof s.condicoes.$inferSelect)[], fs: FarolLinha[]): Redacao {
@@ -172,16 +184,14 @@ async function redigirTarefa(t: Tarefa): Promise<Resultado> {
   const { neg, conds, farois } = dados;
   let r: Redacao;
   let origem: "ia" | "padrao" = "padrao";
-  if (iaConfigurada()) {
+  const salvo = usaSalvo(neg) ? cacheIa()[neg.chaveDataset!] : undefined;
+  if (salvo?.redator && neg.status === (salvo.statusRedator ?? "revisao")) {
+    // primeiro texto do dataset: saída salva do Redator, sem chamar a IA
+    r = salvo.redator;
+    origem = "ia";
+  } else if (iaConfigurada() && !usaSalvo(neg)) {
     try {
-      const resumoFarois = conds.map((c) => ({
-        condicao: c.titulo,
-        valor: c.tipo === "DESCONTO_PERCENTUAL" ? fmtPct(c.percentual) : fmtBRL(c.valor),
-        alcada: alcada(c.tipo, c.percentual, c.valor).label,
-        vermelhos: farois.filter((f) => f.condicaoId === c.id && f.cor === "vermelho").map((f) => `${f.codigo} ${f.titulo}: ${f.detalhe}`),
-        amarelos: farois.filter((f) => f.condicaoId === c.id && f.cor === "amarelo").map((f) => `${f.codigo} ${f.titulo}`),
-      }));
-      r = (await redigir({ status: neg.status, motivo: neg.motivoSaida, fornecedor_remetente: neg.remetente, assunto: neg.assunto, condicoes: resumoFarois })).saida;
+      r = (await redigir(dadosRedator(neg, conds, farois))).saida;
       origem = "ia";
     } catch (e) {
       // texto não é essencial: depois de 3 tentativas usa o padrão em vez de travar

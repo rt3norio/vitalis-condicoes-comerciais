@@ -3,10 +3,11 @@
 import { eq } from "drizzle-orm";
 import { refresh } from "next/cache";
 import { db, schema as s } from "@/db";
-import { parseEml } from "@/lib/dominio/dataset";
-import { isISO } from "@/lib/dominio/datas";
+import { gerarEmails, iaConfigurada } from "@/lib/agentes/agentes";
+import { capturaErp, parseEml } from "@/lib/dominio/dataset";
+import { hoje, isISO } from "@/lib/dominio/datas";
 import { APROVADORES } from "@/lib/dominio/politica";
-import { CATEGORIAS, type CampoCondicao } from "@/lib/dominio/tipos";
+import { CATEGORIA_LABEL, CATEGORIAS, type CampoCondicao } from "@/lib/dominio/tipos";
 import { carregar, paraCondicao, recalcularFarois } from "@/lib/negociacao";
 import { podeAprovar } from "@/lib/regras/farois";
 import { reiniciarSessao, sessaoAtual } from "@/lib/sessao";
@@ -236,6 +237,51 @@ export async function novoEmail(form: FormData): Promise<RespostaAcao> {
   await enfileirar(sid, neg.id, "ler_email");
   refresh();
   return ok("E-mail recebido. Será lido na próxima rodada.");
+}
+
+const LIMITE_GERACOES_POR_SESSAO = 3;
+const EMAILS_POR_GERACAO = 3;
+
+// Ferramenta da demo: a IA escreve e-mails fictícios de fornecedores, que entram em "Recebido" e seguem o funil
+// normal (leitura ao vivo pela IA). É a única chamada de IA disparada por visitante, e só quando ele clica.
+export async function gerarNovosEmails(): Promise<RespostaAcao> {
+  const sid = await sessaoAtual();
+  if (!iaConfigurada()) return falha("IA não configurada neste ambiente.");
+  const jaGerados = (await db.select({ o: s.negociacoes.origem }).from(s.negociacoes).where(eq(s.negociacoes.sessionId, sid))).filter((n) => n.o === "gerado").length;
+  if (jaGerados >= LIMITE_GERACOES_POR_SESSAO * EMAILS_POR_GERACAO) return falha(`Limite de ${LIMITE_GERACOES_POR_SESSAO} gerações por sessão nesta demo.`);
+  let r;
+  try {
+    r = await gerarEmails(EMAILS_POR_GERACAO, {
+      hoje: hoje(),
+      fornecedores: capturaErp.fornecedores.map((f) => `${f.razao_social} (${f.status})`),
+      lojas: capturaErp.lojas.map((l) => l.nome.replace(/^DROG VITALIS\s+/i, "")),
+      linhas: CATEGORIAS.map((c) => CATEGORIA_LABEL[c]),
+    });
+  } catch (e) {
+    return falha(`A IA não conseguiu gerar agora (${e instanceof Error ? e.message.slice(0, 120) : "erro"}). Tente de novo.`);
+  }
+  for (const m of r.saida.emails) {
+    const dominio = m.remetente_email.split("@")[1] ?? "";
+    const [neg] = await db
+      .insert(s.negociacoes)
+      .values({
+        sessionId: sid,
+        origem: "gerado",
+        messageId: `<gerado-${crypto.randomUUID()}@${dominio || "demo"}>`,
+        remetente: `${m.remetente_nome} <${m.remetente_email}>`,
+        dominio,
+        assunto: m.assunto,
+        recebidoEm: new Date(),
+        corpo: m.corpo,
+        bruto: m.corpo,
+        anexos: m.anexo ? [{ nome: m.anexo.nome, texto: m.anexo.csv }] : [],
+        motivoSaida: null,
+      })
+      .returning({ id: s.negociacoes.id });
+    await enfileirar(sid, neg.id, "ler_email");
+  }
+  refresh();
+  return ok(`${r.saida.emails.length} e-mails gerados pela IA (${r.saida.emails.map((m) => m.cenario).join(" · ")}). Entram no funil na próxima rodada.`);
 }
 
 export async function processarAgora(): Promise<RespostaAcao> {

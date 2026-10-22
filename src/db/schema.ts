@@ -23,7 +23,7 @@ export const negociacoes = sqliteTable(
     id: integer("id").primaryKey({ autoIncrement: true }),
     sessionId: text("session_id").notNull(),
     status: text("status").$type<Status>().notNull().default("recebido"),
-    origem: text("origem").$type<"dataset" | "colado" | "eml">().notNull(),
+    origem: text("origem").$type<"dataset" | "colado" | "eml" | "gerado">().notNull(),
     chaveDataset: text("chave_dataset"),
     messageId: text("message_id").notNull(),
     remetente: text("remetente").notNull(),

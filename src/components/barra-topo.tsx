@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useRef, useState, useTransition } from "react";
 import { toast } from "sonner";
-import { novoEmail, processarAgora, reiniciarDemo, type RespostaAcao } from "@/app/acoes";
+import { gerarNovosEmails, novoEmail, processarAgora, reiniciarDemo, type RespostaAcao } from "@/app/acoes";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Label } from "@/components/ui/label";
@@ -45,13 +45,19 @@ export function ProximaRodada({ em }: { em: string | null }) {
   );
 }
 
-export function BotoesTopo() {
+export function BotoesTopo({ ia }: { ia: boolean }) {
   const [pend, start] = useTransition();
+  const [gerando, startGerar] = useTransition();
   return (
     <div className="flex flex-wrap items-center gap-2">
       <Button size="sm" disabled={pend} onClick={() => start(async () => avisar(await processarAgora()))}>
         {pend ? "Processando…" : "Processar agora"}
       </Button>
+      {ia && (
+        <Button size="sm" variant="outline" disabled={gerando} title="A IA escreve 3 e-mails fictícios de fornecedores, com cenários diferentes, que entram no funil" onClick={() => startGerar(async () => avisar(await gerarNovosEmails()))}>
+          {gerando ? "Gerando e-mails… (até 1 min)" : "Gerar novos e-mails (IA)"}
+        </Button>
+      )}
       <NovoEmail />
       <Button
         size="sm"

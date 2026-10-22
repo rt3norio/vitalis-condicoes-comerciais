@@ -41,7 +41,7 @@ async function Painel({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
             <span>Processamento a cada minuto · <ProximaRodada em={prox?.toISOString() ?? null} /></span>
           </p>
         </div>
-        <BotoesTopo />
+        <BotoesTopo ia={ia} />
       </section>
 
       {!ia && (
