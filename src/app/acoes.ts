@@ -8,7 +8,7 @@ import { dadosRedator } from "@/lib/agentes/entrada-redator";
 import { textoPadrao, type DestinoTexto } from "@/lib/agentes/textos-padrao";
 import { capturaErp, parseEml } from "@/lib/dominio/dataset";
 import { hoje, isISO } from "@/lib/dominio/datas";
-import { alcada, PERFIS, veEscalados } from "@/lib/dominio/politica";
+import { alcada, alcadaParaAgir, NIVEIS, nivelParaAgir, PERFIS, podeAgirNaCondicao, podeAgirNaNegociacao, veEscalados } from "@/lib/dominio/politica";
 import { CATEGORIA_LABEL, CATEGORIAS, type CampoCondicao } from "@/lib/dominio/tipos";
 import { carregar, paraCondicao, recalcularFarois } from "@/lib/negociacao";
 import { amarelosSemCiencia, chaveCiencia } from "@/lib/regras/ciencia";
@@ -53,6 +53,15 @@ const alcadaDe = (c: { tipo: "DESCONTO_PERCENTUAL" | "VERBA_EXPOSICAO"; percentu
 const mostrar = (v: unknown) => (v == null || v === "" ? "vazio" : Array.isArray(v) ? v.join(", ") : String(v));
 const LIMITE_CARACTERES = 20_000;
 
+// D24: sem a alçada, só leitura. Devolve o motivo da recusa, ou null se o perfil pode agir.
+async function somenteLeitura(dados: { conds: (typeof s.condicoes.$inferSelect)[] }, condicaoId: number | null): Promise<string | null> {
+  const p = await perfilAtual();
+  const c = condicaoId == null ? undefined : dados.conds.find((x) => x.id === condicaoId);
+  if (c ? podeAgirNaCondicao(p, c) : podeAgirNaNegociacao(p, dados.conds)) return null;
+  const exige = c ? NIVEIS[nivelParaAgir(c)] : alcadaParaAgir(dados.conds);
+  return `Somente leitura: ${c ? "esta condição" : "esta negociação"} exige ${exige}, e ${p.nome} (${p.cargo}) não tem essa alçada.`;
+}
+
 async function condicaoEditavel(condId: number) {
   const sid = await sessaoAtual();
   const c = await db.select().from(s.condicoes).where(eq(s.condicoes.id, condId)).get();
@@ -62,6 +71,8 @@ async function condicaoEditavel(condId: number) {
   if (dados.neg.status !== "revisao") return { erro: "Só dá para editar na revisão humana." } as const;
   if (c.erpCodCondicao) return { erro: `Condição já gravada no ERP como ${c.erpCodCondicao}; não pode mais ser editada.` } as const;
   if (c.aprovadaEm) return { erro: "Condição já aprovada. Desfaça a aprovação para editar." } as const;
+  const ro = await somenteLeitura(dados, c.id);
+  if (ro) return { erro: ro } as const;
   return { sid, c, dados } as const;
 }
 
@@ -158,6 +169,8 @@ export async function darCiencia(negId: number, codigo: string, condicaoId: numb
   const sid = await sessaoAtual();
   const dados = await carregar(sid, negId);
   if (!dados || dados.neg.status !== "revisao") return falha("Negociação não está em revisão.");
+  const ro = await somenteLeitura(dados, condicaoId);
+  if (ro) return falha(ro);
   const f = dados.farois.find((x) => x.codigo === codigo && x.condicaoId === condicaoId);
   if (!f || f.cor !== "amarelo") return falha("Este item não precisa de ciência.");
   const por = (await perfilAtual()).nome;
@@ -173,6 +186,8 @@ export async function darCienciaItens(negId: number, condicaoId: number, codigos
   const sid = await sessaoAtual();
   const dados = await carregar(sid, negId);
   if (!dados || dados.neg.status !== "revisao") return falha("Negociação não está em revisão.");
+  const ro = await somenteLeitura(dados, condicaoId);
+  if (ro) return falha(ro);
   const alvo = dados.farois.filter((f) => f.condicaoId === condicaoId && f.cor === "amarelo" && codigos.includes(f.codigo));
   if (!alvo.length) return falha("Nada para dar ciência neste campo.");
   const em = new Date().toISOString();
@@ -189,6 +204,8 @@ export async function desfazerCiencia(negId: number, codigo: string, condicaoId:
   const sid = await sessaoAtual();
   const dados = await carregar(sid, negId);
   if (!dados || dados.neg.status !== "revisao") return falha("Negociação não está em revisão.");
+  const ro = await somenteLeitura(dados, condicaoId);
+  if (ro) return falha(ro);
   const ciencias = { ...dados.neg.ciencias };
   delete ciencias[chaveCiencia(codigo, condicaoId)];
   await db.update(s.negociacoes).set({ ciencias }).where(eq(s.negociacoes.id, negId));
@@ -236,6 +253,8 @@ export async function desfazerAprovacao(condId: number): Promise<RespostaAcao> {
   if (!c) return falha("Condição não encontrada.");
   const dados = await carregar(sid, c.negociacaoId);
   if (!dados || dados.neg.status !== "revisao") return falha("Só dá para desfazer na revisão.");
+  const ro = await somenteLeitura(dados, c.id);
+  if (ro) return falha(ro);
   if (c.erpCodCondicao) return falha(`Esta condição já está gravada no ERP como ${c.erpCodCondicao}; não dá para desfazer aqui.`);
   await db.update(s.condicoes).set({ aprovador: null, aprovadaEm: null, idempotencyKey: null }).where(eq(s.condicoes.id, condId));
   await registrar(c.negociacaoId, `Desfez a aprovação de "${c.titulo}"`);
@@ -248,6 +267,8 @@ export async function encerrar(negId: number, destino: "recusado" | "escalado", 
   const sid = await sessaoAtual();
   const dados = await carregar(sid, negId);
   if (!dados || dados.neg.status !== "revisao") return falha("Negociação não está em revisão.");
+  const ro = await somenteLeitura(dados, null);
+  if (ro) return falha(ro);
   if (!motivo.trim()) return falha("Escreva o motivo.");
   const quem = await perfilAtual();
   await db
@@ -264,6 +285,10 @@ export async function reabrir(negId: number): Promise<RespostaAcao> {
   const sid = await sessaoAtual();
   const dados = await carregar(sid, negId);
   if (!dados || !["escalado", "recusado"].includes(dados.neg.status)) return falha("Só reabre o que foi escalado ou recusado.");
+  if (dados.neg.status === "recusado") {
+    const ro = await somenteLeitura(dados, null);
+    if (ro) return falha(ro);
+  }
   if (dados.neg.status === "escalado" && !veEscalados(await perfilAtual())) return falha("Só a Diretoria ou o Comitê reabrem um caso escalado.");
   if (dados.farois.some((f) => f.codigo === "LEI-09" && f.cor === "vermelho")) return falha("Texto suspeito: o caso foi escalado à Diretoria Comercial e não pode ser reaberto aqui.");
   await db.update(s.negociacoes).set({ status: "revisao", motivoSaida: null, encerradoPor: null, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
@@ -282,6 +307,8 @@ export async function gerarTexto(negId: number, destino: DestinoTexto): Promise<
   const quem = await perfilAtual();
   if (!podeVer(dados.neg, quem)) return falha("Caso escalado: só a Diretoria ou o Comitê veem.");
   const { neg, conds, farois } = dados;
+  const ro = await somenteLeitura(dados, null);
+  if (ro) return falha(ro);
   if (!conds.length && neg.status !== "escalado") return falha("Ainda não há leitura do e-mail.");
   let texto: string;
   let origem: "ia" | "padrao" = "padrao";
@@ -318,6 +345,8 @@ export async function relerComIa(negId: number): Promise<RespostaAcao> {
   const sid = await sessaoAtual();
   const dados = await carregar(sid, negId);
   if (!dados || !["recebido", "verificacao", "revisao"].includes(dados.neg.status)) return falha("Só relê antes da aprovação.");
+  const ro = await somenteLeitura(dados, null);
+  if (ro) return falha(ro);
   if (dados.conds.some((c) => c.aprovadaEm)) return falha("Há condição aprovada; desfaça antes de reler.");
   // textos gerados descreviam a leitura antiga (D20)
   await db

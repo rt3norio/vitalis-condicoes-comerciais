@@ -169,3 +169,18 @@ describe("D23 — resumo depois de alterar", () => {
     expect(r.join(" ")).not.toContain("Marina");
   });
 });
+
+describe("D24 — sem alçada, só leitura", () => {
+  it("por condição e pela negociação inteira", async () => {
+    const { ANALISTA, APROVADORES: [, gerente, diretora], podeAgirNaCondicao, podeAgirNaNegociacao } = await import("../src/lib/dominio/politica");
+    const gama = preparar("gama").conds; // desconto 12% (Gerência) e verba R$ 8.000 (Diretoria)
+    expect(podeAgirNaCondicao(ANALISTA, gama[0])).toBe(false);
+    expect(podeAgirNaCondicao(gerente, gama[0])).toBe(true);
+    expect(podeAgirNaCondicao(gerente, gama[1])).toBe(false);
+    expect(podeAgirNaNegociacao(gerente, gama)).toBe(false);
+    expect(podeAgirNaNegociacao(diretora, gama)).toBe(true);
+    const alfa = preparar("alfa").conds; // 28%: vedado, fica com a Diretoria (§11)
+    expect(podeAgirNaCondicao(gerente, alfa[0])).toBe(false);
+    expect(podeAgirNaCondicao(diretora, alfa[0])).toBe(true);
+  });
+});

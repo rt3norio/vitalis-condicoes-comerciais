@@ -8,7 +8,7 @@ import { iaConfigurada } from "@/lib/agentes/agentes";
 import { linhaDoTempo } from "@/lib/consultas";
 import { capturaErp } from "@/lib/dominio/dataset";
 import { fmtBRL, fmtDataHora, fmtPct } from "@/lib/dominio/datas";
-import { alcada } from "@/lib/dominio/politica";
+import { alcada, alcadaParaAgir, podeAgirNaCondicao, podeAgirNaNegociacao } from "@/lib/dominio/politica";
 import { CATEGORIA_LABEL, CATEGORIAS, type Farol, type Grupo } from "@/lib/dominio/tipos";
 import { destacar } from "@/lib/destacar";
 import { carregar, snapshotSalvo } from "@/lib/negociacao";
@@ -68,6 +68,9 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
   const suspeita = farolNeg.find((f) => f.codigo === "LEI-09" && f.cor === "vermelho");
   const sugerirEscalar = farois.some((f) => f.acao === "escalar" && f.cor === "vermelho");
   const resumoPendente = tempo.tarefas.some((t) => t.tipo === "redigir" && (t.status === "pendente" || t.status === "executando"));
+  // D24: sem a alçada, só leitura
+  const podeNeg = podeAgirNaNegociacao(perfil, conds);
+  const condsLeitura = conds.filter((c) => !podeAgirNaCondicao(perfil, c));
 
   const evidencias = (leitura?.saidaExtrator.condicoes ?? []).flatMap((k) => [k.categoria, k.lojas, k.valor, k.data_inicio, k.data_fim, k.contrapartida].map((c) => c.trecho)).concat(leitura?.saidaExtrator.fornecedor.trecho ?? "");
   const pedacos = destacar(neg.corpo, evidencias.filter(Boolean));
@@ -90,7 +93,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
         <div className="flex flex-wrap items-center gap-2">
           {leitura && <span className={cn("rounded-full px-2.5 py-0.5 text-xs ring-1 ring-inset", ORIGEM_LEITURA[leitura.origem].cls)}>{ORIGEM_LEITURA[leitura.origem].rotulo}{leitura.modeloExtrator ? ` · ${leitura.modeloExtrator}` : ""}</span>}
           <StatusBadge status={neg.status} />
-          {iaConfigurada() && <BotaoReler negId={neg.id} disabled={!["revisao", "verificacao"].includes(neg.status)} />}
+          {iaConfigurada() && podeNeg && <BotaoReler negId={neg.id} disabled={!["revisao", "verificacao"].includes(neg.status)} />}
         </div>
       </div>
 
@@ -98,6 +101,19 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
         <div role="alert" className="flex flex-wrap items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white">
           <span aria-hidden>⚠</span> Texto suspeito
           <span className="ml-auto rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium">Escalado à Diretoria Comercial</span>
+        </div>
+      )}
+      {emRevisao && condsLeitura.length > 0 && (
+        <div className="rounded-lg border border-zinc-200 bg-zinc-100 px-4 py-2.5 text-sm text-zinc-700">
+          {condsLeitura.length === conds.length ? (
+            <>
+              <b>Somente leitura.</b> Esta negociação exige {alcadaParaAgir(conds)}, e {perfil.nome} ({perfil.cargo}) não tem essa alçada: dá para ver tudo, mas não para alterar, dar ciência ou aprovar.
+            </>
+          ) : (
+            <>
+              <b>Parte só leitura.</b> {condsLeitura.map((c) => `"${c.titulo}"`).join(", ")} exige {alcadaParaAgir(condsLeitura)}; com o perfil {perfil.nome} ({perfil.cargo}) você age só nas outras condições.
+            </>
+          )}
         </div>
       )}
       {neg.alertaRevisao && emRevisao && (
@@ -158,10 +174,10 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
 
         {/* textos para enviar logo abaixo do e-mail, um por destinatário, recolhidos (D19); gerados quando a pessoa pede (D20) */}
         {(conds.length > 0 || neg.status === "escalado") && (
-          <TextoParaEnviar negId={neg.id} destino="fornecedor" titulo="Resposta ao fornecedor" para={neg.remetente} texto={neg.rascunhoFornecedor} meta={neg.textosMeta.fornecedor} />
+          <TextoParaEnviar negId={neg.id} destino="fornecedor" titulo="Resposta ao fornecedor" para={neg.remetente} texto={neg.rascunhoFornecedor} meta={neg.textosMeta.fornecedor} podeGerar={podeNeg} />
         )}
         {(sugerirEscalar || neg.status === "escalado") && (
-          <TextoParaEnviar negId={neg.id} destino="diretoria" titulo="Memorando à Diretoria" para="Diretoria Comercial" texto={neg.memorando} meta={neg.textosMeta.diretoria} />
+          <TextoParaEnviar negId={neg.id} destino="diretoria" titulo="Memorando à Diretoria" para="Diretoria Comercial" texto={neg.memorando} meta={neg.textosMeta.diretoria} podeGerar={podeNeg} />
         )}
 
         <section className="grid content-start gap-4">
@@ -173,6 +189,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
           {conds.map((c) => {
             const fs = farois.filter((f) => f.condicaoId === c.id) as Farol[];
             const a = alcada(c.tipo, c.percentual, c.valor);
+            const podeCond = podeAgirNaCondicao(perfil, c);
             const fsCond = farois.filter((f) => f.condicaoId === c.id);
             const pendentesCiencia = amarelosSemCiencia(fsCond, neg.ciencias);
             const vermelhos = fs.filter((f) => f.cor === "vermelho");
@@ -205,7 +222,8 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                       alternativaEscolhida: !!c.proveniencia.valor?.ajustado,
                       sugestaoFim: (c.proveniencia.data_fim?.sugestao as { valor: string; motivo: string } | undefined) ?? null,
                       substituirCandidato: candidato,
-                      bloqueado: !emRevisao || !!c.aprovadaEm,
+                      bloqueado: !emRevisao || !!c.aprovadaEm || !podeCond,
+                      somenteLeitura: !podeCond,
                     }}
                     pontos={Object.fromEntries(
                       Object.entries(FAROIS_DO_CAMPO).map(([campo, cods]) => {
@@ -246,7 +264,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                                     <b>{f.titulo}:</b> {f.detalhe}
                                   </span>
                                 </span>
-                                <BotaoCiencia negId={neg.id} codigo={f.codigo} condicaoId={c.id} ciente={ciente} quando={ciente && quando ? `${neg.ciencias[`${f.codigo}#${c.id}`]?.por ?? ""} · ${fmtDataHora(quando)}` : null} desabilitado={!emRevisao || !!c.aprovadaEm} />
+                                <BotaoCiencia negId={neg.id} codigo={f.codigo} condicaoId={c.id} ciente={ciente} quando={ciente && quando ? `${neg.ciencias[`${f.codigo}#${c.id}`]?.por ?? ""} · ${fmtDataHora(quando)}` : null} desabilitado={!emRevisao || !!c.aprovadaEm || !podeCond} somenteLeitura={!podeCond} />
                               </li>
                             );
                           })}
@@ -254,6 +272,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                     </div>
                   )}
                   <AprovarCondicao
+                    podeAgir={podeCond}
                     condId={c.id}
                     emRevisao={emRevisao && !c.erpCodCondicao}
                     aprovada={c.aprovadaEm ? `Aprovada por ${c.aprovador?.nome} (${c.aprovador?.cargo}) em ${fmtDataHora(c.aprovadaEm)}${c.erpCodCondicao ? ` · gravada no ERP como ${c.erpCodCondicao}` : ""}` : null}
@@ -268,7 +287,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
             );
           })}
 
-          {emRevisao && conds.length > 0 && (
+          {emRevisao && conds.length > 0 && podeNeg && (
             <div className="grid gap-3 rounded-xl border bg-white px-4 py-3">
               <h2 className="text-sm font-semibold">Outra decisão</h2>
               <Encerrar negId={neg.id} sugerirEscalar={sugerirEscalar} />
@@ -386,7 +405,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
 
 type MetaTexto = { em: string; por: string; origem: "ia" | "padrao"; modelo: string | null };
 
-function TextoParaEnviar({ negId, destino, titulo, para, texto, meta }: { negId: number; destino: "fornecedor" | "diretoria"; titulo: string; para: string; texto: string | null; meta?: MetaTexto }) {
+function TextoParaEnviar({ negId, destino, titulo, para, texto, meta, podeGerar }: { negId: number; destino: "fornecedor" | "diretoria"; titulo: string; para: string; texto: string | null; meta?: MetaTexto; podeGerar: boolean }) {
   return (
     <details className="group rounded-xl border bg-white">
       <summary className="flex cursor-pointer list-none items-center justify-between gap-3 px-4 py-2.5 text-sm">
@@ -406,7 +425,7 @@ function TextoParaEnviar({ negId, destino, titulo, para, texto, meta }: { negId:
                 nada é enviado pelo sistema: copie e envie pelo seu e-mail.
               </span>
               <span className="flex gap-2">
-                <BotaoGerarTexto negId={negId} destino={destino} jaTem />
+                {podeGerar && <BotaoGerarTexto negId={negId} destino={destino} jaTem />}
                 <Copiar texto={texto} />
               </span>
             </div>
@@ -415,7 +434,7 @@ function TextoParaEnviar({ negId, destino, titulo, para, texto, meta }: { negId:
         ) : (
           <div className="flex flex-wrap items-center justify-between gap-3">
             <span className="text-sm text-zinc-500">Ainda não gerado. O Agente Redator escreve sobre o estado atual da negociação (campos, escolhas, aprovações).</span>
-            <BotaoGerarTexto negId={negId} destino={destino} />
+            {podeGerar ? <BotaoGerarTexto negId={negId} destino={destino} /> : <span className="text-xs text-zinc-500">Somente leitura</span>}
           </div>
         )}
       </div>

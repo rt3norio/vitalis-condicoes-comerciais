@@ -11,7 +11,7 @@ Vitalis · Case técnico AI Builder (Pareto) · 22/10/2026 · [A PREENCHER: nome
 1. Abra o link. A primeira visita cria uma demonstração só sua: os 4 e-mails do exemplo entram em **Recebido** e o sistema os processa em 1 a 2 minutos (ou clique **Processar agora**). Se aparecer "ERP falhou", é o ERP simulado caindo de propósito, como no case, e o sistema tenta de novo sozinho na rodada seguinte. Nada do que você fizer aparece para outra pessoa.
 2. Abra **Proposta Q4 - Gama Dermo**. No topo está o resumo, logo abaixo o e-mail original recolhido, e em cada condição o que trava aparece ao lado: o desconto de 12% no corpo contra 12,5% na planilha e o fim da vigência que não veio no e-mail.
 3. No topo, em **Quem você é**, escolha Marina Figueiredo (Diretora Comercial) e abra a Nutrivida. O e-mail tem texto suspeito e foi escalado sem liberação na tela.
-4. Na Beta, ajuste o início para uma data a partir de hoje, clique **Substituir COND-003**, clique **Dar ciência** nos itens amarelos, escolha Carlos Duarte (Gerente Comercial) e clique **Aprovar**. Na rodada seguinte a condição vai ao ERP (aba **ERP (simulado)**).
+4. Na Beta, escolha antes Carlos Duarte (Gerente Comercial) em **Quem você é**: sem a alçada, a condição aparece só para leitura. Ajuste o início para uma data a partir de hoje, clique **Substituir COND-003**, clique **Dar ciência** nos itens amarelos e clique **Aprovar**. Na rodada seguinte a condição vai ao ERP (aba **ERP (simulado)**).
 5. **↺ Reiniciar demo**, no topo, volta tudo ao início.
 
 ### O que ficou dentro e fora do escopo
@@ -22,7 +22,7 @@ Vitalis · Case técnico AI Builder (Pareto) · 22/10/2026 · [A PREENCHER: nome
 | Três agentes de IA (leitura, conferência independente, redação) | Login: no lugar, o seletor **Quem você é** define em nome de quem se aprova |
 | 21 conferências da política, do cadastro e do formato do ERP, com o motivo escrito | Envio de e-mail ao fornecedor: o texto é gerado e a pessoa copia e envia |
 | Correção de campos, escolha entre divergências, sugestões com a premissa visível, ciência item a item | SAP real: ERP simulado com o mesmo contrato do material do case |
-| Aprovação por alçada; escalar, recusar e reabrir | Aviso ao aprovador (Teams) e painel de indicadores |
+| Aprovação por alçada (quem não tem a alçada só vê); escalar, recusar e reabrir | Aviso ao aprovador (Teams) e painel de indicadores |
 | Envio em segundo plano, com novas tentativas e sem gravar duas vezes | Planilha anexa em Excel ou PDF (aceita CSV/texto) |
 | Resposta ao fornecedor e memorando à Diretoria gerados quando a pessoa pede | Segunda IA de outro fornecedor de modelo (ver seção 05) |
 | Histórico de quem fez o quê e auditoria de cada chamada de IA | |
@@ -180,11 +180,11 @@ Quem usa é a analista comercial que confere e corrige, e o aprovador com alçad
 
 ![Topo da negociação](img/gama-topo.png)
 
-*Topo da negociação. Primeiro vem o resumo em tópicos (o que é, o que trava, o que decidir), depois o e-mail original, recolhido; ao abrir, os trechos usados pela IA ficam destacados. Logo abaixo ficam os textos para enviar, um bloco por destinatário, gerados quando a pessoa pede.*
+*Topo da negociação. Primeiro vem o resumo em tópicos (o que é, o que trava, o que decidir), depois o e-mail original, recolhido; ao abrir, os trechos usados pela IA ficam destacados. Logo abaixo ficam os textos para enviar, um bloco por destinatário, gerados quando a pessoa pede. Aqui, como Gerente, aparece o aviso "Parte só leitura": a verba exige a Diretoria, então só o desconto pode ser alterado e aprovado.*
 
 ![Condição com o que trava](img/gama-condicao.png)
 
-*Cada condição tem uma bolinha por campo: verde está ok, amarela pede "confira", vermelha pede "resolver". O motivo está escrito ao lado, em linguagem de negócio. A divergência vira escolha ("12 · corpo do e-mail" ou "12,5 · planilha"), e a sugestão mostra a premissa ("usar 31/12: o e-mail fala em último trimestre"). Cada amarelo pede **Dar ciência** no próprio item. O botão de aprovar diz em nome de quem se aprova e só libera com a alçada certa.*
+*Cada condição tem uma bolinha por campo: verde está ok, amarela pede "confira", vermelha pede "resolver". O motivo está escrito ao lado, em linguagem de negócio. A divergência vira escolha ("12 · corpo do e-mail" ou "12,5 · planilha"), e a sugestão mostra a premissa ("usar 31/12: o e-mail fala em último trimestre"). Cada amarelo pede **Dar ciência** no próprio item. O botão de aprovar diz em nome de quem se aprova. Quem não tem a alçada da condição só vê: os campos ficam travados e não aparecem Dar ciência nem Aprovar.*
 
 ![Texto suspeito](img/nutrivida.png)
 
@@ -196,7 +196,7 @@ Quem usa é a analista comercial que confere e corrige, e o aprovador com alçad
 
 ![Histórico](img/historico.png)
 
-*Histórico, em Detalhes para auditoria (no fim da tela, recolhido). Cada passo do sistema e cada ação de pessoa ficam gravados, com nome, cargo e hora, do mais recente para o mais antigo. Neste caso: a leitura e a verificação usaram a saída salva da IA; Carlos Duarte (Gerente) editou o início de 2026-10-01 para 2026-10-23 e marcou a substituição da COND-003; Renata Alves (Analista) deu ciência nos 5 itens amarelos, cada um com o texto que ela viu; Carlos aprovou na alçada da Gerência; na 1ª tentativa de envio o ERP respondeu "em manutenção" (HTTP 503, em amarelo) e o sistema gravou sozinho na 2ª tentativa (HTTP 201, COND-011); o resumo foi refeito duas vezes.*
+*Histórico, em Detalhes para auditoria (no fim da tela, recolhido). Cada passo do sistema e cada ação de pessoa ficam gravados, com nome, cargo e hora, do mais recente para o mais antigo. Neste caso: a leitura e a verificação usaram a saída salva da IA; Carlos Duarte (Gerente) editou o início de 2026-10-01 para 2026-10-23, marcou a substituição da COND-003, deu ciência nos 5 itens amarelos (cada um com o texto que ele viu) e aprovou na alçada da Gerência; na 1ª tentativa de envio o ERP respondeu "em manutenção" (HTTP 503, em amarelo) e o sistema gravou sozinho na 2ª tentativa (HTTP 201, COND-011); o resumo foi refeito duas vezes.*
 
 ![Auditoria da IA](img/auditoria-ia.png)
 
@@ -224,7 +224,7 @@ Vídeo (até 3 min): [A PREENCHER: link do vídeo]
 | 0:00 a 0:20 | **Reiniciar demo**: os 4 e-mails voltam para Recebido. **Processar agora**: o funil anda sozinho até Revisão humana. |
 | 0:20 a 0:50 | Gama: o resumo, o e-mail com os trechos destacados, a divergência 12% × 12,5% como escolha, o fim sugerido com a premissa e o que trava escrito ao lado. |
 | 0:50 a 1:15 | Nutrivida (como Diretora): texto suspeito, escalada sem liberação, e **Gerar texto** na resposta ao fornecedor. |
-| 1:15 a 2:20 | Beta: ajustar o início, substituir a COND-003, dar ciência, trocar para Gerente e **Aprovar**. A negociação passa de Aguardando envio a Enviado (se o ERP falhar, a linha do tempo mostra a nova tentativa), e o resumo é refeito com o que mudou. |
+| 1:15 a 2:20 | Beta: trocar para Gerente (como Analista, a tela é só leitura), ajustar o início, substituir a COND-003, dar ciência e **Aprovar**. A negociação passa de Aguardando envio a Enviado (se o ERP falhar, a linha do tempo mostra a nova tentativa), e o resumo é refeito com o que mudou. |
 | 2:20 a 2:45 | **ERP (simulado)**: a condição nova gravada e a COND-003 encerrada. |
 | 2:45 a 3:00 | **Detalhes para auditoria**: o que a IA recebeu e devolveu, e quem fez o quê. |
 
@@ -244,6 +244,7 @@ Vídeo (até 3 min): [A PREENCHER: link do vídeo]
 | ERP antes da IA | A leitura depende do cadastro do ERP | IA primeiro × ERP primeiro | ERP primeiro | Com o ERP fora, nenhuma leitura é jogada fora e a falha aparece com o nome certo |
 | Quem aprova | Login está fora do escopo | login × seletor "Quem você é" | Seletor no topo, sem senha | Aprovação, ciência e escalonamento ficam no nome escolhido; escalado só aparece para Diretoria e Comitê |
 | Histórico | O case pede saber o que foi suposto e quem respondeu; o ERP e a IA falham | só o resultado × tudo registrado | Gravar cada tarefa, tentativa, falha, ação de pessoa (ciência, edição, escolha, aprovação) e chamada de IA, e mostrar tudo em "Detalhes para auditoria", recolhido no fim da tela | Qualquer pessoa reconstrói o caso depois; quem decide não vê esse volume no dia a dia |
+| Sem alçada | Quem não tem a alçada não deveria mexer na condição | avisar × só leitura | Só leitura por condição: sem a alçada, não edita, não dá ciência e não aprova. Escalar, recusar, gerar texto e reler pedem alçada em todas as condições do pacote; desconto vedado fica com a Diretoria (§11). Vale na tela e no servidor | A analista acompanha e confere com os olhos; quem tem a alçada corrige, dá ciência e aprova |
 | Envio parcial | O ERP não grava duas condições de uma vez | sem alternativa | Reconfere tudo antes do 1º envio; uma recusa volta à revisão com o que foi gravado | O envio parcial vira exceção visível |
 | Hospedagem | O agendador precisa rodar a cada minuto | Vercel × Fly.io | Fly.io, uma máquina | Simples e barato, sem redundância |
 | Custo da demonstração | Link público, dezenas de visitantes | IA ao vivo × leitura salva | Os 4 e-mails do exemplo usam a leitura real gravada uma vez | Reiniciar não gasta; a IA roda ao vivo só quando o visitante pede |
@@ -305,14 +306,14 @@ Lê os e-mails de proposta dos fornecedores, separa cada desconto e cada verba, 
 
 ### Como usar
 
-1. No topo, em **Quem você é**, escolha o seu nome. Aprovações, ciências e escalonamentos ficam no nome escolhido.
+1. No topo, em **Quem você é**, escolha o seu nome. Aprovações, ciências e escalonamentos ficam no nome escolhido. Se o seu cargo não tem a alçada de uma condição, ela aparece só para leitura.
 2. Abra o **Painel** e clique em **Revisão humana** para ver o que espera por você.
 3. Abra a negociação. No topo está o resumo: o que é, o que trava, o que decidir. O e-mail original está logo abaixo, recolhido; clique em **Ver e-mail original** para ver o texto com o que foi lido destacado em amarelo.
 4. Em cada condição, olhe a bolinha ao lado de cada campo:
    - 🔴 Vermelha ("resolver") trava a aprovação, e o motivo está escrito embaixo. Corrija o campo, escolha entre as opções (quando o e-mail e a planilha divergem) ou use o botão sugerido, como **Substituir COND-003**.
    - 🟡 Amarela ("confira") é algo deduzido ou que merece atenção. Passe o mouse em **confira ⓘ** para ver o motivo e clique em **Dar ciência**.
    - 🟢 Verde está ok.
-5. Clique em **Aprovar como {seu nome}**. O botão só libera se não houver vermelho, se você deu ciência em todos os amarelos e se o seu cargo tem a alçada.
+5. Clique em **Aprovar como {seu nome}**. O botão só aparece para quem tem a alçada e só libera se não houver vermelho e se você deu ciência em todos os amarelos.
 6. Quando todas as condições do e-mail estiverem aprovadas, a negociação vai para **Aguardando envio** e é gravada no ERP na rodada seguinte (até 1 minuto). O resumo é refeito e diz o que você mudou.
 7. Para responder ao fornecedor, abra **Resposta ao fornecedor**, clique em **Gerar texto**, confira, clique em **Copiar** e envie pelo seu e-mail. Se algo mudou na negociação, clique em **Gerar de novo**. Para casos da Diretoria, use **Memorando à Diretoria** do mesmo jeito.
 8. Se a política não cobre o caso, use **Escalar à Diretoria**. Se a proposta não serve, use **Recusar**, com o motivo.

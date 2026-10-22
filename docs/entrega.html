@@ -40,7 +40,7 @@ hr { display: none; }
 <li>Abra o link. A primeira visita cria uma demonstração só sua: os 4 e-mails do exemplo entram em <strong>Recebido</strong> e o sistema os processa em 1 a 2 minutos (ou clique <strong>Processar agora</strong>). Se aparecer &quot;ERP falhou&quot;, é o ERP simulado caindo de propósito, como no case, e o sistema tenta de novo sozinho na rodada seguinte. Nada do que você fizer aparece para outra pessoa.</li>
 <li>Abra <strong>Proposta Q4 - Gama Dermo</strong>. No topo está o resumo, logo abaixo o e-mail original recolhido, e em cada condição o que trava aparece ao lado: o desconto de 12% no corpo contra 12,5% na planilha e o fim da vigência que não veio no e-mail.</li>
 <li>No topo, em <strong>Quem você é</strong>, escolha Marina Figueiredo (Diretora Comercial) e abra a Nutrivida. O e-mail tem texto suspeito e foi escalado sem liberação na tela.</li>
-<li>Na Beta, ajuste o início para uma data a partir de hoje, clique <strong>Substituir COND-003</strong>, clique <strong>Dar ciência</strong> nos itens amarelos, escolha Carlos Duarte (Gerente Comercial) e clique <strong>Aprovar</strong>. Na rodada seguinte a condição vai ao ERP (aba <strong>ERP (simulado)</strong>).</li>
+<li>Na Beta, escolha antes Carlos Duarte (Gerente Comercial) em <strong>Quem você é</strong>: sem a alçada, a condição aparece só para leitura. Ajuste o início para uma data a partir de hoje, clique <strong>Substituir COND-003</strong>, clique <strong>Dar ciência</strong> nos itens amarelos e clique <strong>Aprovar</strong>. Na rodada seguinte a condição vai ao ERP (aba <strong>ERP (simulado)</strong>).</li>
 <li><strong>↺ Reiniciar demo</strong>, no topo, volta tudo ao início.</li>
 </ol>
 <h3>O que ficou dentro e fora do escopo</h3>
@@ -68,7 +68,7 @@ hr { display: none; }
 <td>SAP real: ERP simulado com o mesmo contrato do material do case</td>
 </tr>
 <tr>
-<td>Aprovação por alçada; escalar, recusar e reabrir</td>
+<td>Aprovação por alçada (quem não tem a alçada só vê); escalar, recusar e reabrir</td>
 <td>Aviso ao aprovador (Teams) e painel de indicadores</td>
 </tr>
 <tr>
@@ -364,15 +364,15 @@ hr { display: none; }
 <p><img src="img/painel.png" alt="Painel"></p>
 <p><em>Painel. Uma tabela só, e os botões de status filtram essa mesma tabela. Cada linha diz o status e o andamento (por exemplo, &quot;aguardando decisão&quot; ou &quot;ERP falhou, nova tentativa às 14:20&quot;). Casos escalados só aparecem para a Diretoria e o Comitê.</em></p>
 <p><img src="img/gama-topo.png" alt="Topo da negociação"></p>
-<p><em>Topo da negociação. Primeiro vem o resumo em tópicos (o que é, o que trava, o que decidir), depois o e-mail original, recolhido; ao abrir, os trechos usados pela IA ficam destacados. Logo abaixo ficam os textos para enviar, um bloco por destinatário, gerados quando a pessoa pede.</em></p>
+<p><em>Topo da negociação. Primeiro vem o resumo em tópicos (o que é, o que trava, o que decidir), depois o e-mail original, recolhido; ao abrir, os trechos usados pela IA ficam destacados. Logo abaixo ficam os textos para enviar, um bloco por destinatário, gerados quando a pessoa pede. Aqui, como Gerente, aparece o aviso &quot;Parte só leitura&quot;: a verba exige a Diretoria, então só o desconto pode ser alterado e aprovado.</em></p>
 <p><img src="img/gama-condicao.png" alt="Condição com o que trava"></p>
-<p><em>Cada condição tem uma bolinha por campo: verde está ok, amarela pede &quot;confira&quot;, vermelha pede &quot;resolver&quot;. O motivo está escrito ao lado, em linguagem de negócio. A divergência vira escolha (&quot;12 · corpo do e-mail&quot; ou &quot;12,5 · planilha&quot;), e a sugestão mostra a premissa (&quot;usar 31/12: o e-mail fala em último trimestre&quot;). Cada amarelo pede <strong>Dar ciência</strong> no próprio item. O botão de aprovar diz em nome de quem se aprova e só libera com a alçada certa.</em></p>
+<p><em>Cada condição tem uma bolinha por campo: verde está ok, amarela pede &quot;confira&quot;, vermelha pede &quot;resolver&quot;. O motivo está escrito ao lado, em linguagem de negócio. A divergência vira escolha (&quot;12 · corpo do e-mail&quot; ou &quot;12,5 · planilha&quot;), e a sugestão mostra a premissa (&quot;usar 31/12: o e-mail fala em último trimestre&quot;). Cada amarelo pede <strong>Dar ciência</strong> no próprio item. O botão de aprovar diz em nome de quem se aprova. Quem não tem a alçada da condição só vê: os campos ficam travados e não aparecem Dar ciência nem Aprovar.</em></p>
 <p><img src="img/nutrivida.png" alt="Texto suspeito"></p>
 <p><em>Texto suspeito. A tela mostra só a marca e o encaminhamento, sem expor o trecho nem o que ele pedia. O resumo diz que a proposta não segue, e a resposta ao fornecedor, gerada na hora, pede uma nova proposta em um novo e-mail, sem comentar o texto.</em></p>
 <p><img src="img/beta-enviado.png" alt="Depois de corrigir e aprovar"></p>
 <p><em>Depois de corrigir e aprovar, o resumo é refeito: diz o que mudou em relação ao e-mail (de → para, e quem mudou) e quem aprovou. A condição mostra o código gravado no ERP.</em></p>
 <p><img src="img/historico.png" alt="Histórico"></p>
-<p><em>Histórico, em Detalhes para auditoria (no fim da tela, recolhido). Cada passo do sistema e cada ação de pessoa ficam gravados, com nome, cargo e hora, do mais recente para o mais antigo. Neste caso: a leitura e a verificação usaram a saída salva da IA; Carlos Duarte (Gerente) editou o início de 2026-10-01 para 2026-10-23 e marcou a substituição da COND-003; Renata Alves (Analista) deu ciência nos 5 itens amarelos, cada um com o texto que ela viu; Carlos aprovou na alçada da Gerência; na 1ª tentativa de envio o ERP respondeu &quot;em manutenção&quot; (HTTP 503, em amarelo) e o sistema gravou sozinho na 2ª tentativa (HTTP 201, COND-011); o resumo foi refeito duas vezes.</em></p>
+<p><em>Histórico, em Detalhes para auditoria (no fim da tela, recolhido). Cada passo do sistema e cada ação de pessoa ficam gravados, com nome, cargo e hora, do mais recente para o mais antigo. Neste caso: a leitura e a verificação usaram a saída salva da IA; Carlos Duarte (Gerente) editou o início de 2026-10-01 para 2026-10-23, marcou a substituição da COND-003, deu ciência nos 5 itens amarelos (cada um com o texto que ele viu) e aprovou na alçada da Gerência; na 1ª tentativa de envio o ERP respondeu &quot;em manutenção&quot; (HTTP 503, em amarelo) e o sistema gravou sozinho na 2ª tentativa (HTTP 201, COND-011); o resumo foi refeito duas vezes.</em></p>
 <p><img src="img/auditoria-ia.png" alt="Auditoria da IA"></p>
 <p><em>Auditoria da IA, logo abaixo do histórico, rodada por rodada. Cada chamada mostra o que o agente recebeu (aqui, o e-mail da Beta), as instruções, os parâmetros, as ferramentas usadas (nenhuma) e o que ele devolveu, com tempo e volume de texto. &quot;Saída salva&quot; indica a leitura real da IA gravada uma vez para os e-mails do exemplo.</em></p>
 <p><img src="img/erp.png" alt="ERP simulado"></p>
@@ -409,7 +409,7 @@ hr { display: none; }
 </tr>
 <tr>
 <td>1:15 a 2:20</td>
-<td>Beta: ajustar o início, substituir a COND-003, dar ciência, trocar para Gerente e <strong>Aprovar</strong>. A negociação passa de Aguardando envio a Enviado (se o ERP falhar, a linha do tempo mostra a nova tentativa), e o resumo é refeito com o que mudou.</td>
+<td>Beta: trocar para Gerente (como Analista, a tela é só leitura), ajustar o início, substituir a COND-003, dar ciência e <strong>Aprovar</strong>. A negociação passa de Aguardando envio a Enviado (se o ERP falhar, a linha do tempo mostra a nova tentativa), e o resumo é refeito com o que mudou.</td>
 </tr>
 <tr>
 <td>2:20 a 2:45</td>
@@ -514,6 +514,13 @@ hr { display: none; }
 <td>só o resultado × tudo registrado</td>
 <td>Gravar cada tarefa, tentativa, falha, ação de pessoa (ciência, edição, escolha, aprovação) e chamada de IA, e mostrar tudo em &quot;Detalhes para auditoria&quot;, recolhido no fim da tela</td>
 <td>Qualquer pessoa reconstrói o caso depois; quem decide não vê esse volume no dia a dia</td>
+</tr>
+<tr>
+<td>Sem alçada</td>
+<td>Quem não tem a alçada não deveria mexer na condição</td>
+<td>avisar × só leitura</td>
+<td>Só leitura por condição: sem a alçada, não edita, não dá ciência e não aprova. Escalar, recusar, gerar texto e reler pedem alçada em todas as condições do pacote; desconto vedado fica com a Diretoria (§11). Vale na tela e no servidor</td>
+<td>A analista acompanha e confere com os olhos; quem tem a alçada corrige, dá ciência e aprova</td>
 </tr>
 <tr>
 <td>Envio parcial</td>
@@ -638,7 +645,7 @@ hr { display: none; }
 <p>Lê os e-mails de proposta dos fornecedores, separa cada desconto e cada verba, confere com a política comercial e com o cadastro do ERP, e deixa tudo pronto para você decidir. Depois que você aprova, ele grava no ERP sozinho.</p>
 <h3>Como usar</h3>
 <ol>
-<li>No topo, em <strong>Quem você é</strong>, escolha o seu nome. Aprovações, ciências e escalonamentos ficam no nome escolhido.</li>
+<li>No topo, em <strong>Quem você é</strong>, escolha o seu nome. Aprovações, ciências e escalonamentos ficam no nome escolhido. Se o seu cargo não tem a alçada de uma condição, ela aparece só para leitura.</li>
 <li>Abra o <strong>Painel</strong> e clique em <strong>Revisão humana</strong> para ver o que espera por você.</li>
 <li>Abra a negociação. No topo está o resumo: o que é, o que trava, o que decidir. O e-mail original está logo abaixo, recolhido; clique em <strong>Ver e-mail original</strong> para ver o texto com o que foi lido destacado em amarelo.</li>
 <li>Em cada condição, olhe a bolinha ao lado de cada campo:<ul>
@@ -647,7 +654,7 @@ hr { display: none; }
 <li>🟢 Verde está ok.</li>
 </ul>
 </li>
-<li>Clique em <strong>Aprovar como {seu nome}</strong>. O botão só libera se não houver vermelho, se você deu ciência em todos os amarelos e se o seu cargo tem a alçada.</li>
+<li>Clique em <strong>Aprovar como {seu nome}</strong>. O botão só aparece para quem tem a alçada e só libera se não houver vermelho e se você deu ciência em todos os amarelos.</li>
 <li>Quando todas as condições do e-mail estiverem aprovadas, a negociação vai para <strong>Aguardando envio</strong> e é gravada no ERP na rodada seguinte (até 1 minuto). O resumo é refeito e diz o que você mudou.</li>
 <li>Para responder ao fornecedor, abra <strong>Resposta ao fornecedor</strong>, clique em <strong>Gerar texto</strong>, confira, clique em <strong>Copiar</strong> e envie pelo seu e-mail. Se algo mudou na negociação, clique em <strong>Gerar de novo</strong>. Para casos da Diretoria, use <strong>Memorando à Diretoria</strong> do mesmo jeito.</li>
 <li>Se a política não cobre o caso, use <strong>Escalar à Diretoria</strong>. Se a proposta não serve, use <strong>Recusar</strong>, com o motivo.</li>

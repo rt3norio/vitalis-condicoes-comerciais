@@ -48,3 +48,11 @@ export const ANALISTA: Aprovador = { matricula: "003050", nome: "Renata Alves", 
 export const PERFIS: Aprovador[] = [ANALISTA, ...APROVADORES];
 // Escalado vai para a Diretoria Comercial (§11): só Diretoria e Comitê veem, além de quem escalou
 export const veEscalados = (p: Aprovador) => p.nivel >= 2;
+
+// D24: sem a alçada da condição, só leitura (não edita, não dá ciência, não aprova). Vedado ou sem valor fica com a
+// Diretoria, que decide o que a política não cobre (§11). Ações da negociação inteira exigem alçada em todas as condições.
+type CondAlcada = { tipo: TipoCondicao; percentual: number | null; valor: number | null };
+export const nivelParaAgir = (c: CondAlcada) => alcada(c.tipo, c.percentual, c.valor).nivel ?? 2;
+export const podeAgirNaCondicao = (p: Aprovador, c: CondAlcada) => p.nivel >= nivelParaAgir(c);
+export const podeAgirNaNegociacao = (p: Aprovador, conds: CondAlcada[]) => (conds.length ? conds.every((c) => podeAgirNaCondicao(p, c)) : p.nivel >= 2);
+export const alcadaParaAgir = (conds: CondAlcada[]) => NIVEIS[conds.length ? Math.max(...conds.map(nivelParaAgir)) : 2];

@@ -50,10 +50,11 @@ export type DadosEditor = {
   sugestaoFim: { valor: string; motivo: string } | null;
   substituirCandidato: string | null;
   bloqueado: boolean;
+  somenteLeitura?: boolean; // D24: sem alçada, nada de ciência
 };
 
 export function EditorCondicao({ d, negId, fornecedores, categorias, lojas, pontos = {} }: { d: DadosEditor; negId: number; fornecedores: Opcao[]; categorias: Opcao[]; lojas: Opcao[]; pontos?: Pontos }) {
-  const ciencia = { negId, condId: d.id, desabilitado: d.bloqueado };
+  const ciencia = { negId, condId: d.id, desabilitado: d.bloqueado, oculto: !!d.somenteLeitura };
   const [pend, start] = useTransition();
   const salvar = (campo: Parameters<typeof editarCampo>[1], valor: string | string[] | null) => start(async () => avisar(await editarCampo(d.id, campo, valor)));
   const dis = d.bloqueado || pend;
@@ -181,7 +182,7 @@ function EditorLojas({ d, lojas, dis, onSalvar }: { d: DadosEditor; lojas: Opcao
   );
 }
 
-type CienciaCtx = { negId: number; condId: number; desabilitado: boolean };
+type CienciaCtx = { negId: number; condId: number; desabilitado: boolean; oculto?: boolean };
 
 function Campo({ rotulo, largo, ponto, ciencia, children }: { rotulo: string; largo?: boolean; ponto?: PontoCampo; ciencia?: CienciaCtx; children: React.ReactNode }) {
   return (
@@ -201,7 +202,7 @@ function Campo({ rotulo, largo, ponto, ciencia, children }: { rotulo: string; la
 function CienciaCampo({ ponto, ciencia }: { ponto: PontoCampo; ciencia: CienciaCtx }) {
   const [pend, start] = useTransition();
   const pendentes = ponto.itens.filter((i) => i.cor === "amarelo" && !i.ciente);
-  if (!pendentes.length) return null;
+  if (!pendentes.length || ciencia.oculto) return null;
   return (
     <Button
       size="xs"
@@ -258,6 +259,7 @@ function DicaCampo({ ponto }: { ponto: PontoCampo }) {
 }
 
 export function AprovarCondicao({
+  podeAgir,
   condId,
   perfil,
   alcadaOk,
@@ -267,6 +269,7 @@ export function AprovarCondicao({
   motivo,
   emRevisao,
 }: {
+  podeAgir: boolean;
   condId: number;
   perfil: { nome: string; cargo: string };
   alcadaOk: boolean;
@@ -281,10 +284,13 @@ export function AprovarCondicao({
     return (
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
         <span>✓ {aprovada}</span>
-        {emRevisao && <Button size="xs" variant="outline" disabled={pend} onClick={() => start(async () => avisar(await desfazerAprovacao(condId)))}>Desfazer aprovação</Button>}
+        {emRevisao && podeAgir && <Button size="xs" variant="outline" disabled={pend} onClick={() => start(async () => avisar(await desfazerAprovacao(condId)))}>Desfazer aprovação</Button>}
       </div>
     );
   if (!emRevisao) return null;
+  // D24: sem a alçada, só leitura: sem botão de aprovar
+  if (!podeAgir)
+    return <p className="rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2 text-xs text-zinc-600">Somente leitura. Alçada exigida: {alcadaLabel}.</p>;
   return (
     <div className="grid gap-1.5 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2.5">
       <div className="flex flex-wrap items-center gap-2">
@@ -293,14 +299,15 @@ export function AprovarCondicao({
         </Button>
         <span className="text-xs text-zinc-500">{perfil.cargo}</span>
       </div>
-      {!alcadaOk && <p className="text-xs text-red-700">Seu perfil não tem alçada: esta condição exige {alcadaLabel}. Troque o perfil no topo da página.</p>}
+      {!alcadaOk && <p className="text-xs text-red-700">Esta condição não pode ser aprovada ({alcadaLabel}). Escale ou recuse.</p>}
       {alcadaOk && motivo && <p className="text-xs text-red-700">{motivo}</p>}
     </div>
   );
 }
 
-export function BotaoCiencia({ negId, codigo, condicaoId, ciente, quando, desabilitado }: { negId: number; codigo: string; condicaoId: number; ciente: boolean; quando: string | null; desabilitado: boolean }) {
+export function BotaoCiencia({ negId, codigo, condicaoId, ciente, quando, desabilitado, somenteLeitura = false }: { negId: number; codigo: string; condicaoId: number; ciente: boolean; quando: string | null; desabilitado: boolean; somenteLeitura?: boolean }) {
   const [pend, start] = useTransition();
+  if (!ciente && somenteLeitura) return null;
   if (ciente)
     return (
       <span className="flex shrink-0 items-center gap-2 text-xs text-emerald-700">

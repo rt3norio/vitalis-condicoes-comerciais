@@ -10,7 +10,7 @@ Solução: [vitalis-condicoes.fly.dev](https://vitalis-condicoes.fly.dev) · Ví
 
 ## O que a solução garante
 
-- Nada vai ao ERP sem a aprovação de uma pessoa com alçada.
+- Nada vai ao ERP sem a aprovação de uma pessoa com alçada, e quem não tem a alçada só vê.
 - Quando o ERP cai, o sistema tenta de novo sozinho e nunca grava a mesma condição duas vezes. Num teste, o ERP falhou 4 vezes seguidas e a condição foi gravada na 5ª tentativa.
 - Cada campo mostra o trecho do e-mail de onde veio. O que foi deduzido precisa da ciência de alguém antes da aprovação, com nome e hora.
 
