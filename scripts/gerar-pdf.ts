@@ -106,9 +106,9 @@ h1 + p { font-size: 9pt; margin-top: 0; }
 h2 { break-before: auto; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 1.2pt; border-bottom: 0.6pt solid #99f6e4; margin: 10pt 0 4pt; padding-bottom: 2pt; }
 p strong:only-child { display: block; font-size: 11pt; color: #0f766e; margin: 6pt 0; }
 ul, ol { padding-left: 16pt; margin: 4pt 0; }
-li { margin: 2pt 0; }
+li { margin: 3pt 0; }
 h3 { font-size: 9.5pt; color: #0f766e; margin: 8pt 0 2pt; }
-.colunas ol { columns: 2; column-gap: 16pt; font-size: 8.8pt; line-height: 1.35; margin: 2pt 0; }
+.colunas ol, .colunas ul { columns: 2; column-gap: 16pt; font-size: 8.8pt; line-height: 1.35; margin: 2pt 0; }
 .colunas li { break-inside: avoid; margin: 0 0 3pt; }`;
 
 const renderer = new marked.Renderer();

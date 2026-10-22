@@ -33,9 +33,9 @@ h1 + p { font-size: 9pt; margin-top: 0; }
 h2 { break-before: auto; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 1.2pt; border-bottom: 0.6pt solid #99f6e4; margin: 10pt 0 4pt; padding-bottom: 2pt; }
 p strong:only-child { display: block; font-size: 11pt; color: #0f766e; margin: 6pt 0; }
 ul, ol { padding-left: 16pt; margin: 4pt 0; }
-li { margin: 2pt 0; }
+li { margin: 3pt 0; }
 h3 { font-size: 9.5pt; color: #0f766e; margin: 8pt 0 2pt; }
-.colunas ol { columns: 2; column-gap: 16pt; font-size: 8.8pt; line-height: 1.35; margin: 2pt 0; }
+.colunas ol, .colunas ul { columns: 2; column-gap: 16pt; font-size: 8.8pt; line-height: 1.35; margin: 2pt 0; }
 .colunas li { break-inside: avoid; margin: 0 0 3pt; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
@@ -55,40 +55,41 @@ h3 { font-size: 9.5pt; color: #0f766e; margin: 8pt 0 2pt; }
 <p>A IA lê o e-mail e a planilha, uma segunda IA confere a leitura e a IA escreve o resumo e as respostas. Teto, alçada, vigência, sobreposição e fornecedor ativo (POL-COM-004) são regras fixas (hardcoded) no sistema, sem IA, e quem aprova é sempre uma pessoa.</p>
 <h2>Decisões de desenho</h2>
 <h3>Processo</h3>
-<ol>
-<li>Cada etapa é uma tarefa gravada no banco e executada em segundo plano a cada minuto, num funil de 5 status (Recebido, Verificação, Revisão humana, Aguardando envio, Enviado), como um ticket que troca de raia. Se falha, a falha fica registrada e a tarefa roda de novo na rodada seguinte.</li>
-<li>A unidade de trabalho é o e-mail (a negociação). As condições de um mesmo e-mail são um pacote e vão juntas ao ERP, uma premissa a validar com a área.</li>
-<li>Antes do primeiro envio, o sistema reconfere tudo com o ERP. Se uma condição for recusada, a negociação volta para revisão dizendo o que já foi gravado.</li>
-<li>O ERP é consultado antes da IA: com o ERP fora, nenhuma leitura é jogada fora e a falha aparece como do ERP.</li>
-</ol>
+<ul>
+<li>Tudo é tarefa: fica gravada no banco, roda em segundo plano a cada minuto e, se falhar, tenta de novo na rodada seguinte.</li>
+<li>O e-mail anda por 5 status (Recebido, Verificação, Revisão humana, Aguardando envio, Enviado), como um ticket que troca de raia.</li>
+<li>As condições de um e-mail vão juntas ao ERP (premissa a validar). Antes do envio, tudo é reconferido com o ERP.</li>
+<li>O ERP é consultado antes da IA, para não jogar leitura fora quando ele cai.</li>
+</ul>
 <h3>Revisão e aprovação</h3>
-<ol start="5">
-<li>A revisão humana é obrigatória e tem três saídas: aprovar, recusar ou escalar.</li>
-<li>A hierarquia segue a alçada: quem não tem a alçada de uma condição só vê (não edita, não dá ciência, não aprova). Escalar ou recusar o e-mail inteiro pede a maior alçada do pacote; desconto vedado fica com a Diretoria (§11).</li>
-<li>&quot;Quem você é&quot;, no topo e sem login, define em nome de quem se aprova, dá ciência e escala. Um caso escalado só a Diretoria e o Comitê veem.</li>
-<li>Cada item amarelo pede &quot;Dar ciência&quot; próprio, ao lado da dica do campo, no lugar de uma caixa única de &quot;conferi tudo&quot;.</li>
-</ol>
+<ul>
+<li>Sempre há revisão humana, com três saídas: aprovar, recusar ou escalar.</li>
+<li>Sem a alçada da condição, só leitura. Escalar ou recusar o e-mail inteiro pede a maior alçada; desconto vedado fica com a Diretoria (§11).</li>
+<li>&quot;Quem você é&quot;, no topo e sem login, assina aprovações, ciências e escalonamentos. Caso escalado só a Diretoria e o Comitê veem.</li>
+<li>Cada item amarelo tem o próprio &quot;Dar ciência&quot;, ao lado da dica do campo.</li>
+</ul>
 <h3>IA</h3>
-<ol start="9">
-<li>Três agentes: o Extrator lê, o Verificador confere sem ver o raciocínio do primeiro e o Redator escreve. Escolhi o modelo por teste: o GLM-5.3 custa cerca de US$ 0,006 por e-mail, e os mais baratos que testei erraram a leitura.</li>
-<li>Os 4 e-mails do exemplo usam a leitura real da IA gravada uma vez, então reiniciar não gasta. A IA roda ao vivo em e-mail novo, quando alguém corrige algo e quando alguém pede um texto.</li>
-<li>As respostas ao fornecedor e o memorando à Diretoria são gerados quando a pessoa pede, sobre o estado atual. O resumo é refeito a cada correção, aprovação e envio, dizendo o que mudou em relação ao e-mail.</li>
-<li>Tudo fica gravado (tarefas, falhas, novas tentativas, quem deu ciência, editou ou aprovou, e cada chamada de IA com o que recebeu e devolveu) e aparece em &quot;Detalhes para auditoria&quot;, recolhido. A auditoria mantém o retorno bruto da IA.</li>
-<li>Um e-mail que tenta comandar o sistema é marcado como texto suspeito e escalado à Diretoria, sem expor o trecho na tela. Aquela proposta não segue: o fornecedor precisa mandar outra.</li>
-</ol>
+<ul>
+<li>Três agentes: o Extrator lê, o Verificador confere e o Redator escreve. Modelo GLM-5.3, escolhido por teste (cerca de US$ 0,006 por e-mail).</li>
+<li>Os 4 e-mails do exemplo usam a leitura real da IA gravada uma vez: reiniciar não gasta.</li>
+<li>Resposta ao fornecedor e memorando são gerados quando a pessoa pede. O resumo é refeito a cada mudança e diz o que mudou.</li>
+<li>Tudo fica gravado em &quot;Detalhes para auditoria&quot;, inclusive o retorno bruto da IA.</li>
+<li>Texto suspeito é marcado e escalado, sem expor o trecho. A proposta não segue e o fornecedor precisa mandar outra.</li>
+</ul>
 <h3>Tela</h3>
-<ol start="14">
-<li>O Painel é uma tabela única em que os botões de status filtram a mesma tabela, sem faróis, para não poluir.</li>
-<li>A negociação mostra primeiro o mínimo para decidir: o resumo em tópicos, o e-mail original recolhido com os textos para enviar logo abaixo, e uma bolinha por campo com a dica em tópicos (&quot;confira ⓘ&quot;). Os detalhes de auditoria ficam recolhidos no fim.</li>
-<li>Os faróis são verde, amarelo (deduzido, pede ciência) e vermelho (trava). O cinza aparece só nas regras da política que não se aplicam àquela condição.</li>
-</ol>
+<ul>
+<li>Painel: uma tabela só, filtrada pelos botões de status, sem faróis.</li>
+<li>Negociação: resumo em tópicos, e-mail e textos recolhidos, uma bolinha por campo e a auditoria no fim.</li>
+<li>Faróis verde, amarelo e vermelho; cinza só em regra da política que não se aplica.</li>
+</ul>
 <h3>Demonstração</h3>
-<ol start="17">
-<li>Publicado no Fly.io, com SQLite num disco e uma máquina sempre ligada, porque o agendador roda nela. Cada visitante tem a sua demonstração, que começa em Recebido, com &quot;Processar agora&quot; e &quot;Reiniciar demo&quot;.</li>
-<li>E-mails novos entram por &quot;Novo e-mail&quot; (colar ou subir .eml) ou por &quot;Gerar novos e-mails (IA)&quot;, com limite por sessão.</li>
-<li>A data de operação é a data real, a Alfa vai para a Diretoria e as dúvidas de negócio ficaram registradas (abaixo).</li>
+<ul>
+<li>Fly.io, com SQLite num disco e uma máquina sempre ligada.</li>
+<li>Cada visitante tem a sua demo, que começa em Recebido, com &quot;Processar agora&quot; e &quot;Reiniciar demo&quot;.</li>
+<li>E-mails novos entram por &quot;Novo e-mail&quot; ou &quot;Gerar novos e-mails (IA)&quot;, com limite por sessão.</li>
+<li>Data de operação real, Alfa escalada à Diretoria e dúvidas de negócio registradas (abaixo).</li>
 <li>Funcionalidades até as 15h de 22/10; depois, só documentação, vídeo e publicação.</li>
-</ol>
+</ul>
 <p>Cada decisão, com contexto, opções e consequência, está na seção 08 do documento completo.</p>
 <h2>Para validar com a área</h2>
 <div class="colunas">
