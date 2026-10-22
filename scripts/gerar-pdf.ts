@@ -105,6 +105,7 @@ const CSS_RESUMO = `
 .resumo h1 { font-size: 20pt; margin-bottom: 2pt; }
 .resumo h1 + p { font-size: 9pt; margin-top: 0; }
 .resumo blockquote { font-size: 9.5pt; margin: 6pt 0; padding: 4pt 9pt; }
+.resumo a { white-space: nowrap; }
 .resumo h2 { break-before: auto; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 1.2pt; border-bottom: 0.6pt solid #99f6e4; margin: 10pt 0 4pt; padding-bottom: 2pt; }
 .resumo p strong:only-child { display: block; font-size: 11pt; color: #0f766e; margin: 6pt 0; }
 .resumo ul, .resumo ol { padding-left: 16pt; margin: 4pt 0; }

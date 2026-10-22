@@ -8,7 +8,7 @@ O e-mail do fornecedor vira condição gravada no ERP, com uma pessoa decidindo 
 
 **E-mail → IA lê → segunda IA confere → regras fixas (hardcoded) da política e do ERP → pessoa com alçada aprova → ERP**
 
-Solução: [vitalis-condicoes.fly.dev](https://vitalis-condicoes.fly.dev) · Vídeo: [youtu.be/GcBO8e5EWDs](https://youtu.be/GcBO8e5EWDs)
+Solução: [vitalis-condicoes.fly.dev](https://vitalis-condicoes.fly.dev) · Vídeo: [youtu.be/GcBO8e5EWDs](https://youtu.be/GcBO8e5EWDs) · Código: [github.com/rt3norio/vitalis-condicoes-comerciais](https://github.com/rt3norio/vitalis-condicoes-comerciais)
 
 ## O que a solução garante
 
