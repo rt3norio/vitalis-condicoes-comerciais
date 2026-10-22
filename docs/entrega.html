@@ -27,17 +27,17 @@ hr { display: none; }
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
 <script>mermaid.initialize({ startOnLoad: true, theme: "neutral", flowchart: { htmlLabels: true, useMaxWidth: true } });</script>
 </head><body><h1>Cadastro de condições comerciais com IA</h1>
-<p><strong>Vitalis · Case técnico AI Builder (Pareto) · 22/10/2026</strong></p>
+<p><strong>Vitalis · Case técnico AI Builder (Pareto) · 22/10/2026 · [A PREENCHER: nome e e-mail do autor]</strong></p>
 <blockquote>
 <p><strong>Solução (link público):</strong> [A PREENCHER: link da solução] · <strong>Vídeo (até 3 min):</strong> [A PREENCHER: link do vídeo] · Código: repositório privado, disponível sob pedido.</p>
 <p><strong>Em uma frase:</strong> o e-mail do fornecedor entra; a IA lê e uma segunda IA confere; regras fixas checam a política comercial e o cadastro do ERP; uma pessoa com alçada decide; e o sistema grava a condição no ERP sozinho, tentando de novo se o ERP falhar.</p>
 </blockquote>
 <h3>Como testar em 2 minutos</h3>
 <ol>
-<li>Abra o link. A primeira visita cria uma demonstração só sua: os 4 e-mails do exemplo entram em <strong>Recebido</strong> e o sistema os processa em até 1 minuto (ou clique <strong>Processar agora</strong>). Nada do que você fizer aparece para outra pessoa.</li>
+<li>Abra o link. A primeira visita cria uma demonstração só sua: os 4 e-mails do exemplo entram em <strong>Recebido</strong> e o sistema os processa em 1 a 2 minutos (ou clique <strong>Processar agora</strong>). Se aparecer &quot;ERP falhou&quot;, é o ERP simulado caindo de propósito, como no case: o sistema tenta de novo sozinho na rodada seguinte. Nada do que você fizer aparece para outra pessoa.</li>
 <li>Abra <strong>Proposta Q4 - Gama Dermo</strong>: o resumo no topo, o e-mail original recolhido, e cada condição com o que trava ao lado (desconto 12% no corpo × 12,5% na planilha, fim da vigência ausente).</li>
 <li>No topo, em <strong>Quem você é</strong>, escolha <em>Marina Figueiredo — Diretora Comercial</em> e abra a Nutrivida: e-mail com texto suspeito, escalado sem liberação na tela.</li>
-<li>Na Beta: ajuste o início para uma data a partir de hoje, marque <strong>substituir COND-003</strong>, clique <strong>Dar ciência</strong> nos itens amarelos, escolha <em>Carlos Duarte — Gerente Comercial</em> e <strong>Aprove</strong>. Na rodada seguinte a condição vai ao ERP (aba <strong>ERP (simulado)</strong>).</li>
+<li>Na Beta: ajuste o início para uma data a partir de hoje, clique <strong>Substituir COND-003</strong>, clique <strong>Dar ciência</strong> nos itens amarelos, escolha <em>Carlos Duarte — Gerente Comercial</em> e <strong>Aprove</strong>. Na rodada seguinte a condição vai ao ERP (aba <strong>ERP (simulado)</strong>).</li>
 <li><strong>↺ Reiniciar demo</strong> (no topo) volta tudo ao início.</li>
 </ol>
 <h3>O que ficou dentro e fora do escopo</h3>
@@ -630,7 +630,7 @@ hr { display: none; }
 <li>Abra o <strong>Painel</strong> e clique em <strong>Revisão humana</strong> para ver o que espera por você.</li>
 <li>Abra a negociação. No topo está o <strong>resumo</strong>: o que é, o que trava, o que decidir. O e-mail original está logo abaixo, recolhido: clique em <strong>Ver e-mail original</strong> para ver o texto com o que foi lido destacado em amarelo.</li>
 <li>Em cada condição, olhe a bolinha ao lado de cada campo:<ul>
-<li>🔴 <strong>vermelha — resolver:</strong> trava a aprovação. O motivo está escrito embaixo. Corrija o campo, escolha entre as opções (quando o e-mail e a planilha divergem) ou use o botão sugerido (ex.: <strong>substituir COND-003</strong>).</li>
+<li>🔴 <strong>vermelha — resolver:</strong> trava a aprovação. O motivo está escrito embaixo. Corrija o campo, escolha entre as opções (quando o e-mail e a planilha divergem) ou use o botão sugerido (ex.: <strong>Substituir COND-003</strong>).</li>
 <li>🟡 <strong>amarela — confira:</strong> algo deduzido ou que merece atenção. Passe o mouse em <strong>confira ⓘ</strong> para ver o motivo e clique em <strong>Dar ciência</strong>.</li>
 <li>🟢 <strong>verde:</strong> está ok.</li>
 </ul>
@@ -651,7 +651,7 @@ hr { display: none; }
 <li><em>&quot;A IA não respondeu&quot; ao gerar um texto:</em> clique de novo em alguns segundos.</li>
 </ul>
 <h2>Anexo A · Prompts completos e formatos de saída</h2>
-<p>Os textos abaixo saem direto do código entregue. Todo agente recebe o e-mail ou os dados entre marcas (ex.: <code>&lt;EMAIL&gt;</code>) e é instruído a tratar o que está dentro como dado, nunca como instrução. A resposta é validada contra o formato; fora dele, é recusada e a tarefa tenta de novo. Configuração: modelo GLM-5.3 via OpenRouter, raciocínio &quot;baixo&quot;, temperatura 0 na leitura e na conferência e 0,2 na redação.</p>
+<p>Os textos abaixo saem direto do código entregue. Todo agente recebe o e-mail ou os dados entre marcas (ex.: <code>&lt;EMAIL&gt;</code>) e é instruído a tratar o que está dentro como dado, nunca como instrução. A resposta é validada contra o formato; fora dele, é recusada e a tarefa tenta de novo (no botão <strong>Gerar texto</strong>, a pessoa clica de novo). Configuração: modelo GLM-5.3 via OpenRouter, raciocínio &quot;baixo&quot;, temperatura 0 na leitura e na conferência e 0,2 na redação.</p>
 <h3>Agente Extrator</h3>
 <p><strong>Quando roda:</strong> Lê cada e-mail novo (tarefa “Ler e-mail”). <strong>O que recebe:</strong> O e-mail (remetente, data, assunto, corpo) e os anexos, entre as marcas <code>&lt;EMAIL&gt;</code> e <code>&lt;ANEXO&gt;</code>.</p>
 <p><strong>Prompt completo (instruções do agente):</strong></p>

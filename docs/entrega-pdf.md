@@ -1,6 +1,6 @@
 # Cadastro de condições comerciais com IA
 
-**Vitalis · Case técnico AI Builder (Pareto) · 22/10/2026**
+**Vitalis · Case técnico AI Builder (Pareto) · 22/10/2026 · [A PREENCHER: nome e e-mail do autor]**
 
 > **Solução (link público):** [A PREENCHER: link da solução] · **Vídeo (até 3 min):** [A PREENCHER: link do vídeo] · Código: repositório privado, disponível sob pedido.
 >
@@ -8,10 +8,10 @@
 
 ### Como testar em 2 minutos
 
-1. Abra o link. A primeira visita cria uma demonstração só sua: os 4 e-mails do exemplo entram em **Recebido** e o sistema os processa em até 1 minuto (ou clique **Processar agora**). Nada do que você fizer aparece para outra pessoa.
+1. Abra o link. A primeira visita cria uma demonstração só sua: os 4 e-mails do exemplo entram em **Recebido** e o sistema os processa em 1 a 2 minutos (ou clique **Processar agora**). Se aparecer "ERP falhou", é o ERP simulado caindo de propósito, como no case: o sistema tenta de novo sozinho na rodada seguinte. Nada do que você fizer aparece para outra pessoa.
 2. Abra **Proposta Q4 - Gama Dermo**: o resumo no topo, o e-mail original recolhido, e cada condição com o que trava ao lado (desconto 12% no corpo × 12,5% na planilha, fim da vigência ausente).
 3. No topo, em **Quem você é**, escolha *Marina Figueiredo — Diretora Comercial* e abra a Nutrivida: e-mail com texto suspeito, escalado sem liberação na tela.
-4. Na Beta: ajuste o início para uma data a partir de hoje, marque **substituir COND-003**, clique **Dar ciência** nos itens amarelos, escolha *Carlos Duarte — Gerente Comercial* e **Aprove**. Na rodada seguinte a condição vai ao ERP (aba **ERP (simulado)**).
+4. Na Beta: ajuste o início para uma data a partir de hoje, clique **Substituir COND-003**, clique **Dar ciência** nos itens amarelos, escolha *Carlos Duarte — Gerente Comercial* e **Aprove**. Na rodada seguinte a condição vai ao ERP (aba **ERP (simulado)**).
 5. **↺ Reiniciar demo** (no topo) volta tudo ao início.
 
 ### O que ficou dentro e fora do escopo
@@ -304,7 +304,7 @@ Toda chamada de agente fica gravada e aparece na tela, em **Detalhes para audito
 2. Abra o **Painel** e clique em **Revisão humana** para ver o que espera por você.
 3. Abra a negociação. No topo está o **resumo**: o que é, o que trava, o que decidir. O e-mail original está logo abaixo, recolhido: clique em **Ver e-mail original** para ver o texto com o que foi lido destacado em amarelo.
 4. Em cada condição, olhe a bolinha ao lado de cada campo:
-   - 🔴 **vermelha — resolver:** trava a aprovação. O motivo está escrito embaixo. Corrija o campo, escolha entre as opções (quando o e-mail e a planilha divergem) ou use o botão sugerido (ex.: **substituir COND-003**).
+   - 🔴 **vermelha — resolver:** trava a aprovação. O motivo está escrito embaixo. Corrija o campo, escolha entre as opções (quando o e-mail e a planilha divergem) ou use o botão sugerido (ex.: **Substituir COND-003**).
    - 🟡 **amarela — confira:** algo deduzido ou que merece atenção. Passe o mouse em **confira ⓘ** para ver o motivo e clique em **Dar ciência**.
    - 🟢 **verde:** está ok.
 5. Clique em **Aprovar como {seu nome}**. O botão só libera se não houver vermelho, se você deu ciência em todos os amarelos e se o seu cargo tem a alçada.
@@ -326,7 +326,7 @@ Toda chamada de agente fica gravada e aparece na tela, em **Detalhes para audito
 
 ## Anexo A · Prompts completos e formatos de saída
 
-Os textos abaixo saem direto do código entregue. Todo agente recebe o e-mail ou os dados entre marcas (ex.: `<EMAIL>`) e é instruído a tratar o que está dentro como dado, nunca como instrução. A resposta é validada contra o formato; fora dele, é recusada e a tarefa tenta de novo. Configuração: modelo GLM-5.3 via OpenRouter, raciocínio "baixo", temperatura 0 na leitura e na conferência e 0,2 na redação.
+Os textos abaixo saem direto do código entregue. Todo agente recebe o e-mail ou os dados entre marcas (ex.: `<EMAIL>`) e é instruído a tratar o que está dentro como dado, nunca como instrução. A resposta é validada contra o formato; fora dele, é recusada e a tarefa tenta de novo (no botão **Gerar texto**, a pessoa clica de novo). Configuração: modelo GLM-5.3 via OpenRouter, raciocínio "baixo", temperatura 0 na leitura e na conferência e 0,2 na redação.
 
 <!-- ANEXO:PROMPTS -->
 
