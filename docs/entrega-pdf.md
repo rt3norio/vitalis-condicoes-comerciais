@@ -164,7 +164,7 @@ O que fiz para não precisar de treinamento: linguagem de negócio, motivo do bl
 | Execução | ERP instável (503, limite 10/min) | na hora × fila em segundo plano | Tudo é tarefa, fila no banco, a cada minuto | Resiliente e auditável; até 1 min de espera |
 | Revisão humana | Política exige alçada | opcional × obrigatória | Obrigatória; saídas aprovar/recusar/escalar | Nunca grava sem dono |
 | Incerteza | Case pede "o que foi suposto" | 2 cores × 3 cores | Semáforo + cinza só em Política | Amarelo vira conferência registrada |
-| Texto suspeito no e-mail | Nutrivida | aviso × bloqueio | Marca "Texto suspeito" e escala sem liberação, sem expor o trecho na tela | Fornecedor legítimo pode esperar mais |
+| Texto suspeito no e-mail | Nutrivida | aviso × bloqueio | Marca "Texto suspeito" e escala sem liberação, sem expor o trecho na tela. A condição morre: só segue com um novo contato do fornecedor, que entra como e-mail novo, sem texto suspeito (D18; validar com o time de negócios) | Fornecedor legítimo precisa mandar a proposta de novo |
 | Envio parcial | ERP sem transação | — | Reconfere tudo antes do 1º envio; erro permanente volta à revisão | Parcial vira exceção visível |
 | Hospedagem | Cron grátis só diário na Vercel | Vercel × Fly | Fly, uma máquina, SQLite | Simples; sem redundância |
 | Custo de IA | Demo pública | ao vivo × salvo | Saída salva para o dataset | Reiniciar não gasta |
@@ -230,4 +230,4 @@ Investimento estimado: ~R$ 150–200 mil (fases 0–2). Retorno estimado: pagame
 **Quando algo dá errado**
 - *"Aguardando envio" há muito tempo:* o ERP está fora do ar; o sistema tenta de novo a cada minuto. Veja a linha do tempo.
 - *Voltou para revisão com aviso vermelho:* o ERP recusou ou algo mudou no ERP depois da aprovação. Leia o aviso, ajuste e aprove de novo.
-- *"Texto suspeito" (escalado, sem botão de reabrir):* o caso já foi para a Diretoria Comercial e nada foi gravado. Não comente o texto com o fornecedor.
+- *"Texto suspeito" (escalado, sem botão de reabrir):* o caso já foi para a Diretoria Comercial e nada foi gravado. Essa proposta não segue: para cadastrar a condição, o fornecedor precisa fazer um novo contato, que entra como e-mail novo e passa pelo fluxo normal. Não comente o texto com o fornecedor.
