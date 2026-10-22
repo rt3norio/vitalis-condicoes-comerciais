@@ -34,6 +34,8 @@ const GRUPOS: { g: Grupo; dono: string }[] = [
   { g: "Contrato do ERP", dono: "regra fixa · schema" },
 ];
 
+const NO_CAMPO = new Set<string>(Object.values(FAROIS_DO_CAMPO).flat());
+
 const TAREFA = { ler_email: "Ler e-mail", verificar: "Verificar", redigir: "Redigir textos", enviar_erp: "Enviar ao ERP" } as Record<string, string>;
 const ORIGEM_LEITURA = {
   ia: { rotulo: "Lido pela IA", cls: "bg-sky-50 text-sky-800 ring-sky-200" },
@@ -189,11 +191,6 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                   <span className="text-xs text-zinc-500">Alçada exigida: <b className="text-zinc-700">{a.label}</b></span>
                 </header>
                 <div className="grid gap-4 px-4 py-3">
-                  {c.notas.length > 0 && (
-                    <ul className="list-disc pl-5 text-xs text-zinc-600">
-                      {c.notas.map((n) => <li key={n}>{n}</li>)}
-                    </ul>
-                  )}
                   <EditorCondicao
                     d={{
                       id: c.id,
@@ -225,45 +222,6 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                     categorias={opcoesCat}
                     lojas={opcoesLojas}
                   />
-                  <details className="group rounded-lg border border-zinc-200">
-                    <summary className="flex cursor-pointer list-none flex-wrap items-center justify-between gap-3 px-3 py-2">
-                      <FaixaFarois farois={fs} rotulos />
-                      <span className="text-xs text-teal-700">
-                        <span className="group-open:hidden">
-                          {vermelhos.length ? `${vermelhos.length} trava(m) · ` : ""}
-                          {fs.filter((f) => f.cor === "amarelo").length} atenção · ver detalhe ▾
-                        </span>
-                        <span className="hidden group-open:inline">recolher ▴</span>
-                      </span>
-                    </summary>
-                  <div className="grid gap-3 border-t px-3 py-3 sm:grid-cols-2">
-                    {GRUPOS.map(({ g, dono }) => {
-                      const doGrupo = fs.filter((f) => f.grupo === g);
-                      if (!doGrupo.length) return null;
-                      return (
-                        <div key={g} className={cn(g === "Política" && "sm:col-span-2")}>
-                          <div className="mb-1 flex items-baseline justify-between text-xs">
-                            <span className="font-semibold uppercase tracking-wide text-zinc-600">{g}</span>
-                            <span className="text-zinc-400">{dono}</span>
-                          </div>
-                          <ul className={cn("grid gap-1", g === "Política" && "sm:grid-cols-2 sm:gap-x-4")}>
-                            {doGrupo.map((f) => (
-                              <li key={f.codigo} className="flex gap-2 text-sm">
-                                <Ponto cor={f.cor} className="mt-1.5" />
-                                <div className="min-w-0">
-                                  <span className="mr-1 font-mono text-[11px] text-zinc-400">{f.codigo}</span>
-                                  <span className={cn("font-medium", f.cor === "cinza" && "text-zinc-400")}>{f.titulo}</span>
-                                  {f.ref && <span className="ml-1 text-[11px] text-zinc-400">{f.ref}</span>}
-                                  <p className={cn("text-xs", f.cor === "vermelho" ? "text-red-700" : "text-zinc-500")}>{f.detalhe}</p>
-                                </div>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      );
-                    })}
-                  </div>
-                  </details>
                   {vermelhos.length > 0 && (
                     <ul className="grid gap-0.5 text-sm text-red-700">
                       {vermelhos.map((f) => (
@@ -274,14 +232,12 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                       ))}
                     </ul>
                   )}
-                  {fsCond.some((f) => f.cor === "amarelo") && (
+                  {fsCond.some((f) => f.cor === "amarelo" && !NO_CAMPO.has(f.codigo)) && (
                     <div className="rounded-lg border border-amber-200 bg-amber-50/50 px-3 py-2">
-                      <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-amber-800">
-                        Para dar ciência {pendentesCiencia.length ? `· faltam ${pendentesCiencia.length}` : "· tudo ciente ✓"}
-                      </div>
+                      <div className="mb-1.5 text-xs font-semibold uppercase tracking-wide text-amber-800">Também precisa de ciência</div>
                       <ul className="grid gap-1.5 text-sm">
                         {fsCond
-                          .filter((f) => f.cor === "amarelo")
+                          .filter((f) => f.cor === "amarelo" && !NO_CAMPO.has(f.codigo))
                           .map((f) => {
                             const ciente = temCiencia(neg.ciencias, f);
                             const quando = neg.ciencias[`${f.codigo}#${c.id}`]?.em;
@@ -317,48 +273,116 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
 
           {emRevisao && conds.length > 0 && (
             <div className="grid gap-3 rounded-xl border bg-white px-4 py-3">
-              <h2 className="text-sm font-semibold">Decisão sobre a negociação</h2>
-              <p className="text-xs text-zinc-500">
-                As condições deste e-mail sobem juntas para o ERP: o pacote só vai para “Aguardando envio” quando todas estiverem aprovadas (premissa P11). Aprovadores são uma lista fictícia (premissa P9).
-              </p>
+              <h2 className="text-sm font-semibold">Outra decisão</h2>
               <Encerrar negId={neg.id} sugerirEscalar={sugerirEscalar} />
             </div>
           )}
 
           {(neg.rascunhoFornecedor || neg.memorando) && (
-            <div className="grid gap-3 rounded-xl border bg-white px-4 py-3">
-              <h2 className="text-sm font-semibold">Textos prontos {neg.textosOrigem === "ia" ? "(Agente Redator)" : "(padrão, sem IA)"}</h2>
-              {neg.rascunhoFornecedor && <Texto titulo="Resposta ao fornecedor" texto={neg.rascunhoFornecedor} />}
-              {neg.memorando && <Texto titulo="Memorando à Diretoria" texto={neg.memorando} />}
-              <p className="text-xs text-zinc-500">Nada é enviado por e-mail pelo sistema: copie e envie pelo seu e-mail.</p>
-            </div>
+            <details className="group rounded-xl border bg-white">
+              <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-2.5 text-sm">
+                <span className="font-medium">Textos prontos para copiar {neg.textosOrigem === "ia" ? "(Agente Redator)" : "(padrão, sem IA)"}</span>
+                <span className="text-teal-700 group-open:hidden">abrir ▾</span>
+                <span className="hidden text-teal-700 group-open:inline">recolher ▴</span>
+              </summary>
+              <div className="grid gap-3 border-t px-4 py-3">
+                {neg.rascunhoFornecedor && <Texto titulo="Resposta ao fornecedor" texto={neg.rascunhoFornecedor} />}
+                {neg.memorando && <Texto titulo="Memorando à Diretoria" texto={neg.memorando} />}
+                <p className="text-xs text-zinc-500">Nada é enviado por e-mail pelo sistema: copie e envie pelo seu e-mail.</p>
+              </div>
+            </details>
           )}
 
-          <div className="rounded-xl border bg-white px-4 py-3">
-            <h2 className="mb-2 text-sm font-semibold">Linha do tempo</h2>
-            <ol className="grid gap-1.5 text-xs">
-              {tempo.tentativas.map((t) => (
-                <li key={t.id} className="flex gap-2">
-                  <Ponto cor={t.resultado === "ok" ? "verde" : t.resultado === "transitorio" ? "amarelo" : "vermelho"} className="mt-1" />
-                  <span className="w-28 shrink-0 tabular-nums text-zinc-500">{fmtDataHora(t.inicio)}</span>
-                  <span>
-                    <b>{TAREFA[t.tipo]}</b> · tentativa {t.n}
-                    {t.httpStatus ? ` · HTTP ${t.httpStatus}` : ""} — {t.mensagem}
-                  </span>
-                </li>
-              ))}
-              {tempo.tarefas
-                .filter((t) => t.status === "pendente")
-                .map((t) => (
-                  <li key={`p${t.id}`} className="flex gap-2 text-zinc-500">
-                    <Ponto cor="cinza" className="mt-1" />
-                    <span className="w-28 shrink-0 tabular-nums">{fmtDataHora(t.proximaEm)}</span>
-                    <span><b>{TAREFA[t.tipo]}</b> agendada{t.ultimoErro ? ` (última falha: ${t.ultimoErro})` : ""}</span>
-                  </li>
-                ))}
-              {!tempo.tentativas.length && !tempo.tarefas.length && <li className="text-zinc-500">Nada ainda.</li>}
-            </ol>
-          </div>
+          <details className="group rounded-xl border border-dashed bg-white/60">
+            <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-2.5 text-sm text-zinc-600">
+              <span className="font-medium">Detalhes para auditoria · faróis, observações da IA e linha do tempo</span>
+              <span className="text-teal-700 group-open:hidden">abrir ▾</span>
+              <span className="hidden text-teal-700 group-open:inline">recolher ▴</span>
+            </summary>
+            <div className="grid gap-5 border-t px-4 py-3">
+              {conds.map((c) => {
+                const fs = farois.filter((f) => f.condicaoId === c.id) as Farol[];
+                return (
+                  <div key={c.id} className="grid gap-2">
+                    <div className="flex flex-wrap items-center justify-between gap-3">
+                      <span className="text-sm font-semibold">
+                        {c.ordem}. {c.titulo}
+                      </span>
+                      <FaixaFarois farois={fs} rotulos />
+                    </div>
+                    <div className="grid gap-3 sm:grid-cols-2">
+                      {GRUPOS.map(({ g, dono }) => {
+                        const doGrupo = fs.filter((f) => f.grupo === g);
+                        if (!doGrupo.length) return null;
+                        return (
+                          <div key={g} className={cn(g === "Política" && "sm:col-span-2")}>
+                            <div className="mb-1 flex items-baseline justify-between text-xs">
+                              <span className="font-semibold uppercase tracking-wide text-zinc-600">{g}</span>
+                              <span className="text-zinc-400">{dono}</span>
+                            </div>
+                            <ul className={cn("grid gap-1", g === "Política" && "sm:grid-cols-2 sm:gap-x-4")}>
+                              {doGrupo.map((f) => (
+                                <li key={f.codigo} className="flex gap-2 text-sm">
+                                  <Ponto cor={f.cor} className="mt-1.5" />
+                                  <div className="min-w-0">
+                                    <span className="mr-1 font-mono text-[11px] text-zinc-400">{f.codigo}</span>
+                                    <span className={cn("font-medium", f.cor === "cinza" && "text-zinc-400")}>{f.titulo}</span>
+                                    {f.ref && <span className="ml-1 text-[11px] text-zinc-400">{f.ref}</span>}
+                                    <p className={cn("text-xs", f.cor === "vermelho" ? "text-red-700" : "text-zinc-500")}>{f.detalhe}</p>
+                                  </div>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        );
+                      })}
+                    </div>
+                    {c.notas.length > 0 && (
+                      <div>
+                        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-600">Observações da IA (Extrator)</div>
+                        <ul className="list-disc pl-5 text-xs text-zinc-600">
+                          {c.notas.map((n) => (
+                            <li key={n}>{n}</li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+              <div>
+                <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-zinc-600">Linha do tempo</div>
+                <ol className="grid gap-1.5 text-xs">
+                  {tempo.tentativas.map((t) => (
+                    <li key={t.id} className="flex gap-2">
+                      <Ponto cor={t.resultado === "ok" ? "verde" : t.resultado === "transitorio" ? "amarelo" : "vermelho"} className="mt-1" />
+                      <span className="w-28 shrink-0 tabular-nums text-zinc-500">{fmtDataHora(t.inicio)}</span>
+                      <span>
+                        <b>{TAREFA[t.tipo]}</b> · tentativa {t.n}
+                        {t.httpStatus ? ` · HTTP ${t.httpStatus}` : ""} — {t.mensagem}
+                      </span>
+                    </li>
+                  ))}
+                  {tempo.tarefas
+                    .filter((t) => t.status === "pendente")
+                    .map((t) => (
+                      <li key={`p${t.id}`} className="flex gap-2 text-zinc-500">
+                        <Ponto cor="cinza" className="mt-1" />
+                        <span className="w-28 shrink-0 tabular-nums">{fmtDataHora(t.proximaEm)}</span>
+                        <span>
+                          <b>{TAREFA[t.tipo]}</b> agendada{t.ultimoErro ? ` (última falha: ${t.ultimoErro})` : ""}
+                        </span>
+                      </li>
+                    ))}
+                  {!tempo.tentativas.length && !tempo.tarefas.length && <li className="text-zinc-500">Nada ainda.</li>}
+                </ol>
+              </div>
+              <p className="text-xs text-zinc-500">
+                Premissas: as condições deste e-mail sobem juntas para o ERP (P11); aprovadores são uma lista fictícia (P9); escalados só são vistos pela Diretoria/Comitê e por quem escalou.
+                {leitura && ` Leitura: ${ORIGEM_LEITURA[leitura.origem].rotulo}${leitura.modeloExtrator ? ` (${leitura.modeloExtrator})` : ""}.`}
+              </p>
+            </div>
+          </details>
         </section>
       </div>
     </div>
