@@ -8,6 +8,7 @@ import { listarNegociacoes, usoErpUltimoMinuto } from "@/lib/consultas";
 import { fmtData, fmtDataHora, hoje } from "@/lib/dominio/datas";
 import { STATUS, STATUS_LABEL, type Status } from "@/lib/dominio/tipos";
 import { sessaoAtual } from "@/lib/sessao";
+import { perfilAtual, podeVer } from "@/lib/perfil";
 import { proximaRodadaEm } from "@/lib/tarefas/fila";
 import { cn } from "@/lib/utils";
 
@@ -25,7 +26,12 @@ async function Painel({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
   const sid = await sessaoAtual();
   const { status: filtroBruto } = await searchParams;
   const filtro = STATUS.includes(filtroBruto as Status) ? (filtroBruto as Status) : null;
-  const [{ linhas, contagem, total }, uso, prox] = await Promise.all([listarNegociacoes(sid), usoErpUltimoMinuto(sid), proximaRodadaEm()]);
+  const [{ linhas: todas }, uso, prox, perfil] = await Promise.all([listarNegociacoes(sid), usoErpUltimoMinuto(sid), proximaRodadaEm(), perfilAtual()]);
+  // escalados só para o destino (Diretoria/Comitê) e para quem escalou
+  const linhas = todas.filter((l) => podeVer(l, perfil));
+  const ocultos = todas.length - linhas.length;
+  const contagem = Object.fromEntries(STATUS.map((st) => [st, linhas.filter((l) => l.status === st).length])) as Record<Status, number>;
+  const total = linhas.length;
   const visiveis = filtro ? linhas.filter((l) => l.status === filtro) : linhas;
   const ia = iaConfigurada();
 
@@ -125,6 +131,9 @@ async function Painel({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
           </tbody>
         </table>
       </div>
+      {ocultos > 0 && (
+        <p className="text-xs text-zinc-500">{ocultos} negociação(ões) escalada(s) à Diretoria não aparece(m) para o seu perfil ({perfil.cargo}).</p>
+      )}
       <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
         <span>Como ler as bolinhas (sempre na mesma ordem, uma faixa por condição):</span>
         <FaixaFarois farois={[]} rotulos tamanho="sm" />

@@ -8,13 +8,14 @@ import { iaConfigurada } from "@/lib/agentes/agentes";
 import { linhaDoTempo } from "@/lib/consultas";
 import { capturaErp } from "@/lib/dominio/dataset";
 import { fmtBRL, fmtDataHora, fmtPct } from "@/lib/dominio/datas";
-import { alcada, APROVADORES } from "@/lib/dominio/politica";
+import { alcada } from "@/lib/dominio/politica";
 import { CATEGORIA_LABEL, CATEGORIAS, type Farol, type Grupo } from "@/lib/dominio/tipos";
 import { destacar } from "@/lib/destacar";
-import { carregar, paraCondicao, snapshotSalvo } from "@/lib/negociacao";
+import { carregar, snapshotSalvo } from "@/lib/negociacao";
 import { amarelosSemCiencia, temCiencia } from "@/lib/regras/ciencia";
-import { FAROIS_DO_CAMPO, piorCor, podeAprovar } from "@/lib/regras/farois";
+import { FAROIS_DO_CAMPO, piorCor } from "@/lib/regras/farois";
 import { sessaoAtual } from "@/lib/sessao";
+import { perfilAtual, podeVer } from "@/lib/perfil";
 import { cn } from "@/lib/utils";
 import { AprovarCondicao, BotaoCiencia, BotaoReabrir, BotaoReler, Copiar, EditorCondicao, Encerrar } from "./cliente";
 
@@ -47,6 +48,15 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
   const dados = await carregar(sid, id);
   if (!dados) notFound();
   const { neg, conds, leitura, farois } = dados;
+  const perfil = await perfilAtual();
+  if (!podeVer(neg, perfil))
+    return (
+      <div className="grid gap-3 rounded-xl border bg-white px-6 py-10 text-center">
+        <p className="text-lg font-semibold">Negociação escalada à Diretoria Comercial</p>
+        <p className="text-sm text-zinc-600">Só a Diretoria, o Comitê e quem escalou veem os detalhes. Você está como {perfil.nome} ({perfil.cargo}); troque o perfil no topo se for o caso.</p>
+        <Link href="/" className="text-sm text-teal-700 hover:underline">← Voltar ao painel</Link>
+      </div>
+    );
   const [snap, tempo] = await Promise.all([snapshotSalvo(sid), linhaDoTempo(id)]);
   const fornecedores = snap?.fornecedores ?? capturaErp.fornecedores;
   const lojas = snap?.lojas ?? capturaErp.lojas;
@@ -163,11 +173,9 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
           )}
           {conds.map((c) => {
             const fs = farois.filter((f) => f.condicaoId === c.id) as Farol[];
-            const cond = paraCondicao(c);
             const a = alcada(c.tipo, c.percentual, c.valor);
             const fsCond = farois.filter((f) => f.condicaoId === c.id);
             const pendentesCiencia = amarelosSemCiencia(fsCond, neg.ciencias);
-            const pa = podeAprovar(fs, APROVADORES.at(-1), cond, pendentesCiencia.length === 0);
             const vermelhos = fs.filter((f) => f.cor === "vermelho");
             const substituir = fs.find((f) => f.codigo === "POL-09" && f.acao === "substituir");
             const candidato = substituir ? (substituir.detalhe.match(/COND-\d{3}/)?.[0] ?? null) : null;
@@ -209,9 +217,10 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                       Object.entries(FAROIS_DO_CAMPO).map(([campo, cods]) => {
                         const ordem = { vermelho: 0, amarelo: 1, verde: 2, cinza: 3 } as const;
                         const rel = fs.filter((f) => (cods as readonly string[]).includes(f.codigo) && f.cor !== "cinza").sort((x, y) => ordem[x.cor] - ordem[y.cor]);
-                        return [campo, { cor: piorCor(rel), itens: rel.map((f) => ({ cor: f.cor, titulo: f.titulo, detalhe: f.detalhe, ciente: temCiencia(neg.ciencias, { ...f, condicaoId: c.id }) })) }];
+                        return [campo, { cor: piorCor(rel), itens: rel.map((f) => ({ codigo: f.codigo, cor: f.cor, titulo: f.titulo, detalhe: f.detalhe, ciente: temCiencia(neg.ciencias, { ...f, condicaoId: c.id }) })) }];
                       }),
                     )}
+                    negId={neg.id}
                     fornecedores={opcoesForn}
                     categorias={opcoesCat}
                     lojas={opcoesLojas}
@@ -284,7 +293,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                                     <b>{f.titulo}:</b> {f.detalhe}
                                   </span>
                                 </span>
-                                <BotaoCiencia negId={neg.id} codigo={f.codigo} condicaoId={c.id} ciente={ciente} quando={ciente && quando ? fmtDataHora(quando) : null} desabilitado={!emRevisao || !!c.aprovadaEm} />
+                                <BotaoCiencia negId={neg.id} codigo={f.codigo} condicaoId={c.id} ciente={ciente} quando={ciente && quando ? `${neg.ciencias[`${f.codigo}#${c.id}`]?.por ?? ""} · ${fmtDataHora(quando)}` : null} desabilitado={!emRevisao || !!c.aprovadaEm} />
                               </li>
                             );
                           })}
@@ -295,9 +304,11 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                     condId={c.id}
                     emRevisao={emRevisao && !c.erpCodCondicao}
                     aprovada={c.aprovadaEm ? `Aprovada por ${c.aprovador?.nome} (${c.aprovador?.cargo}) em ${fmtDataHora(c.aprovadaEm)}${c.erpCodCondicao ? ` · gravada no ERP como ${c.erpCodCondicao}` : ""}` : null}
-                    podeAgora={!vermelhos.length}
-                    motivo={pa.ok ? null : vermelhos.length ? "Resolva os itens em vermelho acima para liberar a aprovação." : pa.motivo.includes("ciência") ? pa.motivo : null}
-                    aprovadores={APROVADORES.map((ap) => ({ valor: ap.matricula, rotulo: `${ap.nome} — ${ap.cargo}`, alcadaOk: a.nivel != null && ap.nivel >= a.nivel }))}
+                    podeAgora={!vermelhos.length && pendentesCiencia.length === 0}
+                    motivo={vermelhos.length ? "Resolva os itens em vermelho acima para liberar a aprovação." : pendentesCiencia.length ? `Dê ciência nos ${pendentesCiencia.length} item(ns) amarelo(s) antes de aprovar.` : null}
+                    perfil={{ nome: perfil.nome, cargo: perfil.cargo }}
+                    alcadaOk={a.nivel != null && perfil.nivel >= a.nivel}
+                    alcadaLabel={a.label}
                   />
                 </div>
               </article>

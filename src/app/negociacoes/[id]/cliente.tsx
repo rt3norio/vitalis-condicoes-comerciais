@@ -6,6 +6,7 @@ import {
   aceitarSugestao,
   aprovarCondicao,
   darCiencia,
+  darCienciaItens,
   desfazerCiencia,
   definirSubstituicao,
   desfazerAprovacao,
@@ -27,7 +28,7 @@ const inputCls =
   "h-8 w-full rounded-md border border-zinc-300 bg-white px-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 disabled:bg-zinc-100 disabled:text-zinc-500";
 
 type Opcao = { valor: string; rotulo: string };
-type ItemDica = { cor: Cor; titulo: string; detalhe: string; ciente?: boolean };
+type ItemDica = { codigo: string; cor: Cor; titulo: string; detalhe: string; ciente?: boolean };
 type PontoCampo = { cor: Cor; itens: ItemDica[] };
 type Pontos = Partial<Record<"codFornecedor" | "codCategoria" | "valor" | "dataInicio" | "dataFim" | "lojas" | "contrapartida", PontoCampo>>;
 
@@ -50,7 +51,8 @@ export type DadosEditor = {
   bloqueado: boolean;
 };
 
-export function EditorCondicao({ d, fornecedores, categorias, lojas, pontos = {} }: { d: DadosEditor; fornecedores: Opcao[]; categorias: Opcao[]; lojas: Opcao[]; pontos?: Pontos }) {
+export function EditorCondicao({ d, negId, fornecedores, categorias, lojas, pontos = {} }: { d: DadosEditor; negId: number; fornecedores: Opcao[]; categorias: Opcao[]; lojas: Opcao[]; pontos?: Pontos }) {
+  const ciencia = { negId, condId: d.id, desabilitado: d.bloqueado };
   const [pend, start] = useTransition();
   const salvar = (campo: Parameters<typeof editarCampo>[1], valor: string | string[] | null) => start(async () => avisar(await editarCampo(d.id, campo, valor)));
   const dis = d.bloqueado || pend;
@@ -58,7 +60,7 @@ export function EditorCondicao({ d, fornecedores, categorias, lojas, pontos = {}
   const valorAtual = d.tipo === "DESCONTO_PERCENTUAL" ? d.percentual : d.valor;
   return (
     <div className={cn("grid gap-3 sm:grid-cols-2", pend && "opacity-70")}>
-      <Campo rotulo="Fornecedor (ERP)" ponto={pontos.codFornecedor}>
+      <Campo rotulo="Fornecedor (ERP)" ponto={pontos.codFornecedor} ciencia={ciencia}>
         <select key={`f-${d.codFornecedor}`} className={inputCls} defaultValue={d.codFornecedor ?? ""} disabled={dis} onChange={(e) => salvar("codFornecedor", e.target.value)}>
           <option value="">— escolha —</option>
           {fornecedores.map((o) => (
@@ -66,7 +68,7 @@ export function EditorCondicao({ d, fornecedores, categorias, lojas, pontos = {}
           ))}
         </select>
       </Campo>
-      <Campo rotulo="Categoria (ERP)" ponto={pontos.codCategoria}>
+      <Campo rotulo="Categoria (ERP)" ponto={pontos.codCategoria} ciencia={ciencia}>
         <select key={`c-${d.codCategoria}`} className={inputCls} defaultValue={d.codCategoria ?? ""} disabled={dis} onChange={(e) => salvar("codCategoria", e.target.value)}>
           <option value="">— escolha —</option>
           {categorias.map((o) => (
@@ -74,7 +76,7 @@ export function EditorCondicao({ d, fornecedores, categorias, lojas, pontos = {}
           ))}
         </select>
       </Campo>
-      <Campo rotulo={d.tipo === "DESCONTO_PERCENTUAL" ? "Desconto (%)" : "Verba (R$, total)"} ponto={pontos.valor}>
+      <Campo rotulo={d.tipo === "DESCONTO_PERCENTUAL" ? "Desconto (%)" : "Verba (R$, total)"} ponto={pontos.valor} ciencia={ciencia}>
         {d.alternativas && (
           <div className="mb-1.5 grid gap-1">
             {d.alternativas.map((a) => (
@@ -96,10 +98,10 @@ export function EditorCondicao({ d, fornecedores, categorias, lojas, pontos = {}
         <input key={`v-${valorAtual}`} className={inputCls} type="number" step="0.01" min="0" defaultValue={valorAtual ?? ""} disabled={dis} onBlur={(e) => e.target.value !== String(valorAtual ?? "") && salvar(campoValor, e.target.value)} />
       </Campo>
       <div className="grid grid-cols-2 gap-2">
-        <Campo rotulo="Início" ponto={pontos.dataInicio}>
+        <Campo rotulo="Início" ponto={pontos.dataInicio} ciencia={ciencia}>
           <input key={`i-${d.dataInicio}`} className={inputCls} type="date" defaultValue={d.dataInicio ?? ""} disabled={dis} onBlur={(e) => e.target.value !== (d.dataInicio ?? "") && salvar("dataInicio", e.target.value)} />
         </Campo>
-        <Campo rotulo="Fim" ponto={pontos.dataFim}>
+        <Campo rotulo="Fim" ponto={pontos.dataFim} ciencia={ciencia}>
           <input key={`e-${d.dataFim}`} className={inputCls} type="date" defaultValue={d.dataFim ?? ""} disabled={dis} onBlur={(e) => e.target.value !== (d.dataFim ?? "") && salvar("dataFim", e.target.value)} />
           {d.sugestaoFim && !d.dataFim && (
             <button type="button" disabled={dis} className="mt-1 text-left text-xs text-teal-700 underline" onClick={() => start(async () => avisar(await aceitarSugestao(d.id, "dataFim")))}>
@@ -108,10 +110,10 @@ export function EditorCondicao({ d, fornecedores, categorias, lojas, pontos = {}
           )}
         </Campo>
       </div>
-      <Campo rotulo="Lojas" largo ponto={pontos.lojas}>
+      <Campo rotulo="Lojas" largo ponto={pontos.lojas} ciencia={ciencia}>
         <EditorLojas d={d} lojas={lojas} dis={dis} onSalvar={(v) => salvar("lojas", v)} />
       </Campo>
-      <Campo rotulo={d.tipo === "VERBA_EXPOSICAO" ? "Contrapartida (obrigatória em verba)" : "Contrapartida"} largo ponto={pontos.contrapartida}>
+      <Campo rotulo={d.tipo === "VERBA_EXPOSICAO" ? "Contrapartida (obrigatória em verba)" : "Contrapartida"} largo ponto={pontos.contrapartida} ciencia={ciencia}>
         <Textarea key={`t-${d.contrapartida}`} rows={2} defaultValue={d.contrapartida} disabled={dis} className="text-sm" onBlur={(e) => e.target.value !== d.contrapartida && salvar("contrapartida", e.target.value)} />
       </Campo>
       {(d.substituirCandidato || d.codCondicaoSubstituida) && (
@@ -178,16 +180,38 @@ function EditorLojas({ d, lojas, dis, onSalvar }: { d: DadosEditor; lojas: Opcao
   );
 }
 
-function Campo({ rotulo, largo, ponto, children }: { rotulo: string; largo?: boolean; ponto?: PontoCampo; children: React.ReactNode }) {
+type CienciaCtx = { negId: number; condId: number; desabilitado: boolean };
+
+function Campo({ rotulo, largo, ponto, ciencia, children }: { rotulo: string; largo?: boolean; ponto?: PontoCampo; ciencia?: CienciaCtx; children: React.ReactNode }) {
   return (
     <div className={cn("grid content-start gap-1", largo && "sm:col-span-2")}>
       <span className="flex items-center gap-1.5 text-xs font-medium text-zinc-500">
         {ponto && ponto.cor !== "cinza" && <Ponto cor={ponto.cor} />}
         {rotulo}
         {ponto && (ponto.cor === "amarelo" || ponto.cor === "vermelho") && <DicaCampo ponto={ponto} />}
+        {ponto && ciencia && <CienciaCampo ponto={ponto} ciencia={ciencia} />}
       </span>
       {children}
     </div>
+  );
+}
+
+// Botão ao lado do "confira ⓘ": dá ciência exatamente nos itens amarelos que o tooltip mostra
+function CienciaCampo({ ponto, ciencia }: { ponto: PontoCampo; ciencia: CienciaCtx }) {
+  const [pend, start] = useTransition();
+  const pendentes = ponto.itens.filter((i) => i.cor === "amarelo" && !i.ciente);
+  if (!pendentes.length) return null;
+  return (
+    <Button
+      size="xs"
+      variant="outline"
+      className="h-5 border-amber-300 px-1.5 text-[11px] font-medium text-amber-800"
+      disabled={pend || ciencia.desabilitado}
+      title={`Dar ciência em: ${pendentes.map((p) => p.titulo).join("; ")}`}
+      onClick={() => start(async () => avisar(await darCienciaItens(ciencia.negId, ciencia.condId, pendentes.map((p) => p.codigo))))}
+    >
+      {pend ? "…" : `Dar ciência${pendentes.length > 1 ? ` (${pendentes.length})` : ""}`}
+    </Button>
   );
 }
 
@@ -234,21 +258,24 @@ function DicaCampo({ ponto }: { ponto: PontoCampo }) {
 
 export function AprovarCondicao({
   condId,
-  aprovadores,
+  perfil,
+  alcadaOk,
+  alcadaLabel,
   aprovada,
   podeAgora,
   motivo,
   emRevisao,
 }: {
   condId: number;
-  aprovadores: (Opcao & { alcadaOk: boolean })[];
+  perfil: { nome: string; cargo: string };
+  alcadaOk: boolean;
+  alcadaLabel: string;
   aprovada: string | null;
   podeAgora: boolean;
   motivo: string | null;
   emRevisao: boolean;
 }) {
   const [pend, start] = useTransition();
-  const [ap, setAp] = useState("");
   if (aprovada)
     return (
       <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
@@ -258,19 +285,15 @@ export function AprovarCondicao({
     );
   if (!emRevisao) return null;
   return (
-    <div className="grid gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+    <div className="grid gap-1.5 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2.5">
       <div className="flex flex-wrap items-center gap-2">
-        <select className={cn(inputCls, "w-auto min-w-60")} value={ap} onChange={(e) => setAp(e.target.value)}>
-          <option value="">Quem aprova?</option>
-          {aprovadores.map((a) => (
-            <option key={a.valor} value={a.valor}>{a.rotulo}{a.alcadaOk ? "" : " — sem alçada"}</option>
-          ))}
-        </select>
-        <Button size="sm" disabled={!podeAgora || !ap || pend} onClick={() => start(async () => avisar(await aprovarCondicao(condId, ap)))}>
-          {pend ? "Aprovando…" : "Aprovar esta condição"}
+        <Button size="sm" disabled={!podeAgora || !alcadaOk || pend} onClick={() => start(async () => avisar(await aprovarCondicao(condId)))}>
+          {pend ? "Aprovando…" : `Aprovar como ${perfil.nome}`}
         </Button>
+        <span className="text-xs text-zinc-500">{perfil.cargo}</span>
       </div>
-      {motivo && <p className="text-xs text-red-700">{motivo}</p>}
+      {!alcadaOk && <p className="text-xs text-red-700">Seu perfil não tem alçada: esta condição exige {alcadaLabel}. Troque o perfil no topo da página.</p>}
+      {alcadaOk && motivo && <p className="text-xs text-red-700">{motivo}</p>}
     </div>
   );
 }

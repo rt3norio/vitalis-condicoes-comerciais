@@ -1,6 +1,6 @@
 // Ciência por item amarelo (substitui o "Conferi os N itens" em bloco). A ciência vale para o texto do farol
 // no momento do clique: se uma edição muda aquele item, ela deixa de valer e a pessoa dá ciência de novo.
-export type Ciencias = Record<string, { em: string; detalhe: string }>;
+export type Ciencias = Record<string, { em: string; detalhe: string; por?: string }>;
 
 type FarolCiencia = { codigo: string; condicaoId: number | null; cor: string; detalhe: string };
 

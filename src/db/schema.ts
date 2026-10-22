@@ -42,8 +42,10 @@ export const negociacoes = sqliteTable(
     textosOrigem: text("textos_origem").$type<"ia" | "padrao">(),
     conferidos: text("conferidos", { mode: "json" }).$type<{ por: string; em: string; farois: string[] } | null>(), // obsoleto (S31 antigo)
     // ciência por item amarelo: chave "CODIGO#condicaoId" → quando e sobre qual texto do farol (vale enquanto o texto não muda)
-    ciencias: text("ciencias", { mode: "json" }).$type<Record<string, { em: string; detalhe: string }>>().notNull().default({}),
+    ciencias: text("ciencias", { mode: "json" }).$type<Record<string, { em: string; detalhe: string; por?: string }>>().notNull().default({}),
     motivoSaida: text("motivo_saida"),
+    // matrícula de quem recusou/escalou; null = o próprio sistema (ex.: texto suspeito)
+    encerradoPor: text("encerrado_por"),
     alertaRevisao: text("alerta_revisao"),
     atualizadoEm: ts("atualizado_em").notNull().$defaultFn(agora),
   },

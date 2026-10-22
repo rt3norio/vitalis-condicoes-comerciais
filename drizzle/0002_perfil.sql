@@ -1,0 +1,1 @@
+ALTER TABLE `negociacoes` ADD `encerrado_por` text;

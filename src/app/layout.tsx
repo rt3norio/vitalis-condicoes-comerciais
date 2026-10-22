@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import Link from "next/link";
+import { Suspense } from "react";
+import { PerfilTopo } from "@/components/perfil-topo";
 import { Toaster } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import "./globals.css";
@@ -27,7 +29,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
                   <span className="block text-xs text-zinc-500">Condições comerciais de fornecedores</span>
                 </span>
               </Link>
-              <nav className="flex items-center gap-4 text-sm text-zinc-600">
+              <nav className="flex flex-wrap items-center justify-end gap-4 text-sm text-zinc-600">
+                <Suspense fallback={null}>
+                  <PerfilTopo />
+                </Suspense>
                 <Link href="/" className="hover:text-zinc-900">Painel</Link>
                 <Link href="/erp" className="hover:text-zinc-900">ERP (simulado)</Link>
                 <a href="/politica-comercial.pdf" target="_blank" className="hover:text-zinc-900">Política POL-COM-004</a>

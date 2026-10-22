@@ -42,3 +42,9 @@ export const APROVADORES: Aprovador[] = [
   { matricula: "004330", nome: "Marina Figueiredo", cargo: "Diretora Comercial", nivel: 2 },
   { matricula: "004999", nome: "Comitê Comercial (ata)", cargo: "Comitê Comercial", nivel: 3 },
 ];
+
+// Perfis do seletor "Quem você é" (sem login, é um case). Analista não tem alçada: edita e dá ciência, não aprova.
+export const ANALISTA: Aprovador = { matricula: "003050", nome: "Renata Alves", cargo: "Analista Comercial", nivel: -1 };
+export const PERFIS: Aprovador[] = [ANALISTA, ...APROVADORES];
+// Escalado vai para a Diretoria Comercial (§11): só Diretoria e Comitê veem, além de quem escalou
+export const veEscalados = (p: Aprovador) => p.nivel >= 2;

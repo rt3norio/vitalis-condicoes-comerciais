@@ -6,14 +6,24 @@ import { db, schema as s } from "@/db";
 import { gerarEmails, iaConfigurada } from "@/lib/agentes/agentes";
 import { capturaErp, parseEml } from "@/lib/dominio/dataset";
 import { hoje, isISO } from "@/lib/dominio/datas";
-import { APROVADORES } from "@/lib/dominio/politica";
+import { PERFIS, veEscalados } from "@/lib/dominio/politica";
 import { CATEGORIA_LABEL, CATEGORIAS, type CampoCondicao } from "@/lib/dominio/tipos";
 import { carregar, paraCondicao, recalcularFarois } from "@/lib/negociacao";
 import { amarelosSemCiencia, chaveCiencia } from "@/lib/regras/ciencia";
 import { podeAprovar } from "@/lib/regras/farois";
 import { reiniciarSessao, sessaoAtual } from "@/lib/sessao";
+import { COOKIE_PERFIL, perfilAtual } from "@/lib/perfil";
+import { cookies } from "next/headers";
 import { processarRodada } from "@/lib/tarefas/agendador";
 import { enfileirar } from "@/lib/tarefas/fila";
+
+export async function trocarPerfil(matricula: string): Promise<RespostaAcao> {
+  const p = PERFIS.find((x) => x.matricula === matricula);
+  if (!p) return { ok: false, mensagem: "Perfil desconhecido." };
+  (await cookies()).set(COOKIE_PERFIL, p.matricula, { httpOnly: true, sameSite: "lax", path: "/", maxAge: 60 * 60 * 24 * 30 });
+  refresh();
+  return { ok: true, mensagem: `Agora você é ${p.nome} (${p.cargo}).` };
+}
 
 export type RespostaAcao = { ok: boolean; mensagem: string };
 const ok = (mensagem: string): RespostaAcao => ({ ok: true, mensagem });
@@ -118,10 +128,27 @@ export async function darCiencia(negId: number, codigo: string, condicaoId: numb
   if (!dados || dados.neg.status !== "revisao") return falha("Negociação não está em revisão.");
   const f = dados.farois.find((x) => x.codigo === codigo && x.condicaoId === condicaoId);
   if (!f || f.cor !== "amarelo") return falha("Este item não precisa de ciência.");
-  const ciencias = { ...dados.neg.ciencias, [chaveCiencia(codigo, condicaoId)]: { em: new Date().toISOString(), detalhe: f.detalhe } };
+  const por = (await perfilAtual()).nome;
+  const ciencias = { ...dados.neg.ciencias, [chaveCiencia(codigo, condicaoId)]: { em: new Date().toISOString(), detalhe: f.detalhe, por } };
   await db.update(s.negociacoes).set({ ciencias }).where(eq(s.negociacoes.id, negId));
   refresh();
   return ok(`Ciência registrada: ${f.titulo}.`);
+}
+
+// Ciência em vários itens de uma vez (botão ao lado do "confira" do campo: os itens do tooltip)
+export async function darCienciaItens(negId: number, condicaoId: number, codigos: string[]): Promise<RespostaAcao> {
+  const sid = await sessaoAtual();
+  const dados = await carregar(sid, negId);
+  if (!dados || dados.neg.status !== "revisao") return falha("Negociação não está em revisão.");
+  const alvo = dados.farois.filter((f) => f.condicaoId === condicaoId && f.cor === "amarelo" && codigos.includes(f.codigo));
+  if (!alvo.length) return falha("Nada para dar ciência neste campo.");
+  const em = new Date().toISOString();
+  const por = (await perfilAtual()).nome;
+  const ciencias = { ...dados.neg.ciencias };
+  for (const f of alvo) ciencias[chaveCiencia(f.codigo, condicaoId)] = { em, detalhe: f.detalhe, por };
+  await db.update(s.negociacoes).set({ ciencias }).where(eq(s.negociacoes.id, negId));
+  refresh();
+  return ok(`Ciência registrada: ${alvo.map((f) => f.titulo).join("; ")}.`);
 }
 
 export async function desfazerCiencia(negId: number, codigo: string, condicaoId: number | null): Promise<RespostaAcao> {
@@ -135,14 +162,15 @@ export async function desfazerCiencia(negId: number, codigo: string, condicaoId:
   return ok("Ciência desfeita.");
 }
 
-export async function aprovarCondicao(condId: number, matricula: string): Promise<RespostaAcao> {
+export async function aprovarCondicao(condId: number): Promise<RespostaAcao> {
   const sid = await sessaoAtual();
   const c = await db.select().from(s.condicoes).where(eq(s.condicoes.id, condId)).get();
   if (!c) return falha("Condição não encontrada.");
   const dados = await carregar(sid, c.negociacaoId);
   if (!dados || dados.neg.status !== "revisao") return falha("Negociação não está em revisão.");
   const { porCondicao } = await recalcularFarois(sid, c.negociacaoId);
-  const ap = APROVADORES.find((a) => a.matricula === matricula);
+  const ap = await perfilAtual();
+  if (ap.nivel < 0) return falha(`${ap.nome} (${ap.cargo}) não tem alçada para aprovar. Troque o perfil no topo.`);
   const fsCond = (porCondicao.get(c.id) ?? []).map((f) => ({ ...f, condicaoId: c.id }));
   const todosCientes = amarelosSemCiencia(fsCond, dados.neg.ciencias).length === 0;
   const pa = podeAprovar(porCondicao.get(c.id) ?? [], ap, paraCondicao(c), todosCientes);
@@ -180,7 +208,11 @@ export async function encerrar(negId: number, destino: "recusado" | "escalado", 
   const dados = await carregar(sid, negId);
   if (!dados || dados.neg.status !== "revisao") return falha("Negociação não está em revisão.");
   if (!motivo.trim()) return falha("Escreva o motivo.");
-  await db.update(s.negociacoes).set({ status: destino, motivoSaida: motivo.trim().slice(0, 500), atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
+  const quem = await perfilAtual();
+  await db
+    .update(s.negociacoes)
+    .set({ status: destino, motivoSaida: `${motivo.trim().slice(0, 500)} — ${destino === "escalado" ? "escalado" : "recusado"} por ${quem.nome} (${quem.cargo})`, encerradoPor: quem.matricula, atualizadoEm: new Date() })
+    .where(eq(s.negociacoes.id, negId));
   await enfileirar(sid, negId, "redigir");
   refresh();
   return ok(destino === "recusado" ? "Recusada." : "Escalada à Diretoria.");
@@ -190,8 +222,9 @@ export async function reabrir(negId: number): Promise<RespostaAcao> {
   const sid = await sessaoAtual();
   const dados = await carregar(sid, negId);
   if (!dados || !["escalado", "recusado"].includes(dados.neg.status)) return falha("Só reabre o que foi escalado ou recusado.");
+  if (dados.neg.status === "escalado" && !veEscalados(await perfilAtual())) return falha("Só a Diretoria ou o Comitê reabrem um caso escalado.");
   if (dados.farois.some((f) => f.codigo === "LEI-09" && f.cor === "vermelho")) return falha("Texto suspeito no e-mail: não pode ser reaberto na tela. Encaminhe à Diretoria Comercial.");
-  await db.update(s.negociacoes).set({ status: "revisao", motivoSaida: null, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
+  await db.update(s.negociacoes).set({ status: "revisao", motivoSaida: null, encerradoPor: null, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
   await recalcularFarois(sid, negId);
   refresh();
   return ok("Reaberta para revisão.");
