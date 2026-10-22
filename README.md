@@ -51,7 +51,7 @@ ERP simulado: `/api/v1/{fornecedores,lojas,condicoes}`, mesmo contrato do `mock_
 
 ## Documentação (`docs/`)
 
-- `entrega-pdf.md` rascunho do PDF de entrega (10 seções)
+- `entrega-pdf.md` fonte do PDF de entrega (10 seções), `resumo.md` resumo de 1 página: `pnpm gerar-pdf` e `pnpm gerar-pdf resumo`
 - `registro-alteracoes.md` toda mudança e decisão, com o porquê
 - `desenho.md` funil, faróis, telas · `decisoes-stack.md` stack e arquitetura
 - `pendencias-negocio.md` dúvidas de negócio · `duvidas-do-caminho.md` dúvidas surgidas na construção

@@ -1,6 +1,7 @@
 // Gera o PDF de entrega (F3): docs/entrega-pdf.md → docs/entrega.html → docs/entrega.pdf (Chrome sem interface).
 // Os anexos de prompts, formatos de saída e conferências saem direto do código, para o documento bater com o entregue.
-// Uso: pnpm gerar-pdf
+// Uso: pnpm gerar-pdf            (documento completo)
+//      pnpm gerar-pdf resumo     (docs/resumo.md → docs/resumo.pdf: 1 página, para a pessoa ler; F6)
 import { execFileSync } from "node:child_process";
 import fs from "node:fs";
 import path from "node:path";
@@ -92,8 +93,20 @@ function anexoConferencias() {
   return `| Grupo | Conferência | Política | Quem confere |\n|---|---|---|---|\n${linhas.join("\n")}`;
 }
 
-let md = fs.readFileSync(path.join(DOCS, "entrega-pdf.md"), "utf8");
-md = md.replace("<!-- ANEXO:PROMPTS -->", anexoPrompts()).replace("<!-- ANEXO:CONFERENCIAS -->", anexoConferencias());
+const resumo = process.argv[2] === "resumo";
+let md = fs.readFileSync(path.join(DOCS, resumo ? "resumo.md" : "entrega-pdf.md"), "utf8");
+if (!resumo) md = md.replace("<!-- ANEXO:PROMPTS -->", anexoPrompts()).replace("<!-- ANEXO:CONFERENCIAS -->", anexoConferencias());
+
+// resumo de 1 página: só texto, muito espaço em branco, sem quebra de página por seção
+const CSS_RESUMO = `
+@page { size: A4; margin: 22mm 24mm; }
+body { font-size: 10.5pt; line-height: 1.55; }
+h1 { font-size: 20pt; margin-bottom: 2pt; }
+h1 + p { font-size: 9pt; margin-top: 0; }
+h2 { break-before: auto; font-size: 9pt; text-transform: uppercase; letter-spacing: 1.2pt; border-bottom: 0.6pt solid #99f6e4; margin: 18pt 0 6pt; padding-bottom: 2pt; }
+p strong:only-child { display: block; font-size: 11.5pt; color: #0f766e; margin: 10pt 0; }
+ul, ol { padding-left: 16pt; margin: 4pt 0; }
+li { margin: 3pt 0; }`;
 
 const renderer = new marked.Renderer();
 const codigoPadrao = renderer.code.bind(renderer);
@@ -125,13 +138,14 @@ img { max-width: 100%; border: 0.6pt solid #d4d4d8; border-radius: 4pt; break-in
 p:has(> img) { break-inside: avoid; text-align: center; margin-bottom: 2pt; }
 em.legenda, p > em:only-child { color: #52525b; font-size: 9pt; }
 hr { display: none; }
+${resumo ? CSS_RESUMO : ""}
 </style>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
 <script>mermaid.initialize({ startOnLoad: true, theme: "neutral", flowchart: { htmlLabels: true, useMaxWidth: true } });</script>
 </head><body>${corpo}</body></html>`;
 
-const arqHtml = path.join(DOCS, "entrega.html");
-const arqPdf = path.join(DOCS, "entrega.pdf");
+const arqHtml = path.join(DOCS, resumo ? "resumo.html" : "entrega.html");
+const arqPdf = path.join(DOCS, resumo ? "resumo.pdf" : "entrega.pdf");
 fs.writeFileSync(arqHtml, html);
 execFileSync(CHROME, ["--headless=new", "--disable-gpu", "--no-pdf-header-footer", "--virtual-time-budget=20000", `--print-to-pdf=${arqPdf}`, pathToFileURL(arqHtml).href], { stdio: "ignore" });
 console.log(`PDF: ${arqPdf} (${Math.round(fs.statSync(arqPdf).size / 1024)} KB)`);
