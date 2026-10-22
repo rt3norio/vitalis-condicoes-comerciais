@@ -87,9 +87,9 @@ function anexoConferencias() {
   }
   const sus = farolInstrucaoSuspeita([]);
   titulos.set(sus.codigo, { titulo: sus.titulo });
-  const QUEM: Record<string, string> = { Leitura: "IA, com trecho e certeza", Cadastro: "Regra fixa (cadastro do ERP)", "Política": "Regra fixa (POL-COM-004)", "Contrato do ERP": "Regra fixa (formato do ERP)" };
+  const QUEM: Record<string, string> = { Leitura: "IA, com trecho e certeza", Cadastro: "Regra fixa (hardcoded): cadastro do ERP", "Política": "Regra fixa (hardcoded): POL-COM-004", "Contrato do ERP": "Regra fixa (hardcoded): formato do ERP" };
   const linhas = ORDEM_FAROIS.flatMap((g) => g.codigos.map((cod) => `| ${g.rotulo} | ${titulos.get(cod)?.titulo ?? cod} | ${titulos.get(cod)?.ref ?? ""} | ${QUEM[g.grupo]} |`));
-  linhas.push(`| Leitura | ${titulos.get("LEI-09")?.titulo} | | IA lista; regra fixa decide escalar |`);
+  linhas.push(`| Leitura | ${titulos.get("LEI-09")?.titulo} | | IA lista; regra fixa (hardcoded) decide escalar |`);
   return `| Grupo | Conferência | Política | Quem confere |\n|---|---|---|---|\n${linhas.join("\n")}`;
 }
 

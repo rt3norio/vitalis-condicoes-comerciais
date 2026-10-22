@@ -4,7 +4,7 @@ Vitalis · Case AI Builder (Pareto) · 22/10/2026 · [A PREENCHER: nome e e-mail
 
 O e-mail do fornecedor vira condição gravada no ERP, com uma pessoa decidindo no meio.
 
-**E-mail → IA lê → segunda IA confere → regras da política e do ERP → pessoa com alçada aprova → ERP**
+**E-mail → IA lê → segunda IA confere → regras fixas (hardcoded) da política e do ERP → pessoa com alçada aprova → ERP**
 
 Solução: [A PREENCHER: link da solução] · Vídeo: [A PREENCHER: link do vídeo] · Documento completo: entrega.pdf
 
@@ -16,7 +16,7 @@ Solução: [A PREENCHER: link da solução] · Vídeo: [A PREENCHER: link do ví
 
 ## Onde usa IA e onde não
 
-A IA lê o e-mail e a planilha, uma segunda IA confere essa leitura, e a IA também escreve o resumo e as respostas ao fornecedor. Teto, alçada, vigência, sobreposição e fornecedor ativo (POL-COM-004) ficam com regras fixas, e quem aprova é sempre uma pessoa.
+A IA lê o e-mail e a planilha, uma segunda IA confere essa leitura, e a IA também escreve o resumo e as respostas ao fornecedor. Teto, alçada, vigência, sobreposição e fornecedor ativo (POL-COM-004) são conferidos por regras fixas (hardcoded) no sistema, sem IA, e quem aprova é sempre uma pessoa.
 
 ## Três decisões de desenho
 

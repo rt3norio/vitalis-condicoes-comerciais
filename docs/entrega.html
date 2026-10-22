@@ -23,6 +23,7 @@ img { max-width: 100%; border: 0.6pt solid #d4d4d8; border-radius: 4pt; break-in
 p:has(> img) { break-inside: avoid; text-align: center; margin-bottom: 2pt; }
 em.legenda, p > em:only-child { color: #52525b; font-size: 9pt; }
 hr { display: none; }
+
 </style>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
 <script>mermaid.initialize({ startOnLoad: true, theme: "neutral", flowchart: { htmlLabels: true, useMaxWidth: true } });</script>
@@ -30,7 +31,7 @@ hr { display: none; }
 <p><strong>Vitalis · Case técnico AI Builder (Pareto) · 22/10/2026 · [A PREENCHER: nome e e-mail do autor]</strong></p>
 <blockquote>
 <p><strong>Solução (link público):</strong> [A PREENCHER: link da solução] · <strong>Vídeo (até 3 min):</strong> [A PREENCHER: link do vídeo] · Código: repositório privado, disponível sob pedido.</p>
-<p><strong>Em uma frase:</strong> o e-mail do fornecedor entra; a IA lê e uma segunda IA confere; regras fixas checam a política comercial e o cadastro do ERP; uma pessoa com alçada decide; e o sistema grava a condição no ERP sozinho, tentando de novo se o ERP falhar.</p>
+<p><strong>Em uma frase:</strong> o e-mail do fornecedor entra; a IA lê e uma segunda IA confere; regras fixas (hardcoded) no sistema, sem IA, checam a política comercial e o cadastro do ERP; uma pessoa com alçada decide; e o sistema grava a condição no ERP sozinho, tentando de novo se o ERP falhar.</p>
 </blockquote>
 <h3>Como testar em 2 minutos</h3>
 <ol>
@@ -192,7 +193,7 @@ hr { display: none; }
 <div class="figura"><pre class="mermaid">flowchart TB
   A["E-mail do fornecedor"] --> R1["1 · Recebido"]
   R1 -- "IA lê o e-mail e a planilha" --> R2["2 · Verificação"]
-  R2 -- "segunda IA confere<br/>+ regras da política e do ERP" --> R3["3 · Revisão humana"]
+  R2 -- "segunda IA confere<br/>+ regras fixas (hardcoded)<br/>da política e do ERP" --> R3["3 · Revisão humana"]
   R2 -- "texto suspeito" --> X["Escalado à Diretoria"]
   R3 -- "aprovar com alçada" --> R4["4 · Aguardando envio"]
   R3 -- "recusar" --> Y["Recusado"]
@@ -242,9 +243,9 @@ hr { display: none; }
 <td><strong>OpenRouter</strong> com o modelo <strong>GLM-5.3</strong>: troca de modelo por configuração, sem mudar código. Saída validada por formato fixo.</td>
 </tr>
 <tr>
-<td><strong>Regras</strong></td>
+<td><strong>Regras fixas (hardcoded)</strong></td>
 <td>As 21 conferências (Anexo C) e o pacote que vai ao ERP</td>
-<td>Código comum: regra de negócio tem que dar sempre o mesmo resultado e ser auditável.</td>
+<td>Escritas no código do sistema, sem IA: regra de negócio tem que dar sempre o mesmo resultado e ser auditável.</td>
 </tr>
 <tr>
 <td><strong>Conexão com o ERP</strong></td>
@@ -459,7 +460,7 @@ hr { display: none; }
 <td>Onde usar IA</td>
 <td>Texto livre × regra escrita</td>
 <td>IA em tudo × IA só na leitura e na redação</td>
-<td>IA lê e redige; regra decide</td>
+<td>IA lê e redige; regra fixa (hardcoded) decide</td>
 <td>Mesmo e-mail, mesmo resultado nas regras</td>
 </tr>
 <tr>
@@ -953,79 +954,79 @@ Escreva o memorando à Diretoria Comercial: o caso em poucas linhas e o que se p
 <td>Cadastro</td>
 <td>Fornecedor existe no ERP</td>
 <td></td>
-<td>Regra fixa (cadastro do ERP)</td>
+<td>Regra fixa (hardcoded): cadastro do ERP</td>
 </tr>
 <tr>
 <td>Cadastro</td>
 <td>Lojas existem no ERP</td>
 <td></td>
-<td>Regra fixa (cadastro do ERP)</td>
+<td>Regra fixa (hardcoded): cadastro do ERP</td>
 </tr>
 <tr>
 <td>Cadastro</td>
 <td>Categoria existe no ERP</td>
 <td></td>
-<td>Regra fixa (cadastro do ERP)</td>
+<td>Regra fixa (hardcoded): cadastro do ERP</td>
 </tr>
 <tr>
 <td>Política</td>
 <td>Desconto dentro do teto da categoria</td>
 <td>§4</td>
-<td>Regra fixa (POL-COM-004)</td>
+<td>Regra fixa (hardcoded): POL-COM-004</td>
 </tr>
 <tr>
 <td>Política</td>
 <td>Alçada de aprovação</td>
 <td>§5</td>
-<td>Regra fixa (POL-COM-004)</td>
+<td>Regra fixa (hardcoded): POL-COM-004</td>
 </tr>
 <tr>
 <td>Política</td>
 <td>Vigência de até 12 meses</td>
 <td>§6</td>
-<td>Regra fixa (POL-COM-004)</td>
+<td>Regra fixa (hardcoded): POL-COM-004</td>
 </tr>
 <tr>
 <td>Política</td>
 <td>Início não anterior à data do cadastro</td>
 <td>§6</td>
-<td>Regra fixa (POL-COM-004)</td>
+<td>Regra fixa (hardcoded): POL-COM-004</td>
 </tr>
 <tr>
 <td>Política</td>
 <td>Verba vinculada a contrapartida</td>
 <td>§7</td>
-<td>Regra fixa (POL-COM-004)</td>
+<td>Regra fixa (hardcoded): POL-COM-004</td>
 </tr>
 <tr>
 <td>Política</td>
 <td>Fornecedor com cadastro ativo</td>
 <td>§8</td>
-<td>Regra fixa (POL-COM-004)</td>
+<td>Regra fixa (hardcoded): POL-COM-004</td>
 </tr>
 <tr>
 <td>Política</td>
 <td>Sem sobreposição com condição vigente</td>
 <td>§9</td>
-<td>Regra fixa (POL-COM-004)</td>
+<td>Regra fixa (hardcoded): POL-COM-004</td>
 </tr>
 <tr>
 <td>Política</td>
 <td>Formalizada por e-mail do fornecedor</td>
 <td>§10</td>
-<td>Regra fixa (POL-COM-004)</td>
+<td>Regra fixa (hardcoded): POL-COM-004</td>
 </tr>
 <tr>
 <td>ERP</td>
 <td>Formato aceito pelo ERP</td>
 <td></td>
-<td>Regra fixa (formato do ERP)</td>
+<td>Regra fixa (hardcoded): formato do ERP</td>
 </tr>
 <tr>
 <td>Leitura</td>
 <td>Sem texto suspeito no e-mail</td>
 <td></td>
-<td>IA lista; regra fixa decide escalar</td>
+<td>IA lista; regra fixa (hardcoded) decide escalar</td>
 </tr>
 </tbody></table>
 </body></html>

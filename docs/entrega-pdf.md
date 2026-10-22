@@ -4,7 +4,7 @@
 
 > **Solução (link público):** [A PREENCHER: link da solução] · **Vídeo (até 3 min):** [A PREENCHER: link do vídeo] · Código: repositório privado, disponível sob pedido.
 >
-> **Em uma frase:** o e-mail do fornecedor entra; a IA lê e uma segunda IA confere; regras fixas checam a política comercial e o cadastro do ERP; uma pessoa com alçada decide; e o sistema grava a condição no ERP sozinho, tentando de novo se o ERP falhar.
+> **Em uma frase:** o e-mail do fornecedor entra; a IA lê e uma segunda IA confere; regras fixas (hardcoded) no sistema, sem IA, checam a política comercial e o cadastro do ERP; uma pessoa com alçada decide; e o sistema grava a condição no ERP sozinho, tentando de novo se o ERP falhar.
 
 ### Como testar em 2 minutos
 
@@ -78,7 +78,7 @@ flowchart TB
 flowchart TB
   A["E-mail do fornecedor"] --> R1["1 · Recebido"]
   R1 -- "IA lê o e-mail e a planilha" --> R2["2 · Verificação"]
-  R2 -- "segunda IA confere<br/>+ regras da política e do ERP" --> R3["3 · Revisão humana"]
+  R2 -- "segunda IA confere<br/>+ regras fixas (hardcoded)<br/>da política e do ERP" --> R3["3 · Revisão humana"]
   R2 -- "texto suspeito" --> X["Escalado à Diretoria"]
   R3 -- "aprovar com alçada" --> R4["4 · Aguardando envio"]
   R3 -- "recusar" --> Y["Recusado"]
@@ -111,7 +111,7 @@ O ERP do case cai de propósito (cerca de 1 em cada 5 chamadas responde "sistema
 | **Banco de dados** | Guarda tudo: negociações, condições, conferências, tarefas, histórico, chamadas de IA e o ERP simulado de cada visitante | **SQLite** num disco persistente: custo zero e nenhum serviço extra no protótipo. Em produção: Azure SQL ou Postgres. |
 | **Fila de tarefas e agendador** | Executa cada etapa em segundo plano, a cada minuto, e registra cada tentativa | Feito no próprio sistema. O cadastro não precisa ser instantâneo; precisa ser resiliente e auditável. |
 | **3 agentes de IA** | Extrator, Verificador e Redator (seção 05) | **OpenRouter** com o modelo **GLM-5.3**: troca de modelo por configuração, sem mudar código. Saída validada por formato fixo. |
-| **Regras** | As 21 conferências (Anexo C) e o pacote que vai ao ERP | Código comum: regra de negócio tem que dar sempre o mesmo resultado e ser auditável. |
+| **Regras fixas (hardcoded)** | As 21 conferências (Anexo C) e o pacote que vai ao ERP | Escritas no código do sistema, sem IA: regra de negócio tem que dar sempre o mesmo resultado e ser auditável. |
 | **Conexão com o ERP** | Fala o mesmo contrato do ERP do case (consultas, gravação, recusas, manutenção) | Trocar para o SAP real = trocar o endereço e a autenticação. |
 | **Hospedagem** | O link público | **Fly.io**, uma máquina sempre ligada (o agendador roda nela), na região de São Paulo: ~US$ 5 por mês. |
 
@@ -234,7 +234,7 @@ Toda chamada de agente fica gravada e aparece na tela, em **Detalhes para audito
 | Execução | ERP instável (manutenção, limite de 10 por minuto) | na hora × fila em segundo plano | Tudo é tarefa, a cada minuto, com nova tentativa | Resiliente e auditável; até 1 minuto de espera |
 | Revisão humana | A política exige alçada | opcional × obrigatória | Obrigatória; saídas aprovar, recusar ou escalar | Nada é gravado sem dono |
 | Incerteza | O case pede "o que foi suposto" | sim/não × semáforo | Verde, amarelo (deduzido: exige ciência), vermelho (trava) | Toda suposição vira uma ciência registrada, com nome e hora |
-| Onde usar IA | Texto livre × regra escrita | IA em tudo × IA só na leitura e na redação | IA lê e redige; regra decide | Mesmo e-mail, mesmo resultado nas regras |
+| Onde usar IA | Texto livre × regra escrita | IA em tudo × IA só na leitura e na redação | IA lê e redige; regra fixa (hardcoded) decide | Mesmo e-mail, mesmo resultado nas regras |
 | Modelo | Custo × qualidade | GLM-5.2, GLM-5.3, GLM-5.3-flash | GLM-5.3 nos três agentes | Mais caro que o flash, mas leu tudo certo (seção 05) |
 | Texto suspeito | Nutrivida pede para "pular validações" | avisar × bloquear | Marcar e escalar, sem liberação e sem expor o trecho na tela | A proposta não segue; o fornecedor precisa de novo contato. A validar com o negócio |
 | Textos para enviar | Texto escrito na hora da leitura envelhecia quando a pessoa corrigia ou aprovava | automático × sob demanda | Gerado quando a pessoa clica, sobre o estado atual | Texto sempre atual; cada clique é uma chamada de IA (~US$ 0,001) |
