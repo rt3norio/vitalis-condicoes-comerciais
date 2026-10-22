@@ -24,14 +24,16 @@ p:has(> img) { break-inside: avoid; text-align: center; margin-bottom: 2pt; }
 em.legenda, p > em:only-child { color: #52525b; font-size: 9pt; }
 hr { display: none; }
 
-@page { size: A4; margin: 22mm 24mm; }
-body { font-size: 10.5pt; line-height: 1.55; }
+@page { size: A4; margin: 15mm 20mm; }
+body { font-size: 10pt; line-height: 1.45; }
 h1 { font-size: 20pt; margin-bottom: 2pt; }
 h1 + p { font-size: 9pt; margin-top: 0; }
-h2 { break-before: auto; font-size: 9pt; text-transform: uppercase; letter-spacing: 1.2pt; border-bottom: 0.6pt solid #99f6e4; margin: 18pt 0 6pt; padding-bottom: 2pt; }
-p strong:only-child { display: block; font-size: 11.5pt; color: #0f766e; margin: 10pt 0; }
+h2 { break-before: auto; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 1.2pt; border-bottom: 0.6pt solid #99f6e4; margin: 12pt 0 4pt; padding-bottom: 2pt; }
+p strong:only-child { display: block; font-size: 11pt; color: #0f766e; margin: 6pt 0; }
 ul, ol { padding-left: 16pt; margin: 4pt 0; }
-li { margin: 3pt 0; }
+li { margin: 2pt 0; }
+.colunas ol { columns: 2; column-gap: 16pt; font-size: 8.8pt; line-height: 1.35; margin: 2pt 0; }
+.colunas li { break-inside: avoid; margin: 0 0 3pt; }
 </style>
 <script src="https://cdn.jsdelivr.net/npm/mermaid@11.4.1/dist/mermaid.min.js"></script>
 <script>mermaid.initialize({ startOnLoad: true, theme: "neutral", flowchart: { htmlLabels: true, useMaxWidth: true } });</script>
@@ -57,10 +59,25 @@ li { margin: 3pt 0; }
 <li><strong>E-mail que tenta comandar o sistema é marcado e escalado à Diretoria.</strong> Aquela proposta não segue; o fornecedor manda outra.</li>
 <li><strong>Modelo escolhido por teste medido.</strong> O GLM-5.3 custa ~US$ 0,006 por e-mail; os mais baratos testados erraram a leitura.</li>
 </ol>
-<h2>Próximos passos</h2>
+<h2>Para validar com a área</h2>
+<div class="colunas">
+
 <ol>
-<li><strong>Validar com a área</strong> as 12 dúvidas de negócio (ex.: a alçada da verba é pelo total ou por loja?). 2 semanas.</li>
-<li><strong>Piloto</strong> com a caixa do Outlook, o SAP de testes e um time comercial. 4 a 6 semanas.</li>
-<li><strong>Produção</strong> no Azure, com login da empresa e aviso ao aprovador no Teams. 4 semanas.</li>
+<li><strong>Data passada:</strong> quando o início pedido já passou, combina-se nova data ou recusa-se?</li>
+<li><strong>Alfa (28%, &quot;campanha sazonal&quot;):</strong> vale a nota (*) da §4, até 30% com Trade Marketing, ou a §5, que veda acima de 25%?</li>
+<li><strong>Verba da Gama:</strong> a alçada é pelo total (R$ 8.000) ou por loja (R$ 2.000)?</li>
+<li><strong>Desconto da Gama:</strong> vale 12% (e-mail) ou 12,5% (planilha)?</li>
+<li><strong>Gama sem data de fim:</strong> sugerir 31/12 ou esperar o fornecedor?</li>
+<li><strong>Lojas da Gama:</strong> Copacabana, Ipanema, Leblon e Barra são as lojas 101, 102, 103 e 109? A contrapartida vale também para o desconto?</li>
+<li><strong>Beta:</strong> a COND-003 passou de 10% para 11% depois do e-mail. A Beta sabe? &quot;HPC&quot; é Higiene e Beleza?</li>
+<li><strong>Fornecedor inativo (Nutrivida):</strong> bloquear antes do ERP ou aprovar e esperar a regularização?</li>
+<li><strong>Sobreposição (§9):</strong> vale entre tipos diferentes, como desconto e verba nas mesmas lojas?</li>
+<li><strong>Aprovadores:</strong> quem são, por alçada, com nome e matrícula?</li>
+<li><strong>Pacote:</strong> as condições de um mesmo e-mail valem separadas ou só juntas?</li>
+<li><strong>Texto suspeito:</strong> quem recebe (Diretoria, Compliance, TI)? O fornecedor é avisado? A proposta morre?</li>
 </ol>
+</div>
+
+<h2>Próximos passos</h2>
+<p><strong>Validar com a área</strong> os pontos acima → <strong>piloto</strong> com a caixa do Outlook, o SAP de testes e um time comercial → <strong>produção</strong> no Azure, com login da empresa e aviso ao aprovador no Teams.</p>
 </body></html>

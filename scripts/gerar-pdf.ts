@@ -99,14 +99,16 @@ if (!resumo) md = md.replace("<!-- ANEXO:PROMPTS -->", anexoPrompts()).replace("
 
 // resumo de 1 página: só texto, muito espaço em branco, sem quebra de página por seção
 const CSS_RESUMO = `
-@page { size: A4; margin: 22mm 24mm; }
-body { font-size: 10.5pt; line-height: 1.55; }
+@page { size: A4; margin: 15mm 20mm; }
+body { font-size: 10pt; line-height: 1.45; }
 h1 { font-size: 20pt; margin-bottom: 2pt; }
 h1 + p { font-size: 9pt; margin-top: 0; }
-h2 { break-before: auto; font-size: 9pt; text-transform: uppercase; letter-spacing: 1.2pt; border-bottom: 0.6pt solid #99f6e4; margin: 18pt 0 6pt; padding-bottom: 2pt; }
-p strong:only-child { display: block; font-size: 11.5pt; color: #0f766e; margin: 10pt 0; }
+h2 { break-before: auto; font-size: 8.5pt; text-transform: uppercase; letter-spacing: 1.2pt; border-bottom: 0.6pt solid #99f6e4; margin: 12pt 0 4pt; padding-bottom: 2pt; }
+p strong:only-child { display: block; font-size: 11pt; color: #0f766e; margin: 6pt 0; }
 ul, ol { padding-left: 16pt; margin: 4pt 0; }
-li { margin: 3pt 0; }`;
+li { margin: 2pt 0; }
+.colunas ol { columns: 2; column-gap: 16pt; font-size: 8.8pt; line-height: 1.35; margin: 2pt 0; }
+.colunas li { break-inside: avoid; margin: 0 0 3pt; }`;
 
 const renderer = new marked.Renderer();
 const codigoPadrao = renderer.code.bind(renderer);

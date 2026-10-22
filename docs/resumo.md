@@ -25,8 +25,25 @@ Solução: [A PREENCHER: link da solução] · Vídeo: [A PREENCHER: link do ví
 2. **E-mail que tenta comandar o sistema é marcado e escalado à Diretoria.** Aquela proposta não segue; o fornecedor manda outra.
 3. **Modelo escolhido por teste medido.** O GLM-5.3 custa ~US$ 0,006 por e-mail; os mais baratos testados erraram a leitura.
 
+## Para validar com a área
+
+<div class="colunas">
+
+1. **Data passada:** quando o início pedido já passou, combina-se nova data ou recusa-se?
+2. **Alfa (28%, "campanha sazonal"):** vale a nota (*) da §4, até 30% com Trade Marketing, ou a §5, que veda acima de 25%?
+3. **Verba da Gama:** a alçada é pelo total (R$ 8.000) ou por loja (R$ 2.000)?
+4. **Desconto da Gama:** vale 12% (e-mail) ou 12,5% (planilha)?
+5. **Gama sem data de fim:** sugerir 31/12 ou esperar o fornecedor?
+6. **Lojas da Gama:** Copacabana, Ipanema, Leblon e Barra são as lojas 101, 102, 103 e 109? A contrapartida vale também para o desconto?
+7. **Beta:** a COND-003 passou de 10% para 11% depois do e-mail. A Beta sabe? "HPC" é Higiene e Beleza?
+8. **Fornecedor inativo (Nutrivida):** bloquear antes do ERP ou aprovar e esperar a regularização?
+9. **Sobreposição (§9):** vale entre tipos diferentes, como desconto e verba nas mesmas lojas?
+10. **Aprovadores:** quem são, por alçada, com nome e matrícula?
+11. **Pacote:** as condições de um mesmo e-mail valem separadas ou só juntas?
+12. **Texto suspeito:** quem recebe (Diretoria, Compliance, TI)? O fornecedor é avisado? A proposta morre?
+
+</div>
+
 ## Próximos passos
 
-1. **Validar com a área** as 12 dúvidas de negócio (ex.: a alçada da verba é pelo total ou por loja?). 2 semanas.
-2. **Piloto** com a caixa do Outlook, o SAP de testes e um time comercial. 4 a 6 semanas.
-3. **Produção** no Azure, com login da empresa e aviso ao aprovador no Teams. 4 semanas.
+**Validar com a área** os pontos acima → **piloto** com a caixa do Outlook, o SAP de testes e um time comercial → **produção** no Azure, com login da empresa e aviso ao aprovador no Teams.
