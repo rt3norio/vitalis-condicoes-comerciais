@@ -13,7 +13,9 @@ pnpm test                    # faróis (Cadastro/Política) e contrato do ERP
 
 Banco: SQLite em `.data/app.db` (criado e migrado sozinho). Sem chave de IA, os 4 e-mails do dataset usam uma leitura de referência feita à mão, rotulada assim na tela.
 
-Com chave, gere o cache real da IA para os 4 e-mails: `pnpm gerar-cache-ia` (grava `data/leituras-ia-cache.json`).
+Com chave, gere o cache real da IA para os 4 e-mails: `pnpm gerar-cache-ia` (grava `data/leituras-ia-cache.json`, já incluído no repositório). Reiniciar a demo usa esse cache e não chama a IA.
+
+E-mails de teste: `pnpm gerar-exemplos 6` escreve e-mails fictícios em `data/exemplos/` (para colar/subir pela tela) e mostra como cada um seria lido. Na tela, o botão **Gerar novos e-mails (IA)** faz o mesmo direto no funil.
 
 ## Como funciona
 
