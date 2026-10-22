@@ -103,7 +103,7 @@ async function Painel({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
                   <div className="flex flex-col items-start gap-1">
                     <StatusBadge status={l.status} />
                     {l.instrucoesSuspeitas.length > 0 && (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-medium text-white" title="O e-mail tem texto tentando comandar o sistema; foi ignorado">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-[11px] font-medium text-white">
                         ⚠ texto suspeito
                       </span>
                     )}

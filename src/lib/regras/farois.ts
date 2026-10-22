@@ -274,19 +274,19 @@ export function calcularFarois(c: Condicao, ctx: ContextoFarois): Farol[] {
 }
 
 // Texto suspeito = trecho do e-mail tentando comandar o sistema (pular regra, revisão ou aprovação). S33.
-export const MOTIVO_TEXTO_SUSPEITO =
-  "Texto suspeito no e-mail: tentativa de comandar o sistema (pular regras ou aprovação). Escalado à Diretoria Comercial, sem liberação na tela.";
+// Na tela e nos textos fica só a marca e o escalonamento: nada do trecho nem do que ele pedia (D13).
+export const MOTIVO_TEXTO_SUSPEITO = "Texto suspeito no e-mail. Escalado à Diretoria Comercial.";
 
 // LEI-09 é da negociação inteira (o e-mail), não de uma condição
 export function farolInstrucaoSuspeita(instrucoes: { trecho: string; motivo: string }[]): Farol {
   const base = { codigo: "LEI-09", grupo: "Leitura" as const, titulo: "Sem texto suspeito no e-mail" };
-  if (!instrucoes.length) return { ...base, cor: "verde", detalhe: "Nenhum texto tentando comandar o sistema." };
+  if (!instrucoes.length) return { ...base, cor: "verde", detalhe: "Nenhum texto suspeito." };
   return {
     ...base,
     titulo: "Texto suspeito encontrado",
     cor: "vermelho",
     acao: "escalar",
-    detalhe: `${instrucoes.map((i) => `“${i.trecho}”`).join(" ")} Ignorado: nada foi aprovado nem gravado; negociação escalada sem liberação.`,
+    detalhe: "Escalado à Diretoria Comercial.",
   };
 }
 

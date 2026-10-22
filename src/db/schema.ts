@@ -1,5 +1,6 @@
 // Schema SQLite (docs/desenho.md §2). Toda tabela de dados carrega session_id (S18).
 import { index, integer, primaryKey, real, sqliteTable, text } from "drizzle-orm/sqlite-core";
+import type { RegistroIa } from "../lib/agentes/agentes";
 import type { Extracao, Verificacao } from "../lib/agentes/schemas";
 import type { ErpCondicao } from "../lib/dominio/dataset";
 import type { CampoCondicao, Farol, Proveniencia, Status, TipoCondicao } from "../lib/dominio/tipos";
@@ -143,6 +144,23 @@ export const eventos = sqliteTable('eventos', {
   por: text('por').notNull(),
   descricao: text('descricao').notNull(),
 });
+
+// Auditoria da IA (D14): cada chamada de agente, com o que recebeu, tools, retorno e tokens.
+// origem "cache" = saída salva por `pnpm gerar-cache-ia`, reaproveitada sem chamada nova (S36).
+export const chamadasIa = sqliteTable(
+  "chamadas_ia",
+  {
+    id: integer("id").primaryKey({ autoIncrement: true }),
+    negociacaoId: integer("negociacao_id").notNull(),
+    tarefaId: integer("tarefa_id"),
+    tentativa: integer("tentativa"),
+    em: ts("em").notNull().$defaultFn(agora),
+    origem: text("origem").$type<"ia" | "cache">().notNull(),
+    geradoEm: text("gerado_em"),
+    registro: text("registro", { mode: "json" }).$type<RegistroIa>().notNull(),
+  },
+  (t) => [index("chamadas_ia_neg").on(t.negociacaoId)],
+);
 
 // ---------- ERP simulado ----------
 export const erpFornecedores = sqliteTable(

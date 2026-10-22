@@ -5,7 +5,7 @@ import path from "node:path";
 import { db, schema as s } from "@/db";
 import type { TipoTarefa } from "@/db/schema";
 import referencia from "../../../data/leituras-referencia.json";
-import { extrair, IaIndisponivel, iaConfigurada, redigir, verificar, MODELOS, type MaterialEmail } from "../agentes/agentes";
+import { extrair, FalhaIa, IaIndisponivel, iaConfigurada, redigir, verificar, MODELOS, type MaterialEmail, type RegistroIa } from "../agentes/agentes";
 import { dadosRedator } from "../agentes/entrada-redator";
 import { soDirigidas, type Extracao, type Redacao, type Verificacao } from "../agentes/schemas";
 import { fmtBRL, fmtData, fmtPct } from "../dominio/datas";
@@ -21,7 +21,17 @@ const MAX_TENTATIVAS_IA = 5;
 
 // Saídas reais da IA salvas para os 4 e-mails do dataset (S36). Gerado por `pnpm gerar-cache-ia` com chave.
 const CAMINHO_CACHE = path.join(process.cwd(), "data", "leituras-ia-cache.json");
-type ItemCache = { extrator: Extracao; verificador: Verificacao | null; redator?: Redacao; statusRedator?: string; modeloExtrator: string; modeloVerificador: string | null; modeloRedator?: string };
+type ItemCache = {
+  extrator: Extracao;
+  verificador: Verificacao | null;
+  redator?: Redacao;
+  statusRedator?: string;
+  modeloExtrator: string;
+  modeloVerificador: string | null;
+  modeloRedator?: string;
+  geradoEm?: string;
+  chamadas?: Partial<Record<"extrator" | "verificador" | "redator", RegistroIa>>;
+};
 function cacheIa(): Record<string, ItemCache> {
   try {
     return JSON.parse(fs.readFileSync(CAMINHO_CACHE, "utf8"));
@@ -41,6 +51,12 @@ const material = (n: LinhaNegociacao): MaterialEmail => ({
 // Dataset nunca chama a IA ao vivo por visitante: usa a saída salva (ou a referência manual). IA ao vivo só
 // para e-mail novo (gerado/colado) ou quando alguém pede "reler ao vivo".
 const usaSalvo = (n: LinhaNegociacao) => !!n.chaveDataset && !n.forcarLeituraIa;
+
+// Auditoria da IA (D14): guarda cada chamada (ao vivo ou saída salva) ligada à tarefa e à tentativa
+async function registrarIa(t: Tarefa, registro: RegistroIa | undefined, origem: "ia" | "cache", geradoEm: string | null = null) {
+  if (!registro) return;
+  await db.insert(s.chamadasIa).values({ negociacaoId: t.negociacaoId, tarefaId: t.id, tentativa: t.tentativas, origem, geradoEm, registro });
+}
 
 function erroIa(e: unknown, t: Tarefa): never {
   if (e instanceof IaIndisponivel) throw new Transitoria(`${e.message}. Tenta de novo em 5 min.`, 300);
@@ -76,16 +92,19 @@ async function lerEmail(t: Tarefa): Promise<Resultado> {
     verificador = doCache.verificador;
     modeloExtrator = doCache.modeloExtrator;
     modeloVerificador = doCache.modeloVerificador;
+    await registrarIa(t, doCache.chamadas?.extrator, "cache", doCache.geradoEm ?? null);
   } else if (usaSalvo(neg)) {
     origem = "referencia_manual"; // C1: sem chave, leitura de referência rotulada como manual
     saida = (referencia as unknown as Record<string, Extracao>)[neg.chaveDataset!];
   } else {
     try {
       const r = await extrair(material(neg));
+      await registrarIa(t, r.registro, "ia");
       saida = r.saida;
       modeloExtrator = r.modelo;
       origem = "ia";
     } catch (e) {
+      if (e instanceof FalhaIa) await registrarIa(t, e.registro, "ia");
       erroIa(e, t);
     }
   }
@@ -121,16 +140,23 @@ async function verificarTarefa(t: Tarefa): Promise<Resultado> {
   if (neg.status !== "verificacao") return { mensagem: `Ignorada: negociação em ${neg.status}.` };
 
   let msgVerif = "Verificador não executado (IA não configurada).";
-  if (leitura.saidaVerificador) msgVerif = `Verificação salva (${leitura.modeloVerificador}).`;
-  else if (iaConfigurada() && leitura.origem === "ia") {
+  if (leitura.saidaVerificador) {
+    msgVerif = `Verificação salva (${leitura.modeloVerificador}).`;
+    if (leitura.origem === "cache") {
+      const c = cacheIa()[neg.chaveDataset!];
+      await registrarIa(t, c?.chamadas?.verificador, "cache", c?.geradoEm ?? null);
+    }
+  } else if (iaConfigurada() && leitura.origem === "ia") {
     try {
       const r = await verificar(material(neg), leitura.saidaExtrator);
+      await registrarIa(t, r.registro, "ia");
       await db.update(s.leituras).set({ saidaVerificador: r.saida, modeloVerificador: r.modelo }).where(eq(s.leituras.id, leitura.id));
       // o Verificador também procura texto suspeito: soma ao que o Extrator achou
       const todas = [...neg.instrucoesSuspeitas, ...soDirigidas(r.saida.instrucoes_suspeitas).filter((x) => !neg.instrucoesSuspeitas.some((y) => y.trecho === x.trecho))];
       await db.update(s.negociacoes).set({ instrucoesSuspeitas: todas }).where(eq(s.negociacoes.id, neg.id));
       msgVerif = `Verificador (${r.modelo}): ${r.saida.checagens.filter((c) => c.veredito !== "concorda").length} ponto(s) de dúvida/discordância.`;
     } catch (e) {
+      if (e instanceof FalhaIa) await registrarIa(t, e.registro, "ia");
       erroIa(e, t);
     }
   }
@@ -193,11 +219,15 @@ async function redigirTarefa(t: Tarefa): Promise<Resultado> {
     r = salvo.redator;
     origem = "ia";
     deCache = true;
+    await registrarIa(t, salvo.chamadas?.redator, "cache", salvo.geradoEm ?? null);
   } else if (iaConfigurada() && !usaSalvo(neg)) {
     try {
-      r = (await redigir(dadosRedator(neg, conds, farois))).saida;
+      const red = await redigir(dadosRedator(neg, conds, farois));
+      await registrarIa(t, red.registro, "ia");
+      r = red.saida;
       origem = "ia";
     } catch (e) {
+      if (e instanceof FalhaIa) await registrarIa(t, e.registro, "ia");
       // texto não é essencial: depois de 3 tentativas usa o padrão em vez de travar
       if (t.tentativas < 3 && !(e instanceof IaIndisponivel)) erroIa(e, t);
       r = textosPadrao(neg, conds, farois);

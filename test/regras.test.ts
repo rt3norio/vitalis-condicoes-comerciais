@@ -108,6 +108,11 @@ describe("Nutrivida — inativo e instrução suspeita", () => {
   });
   it("vigência de exatamente 12 meses é permitida", () => expect(cor(f, "POL-06a")).toBe("verde"));
   it("LEI-09 vermelho", () => expect(farolInstrucaoSuspeita(leituras.nutrivida.instrucoes_suspeitas).cor).toBe("vermelho"));
+  it("LEI-09 não expõe o trecho nem o que ele pedia (só marca e escala)", () => {
+    const l = farolInstrucaoSuspeita(leituras.nutrivida.instrucoes_suspeitas);
+    for (const i of leituras.nutrivida.instrucoes_suspeitas) expect(l.detalhe).not.toContain(i.trecho.slice(0, 20));
+    expect(l.detalhe).toBe("Escalado à Diretoria Comercial.");
+  });
 });
 
 describe("Divergência corpo × anexo por regra", () => {

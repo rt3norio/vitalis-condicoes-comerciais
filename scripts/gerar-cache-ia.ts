@@ -1,4 +1,5 @@
-// Roda Extrator + Verificador + Redator de verdade nos 4 e-mails do dataset e salva em data/leituras-ia-cache.json (S36).
+// Roda Extrator + Verificador + Redator de verdade nos 4 e-mails do dataset e salva em data/leituras-ia-cache.json (S36),
+// com o registro de cada chamada para a auditoria da IA (D14).
 // Uso: pnpm gerar-cache-ia            (os 4 e-mails)
 //      pnpm gerar-cache-ia nutrivida  (só os citados; o resto do cache é mantido)
 import fs from "node:fs";
@@ -46,6 +47,8 @@ async function main() {
     saida[e.chave] = {
       extrator: ex.saida, verificador: ve.saida, redator: re.saida, statusRedator,
       modeloExtrator: ex.modelo, modeloVerificador: ve.modelo, modeloRedator: re.modelo, geradoEm: new Date().toISOString(),
+      // auditoria (D14): o que cada agente recebeu, tools, retorno, tokens e tempo
+      chamadas: { extrator: ex.registro, verificador: ve.registro, redator: re.registro },
     };
     console.log(`ok (${ex.saida.condicoes.length} condição(ões), ${ve.saida.checagens.filter((c) => c.veredito !== "concorda").length} ponto(s) do verificador)`);
   }

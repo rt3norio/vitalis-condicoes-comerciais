@@ -17,6 +17,7 @@ import { FAROIS_DO_CAMPO, piorCor } from "@/lib/regras/farois";
 import { sessaoAtual } from "@/lib/sessao";
 import { perfilAtual, podeVer } from "@/lib/perfil";
 import { cn } from "@/lib/utils";
+import { AuditoriaIa } from "./auditoria-ia";
 import { AprovarCondicao, BotaoCiencia, BotaoReabrir, BotaoReler, Copiar, EditorCondicao, Encerrar } from "./cliente";
 
 export default function Pagina(props: PageProps<"/negociacoes/[id]">) {
@@ -68,7 +69,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
   const sugerirEscalar = farois.some((f) => f.acao === "escalar" && f.cor === "vermelho");
 
   const evidencias = (leitura?.saidaExtrator.condicoes ?? []).flatMap((k) => [k.categoria, k.lojas, k.valor, k.data_inicio, k.data_fim, k.contrapartida].map((c) => c.trecho)).concat(leitura?.saidaExtrator.fornecedor.trecho ?? "");
-  const pedacos = destacar(neg.corpo, evidencias.filter(Boolean), neg.instrucoesSuspeitas.map((i) => i.trecho));
+  const pedacos = destacar(neg.corpo, evidencias.filter(Boolean));
 
   const opcoesForn = fornecedores.map((f) => ({ valor: f.cod_fornecedor, rotulo: `${f.cod_fornecedor} · ${f.razao_social}${f.status !== "ATIVO" ? ` (${f.status})` : ""}` }));
   const opcoesCat = CATEGORIAS.map((c) => ({ valor: c, rotulo: CATEGORIA_LABEL[c] }));
@@ -93,26 +94,10 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
       </div>
 
       {suspeita && (
-        <section role="alert" className="overflow-hidden rounded-xl border border-red-300 bg-white">
-          <div className="flex flex-wrap items-center gap-2 bg-red-600 px-4 py-2 text-sm font-semibold text-white">
-            <span aria-hidden>⚠</span> Texto suspeito encontrado
-            <span className="ml-auto rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium">Escalado à Diretoria · sem liberação na tela</span>
-          </div>
-          <div className="grid gap-3 px-4 py-3 text-sm">
-            {neg.instrucoesSuspeitas.map((i) => (
-              <div key={i.trecho} className="grid gap-2">
-                <blockquote className="rounded-md border-l-4 border-red-500 bg-red-50 px-3 py-2 font-mono text-[13px] text-red-900">“{i.trecho}”</blockquote>
-                <p><b>O que o texto pedia:</b> {i.motivo}</p>
-              </div>
-            ))}
-            <p>
-              <b>O que o sistema fez:</b> ignorou o texto, não aprovou nem gravou nada, e escalou a negociação à Diretoria Comercial. Um fornecedor não pode aprovar a própria condição; a IA não tem como mudar status nem aprovação.
-            </p>
-            <p className="text-zinc-600">
-              <b>O que fazer:</b> encaminhar à Diretoria (memorando abaixo). Não responda ao fornecedor sobre o texto suspeito antes da orientação.
-            </p>
-          </div>
-        </section>
+        <div role="alert" className="flex flex-wrap items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-semibold text-white">
+          <span aria-hidden>⚠</span> Texto suspeito
+          <span className="ml-auto rounded-full bg-white/20 px-2 py-0.5 text-xs font-medium">Escalado à Diretoria Comercial</span>
+        </div>
       )}
       {neg.alertaRevisao && emRevisao && (
         <div role="alert" className="rounded-lg border border-red-300 bg-red-50 px-4 py-3 text-sm text-red-900">
@@ -154,7 +139,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
           <div className="border-t">
             <pre className="max-h-[60vh] overflow-auto whitespace-pre-wrap px-4 py-3 font-mono text-[13px] leading-relaxed">
               {pedacos.map((p, i) =>
-                p.tipo === "normal" ? <span key={i}>{p.texto}</span> : <mark key={i} title={p.tipo === "suspeito" ? "Texto suspeito: ignorado pelo sistema" : "Trecho usado como evidência"} className={p.tipo === "suspeito" ? "rounded bg-red-200 px-0.5 outline outline-1 outline-red-400" : "rounded bg-yellow-100 px-0.5"}>{p.texto}</mark>,
+                p.tipo === "normal" ? <span key={i}>{p.texto}</span> : <mark key={i} title="Trecho usado como evidência" className="rounded bg-yellow-100 px-0.5">{p.texto}</mark>,
               )}
             </pre>
             {neg.anexos.map((a) => (
@@ -163,7 +148,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                 <TabelaCsv texto={a.texto} />
               </div>
             ))}
-            <p className="border-t px-4 py-2 text-xs text-zinc-500">Destaque amarelo: trecho usado como evidência. Vermelho: texto suspeito (tentando comandar o sistema).</p>
+            <p className="border-t px-4 py-2 text-xs text-zinc-500">Destaque amarelo: trecho usado como evidência.</p>
           </div>
         </details>
 
@@ -295,7 +280,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
 
           <details className="group rounded-xl border border-dashed bg-white/60">
             <summary className="flex cursor-pointer list-none items-center justify-between px-4 py-2.5 text-sm text-zinc-600">
-              <span className="font-medium">Detalhes para auditoria · faróis, observações da IA e linha do tempo (quem fez o quê)</span>
+              <span className="font-medium">Detalhes para auditoria · faróis, IA rodada por rodada e linha do tempo (quem fez o quê)</span>
               <span className="text-teal-700 group-open:hidden">abrir ▾</span>
               <span className="hidden text-teal-700 group-open:inline">recolher ▴</span>
             </summary>
@@ -389,6 +374,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
                   {!tempo.itens.length && !tempo.tarefas.length && <li className="text-zinc-500">Nada ainda.</li>}
                 </ol>
               </div>
+              <AuditoriaIa chamadas={tempo.ia} semIa={leitura?.origem === "referencia_manual" ? "Nenhuma chamada de IA: leitura de referência manual (IA não configurada neste ambiente)." : null} />
               <p className="text-xs text-zinc-500">
                 Premissas: as condições deste e-mail sobem juntas para o ERP (P11); aprovadores são uma lista fictícia (P9); escalados só são vistos pela Diretoria/Comitê e por quem escalou.
                 {leitura && ` Leitura: ${ORIGEM_LEITURA[leitura.origem].rotulo}${leitura.modeloExtrator ? ` (${leitura.modeloExtrator})` : ""}.`}

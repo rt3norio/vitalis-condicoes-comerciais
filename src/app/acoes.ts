@@ -257,7 +257,7 @@ export async function reabrir(negId: number): Promise<RespostaAcao> {
   const dados = await carregar(sid, negId);
   if (!dados || !["escalado", "recusado"].includes(dados.neg.status)) return falha("Só reabre o que foi escalado ou recusado.");
   if (dados.neg.status === "escalado" && !veEscalados(await perfilAtual())) return falha("Só a Diretoria ou o Comitê reabrem um caso escalado.");
-  if (dados.farois.some((f) => f.codigo === "LEI-09" && f.cor === "vermelho")) return falha("Texto suspeito no e-mail: não pode ser reaberto na tela. Encaminhe à Diretoria Comercial.");
+  if (dados.farois.some((f) => f.codigo === "LEI-09" && f.cor === "vermelho")) return falha("Texto suspeito: escalado à Diretoria Comercial, sem reabertura na tela.");
   await db.update(s.negociacoes).set({ status: "revisao", motivoSaida: null, encerradoPor: null, atualizadoEm: new Date() }).where(eq(s.negociacoes.id, negId));
   await recalcularFarois(sid, negId);
   await registrar(negId, "Reabriu para revisão");
@@ -357,6 +357,8 @@ export async function gerarNovosEmails(): Promise<RespostaAcao> {
         motivoSaida: null,
       })
       .returning({ id: s.negociacoes.id });
+    // auditoria: a chamada do Gerador fica em cada e-mail que ela criou
+    await db.insert(s.chamadasIa).values({ negociacaoId: neg.id, origem: "ia", registro: r.registro });
     await enfileirar(sid, neg.id, "ler_email");
   }
   refresh();

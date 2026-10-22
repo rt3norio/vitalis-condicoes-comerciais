@@ -54,7 +54,13 @@ export async function linhaDoTempo(negId: number) {
     ...ts.map((t) => ({ chave: `t${t.id}`, em: t.inicio, quem: "Sistema", cor: t.resultado === "ok" ? "verde" : t.resultado === "transitorio" ? "amarelo" : "vermelho", tarefa: tarefas.find((x) => x.id === t.tarefaId)?.tipo ?? "?", n: t.n, http: t.httpStatus, texto: t.mensagem })),
     ...evs.map((e) => ({ chave: `e${e.id}`, em: e.em, quem: e.por, cor: "pessoa", tarefa: null, n: null, http: null, texto: e.descricao })),
   ].sort((x, y) => y.em.getTime() - x.em.getTime());
-  return { tentativas: ts.map((t) => ({ ...t, tipo: tarefas.find((x) => x.id === t.tarefaId)?.tipo ?? "?" })), tarefas, itens };
+  // auditoria da IA: em ordem de chamada, com a rodada (tarefa + tentativa) em que aconteceu
+  const ia = (await db.select().from(s.chamadasIa).where(eq(s.chamadasIa.negociacaoId, negId)).orderBy(s.chamadasIa.id)).map((c) => ({
+    ...c,
+    tarefa: tarefas.find((x) => x.id === c.tarefaId)?.tipo ?? null,
+    rodadaEm: ts.find((x) => x.tarefaId === c.tarefaId && x.n === c.tentativa)?.inicio ?? null,
+  }));
+  return { tentativas: ts.map((t) => ({ ...t, tipo: tarefas.find((x) => x.id === t.tarefaId)?.tipo ?? "?" })), tarefas, itens, ia };
 }
 
 export async function estadoErp(sid: string) {
