@@ -163,7 +163,7 @@ async function Negociacao({ params }: Pick<PageProps<"/negociacoes/[id]">, "para
         <section className="grid content-start gap-4">
           {!conds.length && (
             <div className="rounded-xl border bg-white px-4 py-8 text-center text-sm text-zinc-500">
-              {neg.status === "recebido" ? "Aguardando leitura (próxima rodada)." : "Nenhuma condição encontrada neste e-mail."}
+              {neg.status !== "recebido" ? "Nenhuma condição encontrada neste e-mail." : avisoLeitura(tempo)}
             </div>
           )}
           {conds.map((c) => {
@@ -417,6 +417,17 @@ function TextoParaEnviar({ negId, destino, titulo, para, texto, meta }: { negId:
       </div>
     </details>
   );
+}
+
+// D22: com HTTP na última tentativa, quem falhou foi o ERP (a leitura depende dele para conferir fornecedor, lojas e categoria)
+function avisoLeitura(tempo: Awaited<ReturnType<typeof linhaDoTempo>>) {
+  const t = tempo.tarefas.find((x) => x.tipo === "ler_email" && x.status === "pendente");
+  if (!t?.ultimoErro) return "Aguardando leitura (próxima rodada).";
+  const hora = fmtDataHora(t.proximaEm).split(" ")[1];
+  const http = tempo.tentativas.find((x) => x.tarefaId === t.id)?.httpStatus;
+  return http
+    ? `O ERP falhou (HTTP ${http}). A leitura depende dele para conferir fornecedor, lojas e categoria; a IA lê o e-mail na nova tentativa, às ${hora}.`
+    : `A leitura falhou (${t.ultimoErro}). Nova tentativa às ${hora}.`;
 }
 
 function TabelaCsv({ texto }: { texto: string }) {

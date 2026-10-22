@@ -64,10 +64,11 @@ function erroIa(e: unknown, t: Tarefa): never {
   throw new Transitoria(`IA falhou: ${msg.slice(0, 300)}`);
 }
 
-function erroErp(e: unknown): never {
+function erroErp(e: unknown, contexto?: string): never {
   if (e instanceof FalhaErp) {
-    if (classificar(e.status) === "permanente") throw new Permanente(e.message, e.status);
-    throw new Transitoria(e.message, e.retryAfter, e.status);
+    const msg = contexto ? `${contexto} (${e.message})` : e.message;
+    if (classificar(e.status) === "permanente") throw new Permanente(msg, e.status);
+    throw new Transitoria(msg, e.retryAfter, e.status);
   }
   throw e;
 }
@@ -78,6 +79,15 @@ async function lerEmail(t: Tarefa): Promise<Resultado> {
   if (!dados) throw new Permanente("negociação não existe mais");
   const { neg } = dados;
   if (neg.status !== "recebido") return { mensagem: `Ignorada: negociação já está em ${neg.status}.` };
+
+  // ERP antes da IA (D22): se o ERP cair, a IA nem é chamada (sem leitura jogada fora nem custo repetido)
+  // e a falha fica no nome certo
+  let snap;
+  try {
+    snap = await obterSnapshot(t.sessionId);
+  } catch (e) {
+    erroErp(e, "ERP falhou antes da leitura; a IA não foi chamada");
+  }
 
   let origem: "ia" | "cache" | "referencia_manual";
   let saida: Extracao;
@@ -108,12 +118,6 @@ async function lerEmail(t: Tarefa): Promise<Resultado> {
     }
   }
 
-  let snap;
-  try {
-    snap = await obterSnapshot(t.sessionId);
-  } catch (e) {
-    erroErp(e);
-  }
   const novas = condicoesDaLeitura(saida, neg.dominio, snap.fornecedores, snap.lojas, [...snap.condicoes, ...extrato]);
   const [leitura] = await db
     .insert(s.leituras)

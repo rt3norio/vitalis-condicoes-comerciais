@@ -11,15 +11,23 @@ export async function listarNegociacoes(sid: string) {
     : [];
   const tarefasAbertas = ids.length
     ? await db
-        .select({ n: s.tarefas.negociacaoId, tipo: s.tarefas.tipo, erro: s.tarefas.ultimoErro, prox: s.tarefas.proximaEm, tent: s.tarefas.tentativas })
+        .select({ id: s.tarefas.id, n: s.tarefas.negociacaoId, tipo: s.tarefas.tipo, erro: s.tarefas.ultimoErro, prox: s.tarefas.proximaEm, tent: s.tarefas.tentativas })
         .from(s.tarefas)
         .where(and(inArray(s.tarefas.negociacaoId, ids), inArray(s.tarefas.status, ["pendente", "executando"])))
+    : [];
+  // HTTP da última tentativa de cada tarefa aberta: com HTTP, quem falhou foi o ERP (D22)
+  const ultimas = tarefasAbertas.length
+    ? await db
+        .select({ tarefaId: s.tentativas.tarefaId, http: s.tentativas.httpStatus })
+        .from(s.tentativas)
+        .where(inArray(s.tentativas.tarefaId, tarefasAbertas.map((t) => t.id)))
+        .orderBy(desc(s.tentativas.id))
     : [];
   const linhas = negs.map((n) => ({
     ...n,
     nCondicoes: conds.filter((c) => c.n === n.id).length,
     nAprovadas: conds.filter((c) => c.n === n.id && c.aprov).length,
-    tarefa: tarefasAbertas.find((t) => t.n === n.id) ?? null,
+    tarefa: ((t) => (t ? { ...t, http: ultimas.find((u) => u.tarefaId === t.id)?.http ?? null } : null))(tarefasAbertas.find((t) => t.n === n.id)),
   }));
   const contagem = Object.fromEntries(STATUS.map((st) => [st, negs.filter((n) => n.status === st).length])) as Record<Status, number>;
   return { linhas, contagem, total: negs.length };

@@ -102,7 +102,9 @@ async function Painel({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
                   {l.tarefa ? (
                     <span className={cn(l.tarefa.erro && "text-amber-700")}>
                       {TAREFA_LABEL[l.tarefa.tipo]}
-                      {l.tarefa.erro ? ` · falhou, nova tentativa ${fmtDataHora(l.tarefa.prox).split(" ")[1]}` : " · na fila"}
+                      {l.tarefa.erro
+                        ? `${l.tarefa.http ? ` · ERP falhou (HTTP ${l.tarefa.http})` : " · falhou"}, nova tentativa ${fmtDataHora(l.tarefa.prox).split(" ")[1]}`
+                        : " · na fila"}
                     </span>
                   ) : l.status === "revisao" ? (
                     <span className="text-violet-700">aguardando decisão</span>

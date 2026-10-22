@@ -228,6 +228,7 @@ Investimento estimado: ~R$ 150–200 mil (fases 0–2). Retorno estimado: pagame
 **O que ele não faz:** não aprova sozinho; não manda e-mail para o fornecedor (você abre "Resposta ao fornecedor", clica em **Gerar texto**, confere, copia e envia pelo seu e-mail; mudou algo na negociação, **Gerar de novo**); não decide casos que a política não cobre — esses vão para **Escalar à Diretoria**.
 
 **Quando algo dá errado**
+- *"Recebido" com "ERP falhou (HTTP 503)":* o ERP está fora; a leitura espera por ele (precisa conferir fornecedor, lojas e categoria) e tenta de novo a cada minuto. A IA só é chamada quando o ERP responde.
 - *"Aguardando envio" há muito tempo:* o ERP está fora do ar; o sistema tenta de novo a cada minuto. Veja a linha do tempo.
 - *Voltou para revisão com aviso vermelho:* o ERP recusou ou algo mudou no ERP depois da aprovação. Leia o aviso, ajuste e aprove de novo.
 - *"Texto suspeito" (escalado, sem botão de reabrir):* o caso já foi para a Diretoria Comercial e nada foi gravado. Essa proposta não segue: para cadastrar a condição, o fornecedor precisa fazer um novo contato, que entra como e-mail novo e passa pelo fluxo normal. Não comente o texto com o fornecedor.
