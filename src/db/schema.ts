@@ -13,7 +13,7 @@ export const sessoes = sqliteTable("sessoes", {
   ultimoAcesso: ts("ultimo_acesso").notNull().$defaultFn(agora),
   emailsColados: integer("emails_colados").notNull().default(0),
   // última consulta ao ERP (fornecedores, lojas, condições vigentes) feita por HTTP; reusada por até 60 s
-  erpSnapshot: text("erp_snapshot", { mode: "json" }).$type<{ fornecedores: unknown[]; lojas: unknown[]; condicoes: unknown[] } | null>(),
+  erpSnapshot: text("erp_snapshot", { mode: "json" }).$type<Record<string, unknown> | null>(),
   erpSnapshotEm: ts("erp_snapshot_em"),
 });
 

@@ -9,7 +9,7 @@ import { extrair, IaIndisponivel, iaConfigurada, redigir, verificar, MODELOS, ty
 import type { Extracao, Redacao, Verificacao } from "../agentes/schemas";
 import { fmtBRL, fmtData, fmtPct } from "../dominio/datas";
 import { alcada } from "../dominio/politica";
-import { CATEGORIA_LABEL, type Categoria, type Farol } from "../dominio/tipos";
+import { CATEGORIA_LABEL, type Categoria } from "../dominio/tipos";
 import { classificar, erp } from "../erp/cliente";
 import { carregar, FalhaErp, obterSnapshot, paraCondicao, recalcularFarois, type LinhaNegociacao } from "../negociacao";
 import { condicoesDaLeitura } from "../regras/condicoes-da-leitura";
@@ -209,7 +209,7 @@ async function enviarErp(t: Tarefa): Promise<Resultado> {
   if (!gravadas.length) {
     let snap;
     try {
-      snap = await obterSnapshot(t.sessionId, 0, ["condicoes", "fornecedores"]);
+      snap = await obterSnapshot(t.sessionId, ["condicoes", "fornecedores"]);
     } catch (e) {
       erroErp(e);
     }

@@ -1,12 +1,15 @@
 // Sessão anônima por cookie (S18). Cada sessão tem seu ERP simulado e sua caixa com os 4 e-mails.
 import { eq, inArray } from "drizzle-orm";
 import { cookies } from "next/headers";
+import { connection } from "next/server";
 import { db, garantirMigracao, schema as s } from "@/db";
 import { capturaErp, emailsDataset } from "./dominio/dataset";
 
 export const COOKIE_SESSAO = "vitalis_sid";
 
 export async function sessaoAtual(): Promise<string> {
+  // tudo que depende da sessão é por requisição (datas, banco): não entra na pré-renderização
+  await connection();
   const sid = (await cookies()).get(COOKIE_SESSAO)?.value;
   if (!sid) throw new Error("Sessão ausente (proxy não criou o cookie)");
   await garantirSessao(sid);

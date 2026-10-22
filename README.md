@@ -1,36 +1,57 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vitalis · Condições comerciais
 
-## Getting Started
+Protótipo do case AI Builder (Pareto): e-mail do fornecedor → agentes de IA → conferência humana → condição gravada no ERP.
 
-First, run the development server:
+## Rodar local
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+pnpm install
+cp .env.example .env.local   # opcional: OPENROUTER_API_KEY para a IA rodar de verdade
+pnpm dev                     # http://localhost:3000
+pnpm test                    # faróis (Cadastro/Política) e contrato do ERP
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Banco: SQLite em `.data/app.db` (criado e migrado sozinho). Sem chave de IA, os 4 e-mails do dataset usam uma leitura de referência feita à mão, rotulada assim na tela.
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Com chave, gere o cache real da IA para os 4 e-mails: `pnpm gerar-cache-ia` (grava `data/leituras-ia-cache.json`).
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Como funciona
 
-## Learn More
+Cada e-mail é uma **negociação** que passa por um funil. Toda etapa é uma **tarefa** gravada no banco e executada em segundo plano por um agendador (a cada 60 s, ou "Processar agora"). Falha transitória (IA fora, ERP 503/429) fica registrada e tenta de novo na próxima rodada.
 
-To learn more about Next.js, take a look at the following resources:
+```
+Recebido ──ler_email──▶ Verificação ──verificar──▶ Revisão humana ──aprovar──▶ Aguardando envio ──enviar_erp──▶ Enviado
+                                  └─ instrução suspeita ─▶ Escalado        └─ recusar / escalar
+```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+| Etapa | Quem faz | IA? |
+|---|---|---|
+| Ler e-mail | Agente Extrator: campos + trecho de origem + certeza | Sim |
+| Nome → código do ERP | Regra fixa (`src/lib/regras/resolver.ts`) | Não |
+| Conferir leitura | Agente Verificador, independente | Sim |
+| Faróis de Cadastro, Política, Contrato | Regra fixa (`src/lib/regras/farois.ts`) | Não |
+| Resumo e rascunhos | Agente Redator (texto padrão se a IA falhar) | Sim |
+| Aprovar | Pessoa com alçada | Não |
+| Enviar ao ERP | Tarefa HTTP com Idempotency-Key | Não |
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+Faróis: 🟢 ok · 🟡 deduzido/atenção (exige "Conferi os N itens") · 🔴 trava · ⚪ não se aplica (só Política). Catálogo em `../docs/desenho.md`.
 
-## Deploy on Vercel
+ERP simulado: `/api/v1/{fornecedores,lojas,condicoes}`, mesmo contrato do `mock_erp` (10 req/min, ~20% de 503, idempotência). Cada sessão do navegador tem o seu.
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Estrutura
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- `src/lib/regras/` motor de faróis, resolução de nomes, contrato do ERP (puro, testado)
+- `src/lib/agentes/` prompts, schemas Zod e chamadas dos 3 agentes (AI SDK + OpenRouter)
+- `src/lib/tarefas/` fila, handlers e agendador
+- `src/lib/erp/` ERP simulado (servidor) e cliente HTTP
+- `src/db/` schema Drizzle (SQLite/libsql) · `drizzle/` migrações
+- `src/app/` telas e Server Actions
+
+## Deploy (Fly.io)
+
+Preparado em `Dockerfile` e `fly.toml` (máquina sempre ligada, volume em `/data`). Ainda não implantado.
+
+## Dentro e fora do escopo
+
+Dentro: funil completo, 3 agentes, faróis, aprovação por alçada, envio resiliente ao ERP simulado, novo e-mail colado/.eml.
+Fora: caixa de entrada real (IMAP), autenticação, envio de e-mail ao fornecedor, ERP real, limpeza de sessões antigas.

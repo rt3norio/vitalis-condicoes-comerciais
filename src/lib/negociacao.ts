@@ -42,33 +42,40 @@ export class FalhaErp extends Error {
   }
 }
 
-// Consulta ao ERP por HTTP (S30). Reusa a última consulta da sessão por até `maxIdadeMs`.
-export async function obterSnapshot(sid: string, maxIdadeMs = 60_000, forcar: ("condicoes" | "fornecedores")[] = []): Promise<Snapshot> {
-  const sess = await db.select().from(s.sessoes).where(eq(s.sessoes.id, sid)).get();
-  const atual = sess?.erpSnapshot as Omit<Snapshot, "em"> | null | undefined;
-  const fresco = atual && sess?.erpSnapshotEm && Date.now() - sess.erpSnapshotEm.getTime() < maxIdadeMs;
-  if (atual && fresco && !forcar.length) return { ...atual, em: sess!.erpSnapshotEm! };
+type Recurso = "fornecedores" | "lojas" | "condicoes";
+type SnapshotGuardado = Omit<Snapshot, "em"> & { em?: Partial<Record<Recurso, string>> };
 
-  const precisa = atual && fresco ? forcar : (["fornecedores", "lojas", "condicoes"] as const);
-  const novo = { fornecedores: atual?.fornecedores ?? [], lojas: atual?.lojas ?? [], condicoes: atual?.condicoes ?? [] } as Omit<Snapshot, "em">;
-  for (const r of precisa) {
+// Cadastros quase não mudam; condições vigentes mudam a qualquer hora
+const VALIDADE_MS: Record<Recurso, number> = { fornecedores: 10 * 60_000, lojas: 10 * 60_000, condicoes: 60_000 };
+
+// Consulta ao ERP por HTTP (S30). Cada recurso que deu certo fica salvo na hora: se o próximo falhar (503),
+// a nova tentativa só busca o que falta. `forcar` ignora a validade (reconferência antes do envio).
+export async function obterSnapshot(sid: string, forcar: Recurso[] = []): Promise<Snapshot> {
+  const sess = await db.select().from(s.sessoes).where(eq(s.sessoes.id, sid)).get();
+  const atual: SnapshotGuardado = (sess?.erpSnapshot as SnapshotGuardado | null) ?? { fornecedores: [], lojas: [], condicoes: [], em: {} };
+  atual.em ??= {};
+  const agora = Date.now();
+  for (const r of ["fornecedores", "lojas", "condicoes"] as const) {
+    const quando = atual.em[r] ? new Date(atual.em[r]!).getTime() : 0;
+    if (!forcar.includes(r) && agora - quando < VALIDADE_MS[r]) continue;
     const resp = r === "fornecedores" ? await erp.fornecedores(sid) : r === "lojas" ? await erp.lojas(sid) : await erp.condicoesVigentes(sid);
     if (resp.status !== 200) {
       const e = resp.body as { error?: string; message?: string };
       throw new FalhaErp(`GET /${r}: ${resp.status} ${e?.error ?? ""} ${e?.message ?? ""}`.trim(), resp.status, resp.retryAfter);
     }
-    (novo as Record<string, unknown>)[r] = (resp.body as { itens: unknown[] }).itens;
+    (atual as Record<string, unknown>)[r] = (resp.body as { itens: unknown[] }).itens;
+    atual.em[r] = new Date().toISOString();
+    await db.update(s.sessoes).set({ erpSnapshot: atual, erpSnapshotEm: new Date() }).where(eq(s.sessoes.id, sid));
   }
-  const em = new Date();
-  await db.update(s.sessoes).set({ erpSnapshot: novo, erpSnapshotEm: em }).where(eq(s.sessoes.id, sid));
-  return { ...novo, em };
+  return { fornecedores: atual.fornecedores, lojas: atual.lojas, condicoes: atual.condicoes, em: new Date(atual.em.condicoes ?? Date.now()) };
 }
 
 // Última consulta, sem chamar o ERP (para telas)
 export async function snapshotSalvo(sid: string): Promise<Snapshot | null> {
   const sess = await db.select().from(s.sessoes).where(eq(s.sessoes.id, sid)).get();
-  if (!sess?.erpSnapshot || !sess.erpSnapshotEm) return null;
-  return { ...(sess.erpSnapshot as Omit<Snapshot, "em">), em: sess.erpSnapshotEm };
+  const g = sess?.erpSnapshot as SnapshotGuardado | null | undefined;
+  if (!g || !g.em?.condicoes || !g.em?.fornecedores || !g.em?.lojas) return null;
+  return { fornecedores: g.fornecedores, lojas: g.lojas, condicoes: g.condicoes, em: new Date(g.em.condicoes) };
 }
 
 export async function carregar(sid: string, negId: number) {

@@ -1,0 +1,307 @@
+"use client";
+// Partes interativas da negociação. Toda mudança chama uma Server Action, que recalcula os faróis.
+import { useState, useTransition } from "react";
+import { toast } from "sonner";
+import {
+  aceitarSugestao,
+  aprovarCondicao,
+  conferirAmarelos,
+  definirSubstituicao,
+  desfazerAprovacao,
+  editarCampo,
+  encerrar,
+  escolherAlternativa,
+  reabrir,
+  relerComIa,
+} from "@/app/acoes";
+import { avisar } from "@/components/barra-topo";
+import { Button } from "@/components/ui/button";
+import { Textarea } from "@/components/ui/textarea";
+import { cn } from "@/lib/utils";
+
+const inputCls =
+  "h-8 w-full rounded-md border border-zinc-300 bg-white px-2 text-sm outline-none focus:border-teal-600 focus:ring-2 focus:ring-teal-600/20 disabled:bg-zinc-100 disabled:text-zinc-500";
+
+type Opcao = { valor: string; rotulo: string };
+
+export type DadosEditor = {
+  id: number;
+  tipo: "DESCONTO_PERCENTUAL" | "VERBA_EXPOSICAO";
+  codFornecedor: string | null;
+  codCategoria: string | null;
+  lojas: string[];
+  percentual: number | null;
+  valor: number | null;
+  dataInicio: string | null;
+  dataFim: string | null;
+  contrapartida: string;
+  codCondicaoSubstituida: string | null;
+  alternativas: { valor: number; origem: string; trecho: string }[] | null;
+  alternativaEscolhida: boolean;
+  sugestaoFim: { valor: string; motivo: string } | null;
+  substituirCandidato: string | null;
+  bloqueado: boolean;
+};
+
+export function EditorCondicao({ d, fornecedores, categorias, lojas }: { d: DadosEditor; fornecedores: Opcao[]; categorias: Opcao[]; lojas: Opcao[] }) {
+  const [pend, start] = useTransition();
+  const salvar = (campo: Parameters<typeof editarCampo>[1], valor: string | string[] | null) => start(async () => avisar(await editarCampo(d.id, campo, valor)));
+  const dis = d.bloqueado || pend;
+  const campoValor = d.tipo === "DESCONTO_PERCENTUAL" ? "percentual" : "valor";
+  const valorAtual = d.tipo === "DESCONTO_PERCENTUAL" ? d.percentual : d.valor;
+  return (
+    <div className={cn("grid gap-3 sm:grid-cols-2", pend && "opacity-70")}>
+      <Campo rotulo="Fornecedor (ERP)">
+        <select key={`f-${d.codFornecedor}`} className={inputCls} defaultValue={d.codFornecedor ?? ""} disabled={dis} onChange={(e) => salvar("codFornecedor", e.target.value)}>
+          <option value="">— escolha —</option>
+          {fornecedores.map((o) => (
+            <option key={o.valor} value={o.valor}>{o.rotulo}</option>
+          ))}
+        </select>
+      </Campo>
+      <Campo rotulo="Categoria (ERP)">
+        <select key={`c-${d.codCategoria}`} className={inputCls} defaultValue={d.codCategoria ?? ""} disabled={dis} onChange={(e) => salvar("codCategoria", e.target.value)}>
+          <option value="">— escolha —</option>
+          {categorias.map((o) => (
+            <option key={o.valor} value={o.valor}>{o.rotulo}</option>
+          ))}
+        </select>
+      </Campo>
+      <Campo rotulo={d.tipo === "DESCONTO_PERCENTUAL" ? "Desconto (%)" : "Verba (R$, total)"}>
+        {d.alternativas && (
+          <div className="mb-1.5 grid gap-1">
+            {d.alternativas.map((a) => (
+              <button
+                key={`${a.origem}-${a.valor}`}
+                type="button"
+                disabled={dis}
+                onClick={() => start(async () => avisar(await escolherAlternativa(d.id, a.valor)))}
+                className={cn(
+                  "rounded-md border px-2 py-1 text-left text-xs hover:bg-teal-50",
+                  d.alternativaEscolhida && valorAtual === a.valor ? "border-teal-600 bg-teal-50" : "border-zinc-300 bg-white",
+                )}
+              >
+                <b>{String(a.valor).replace(".", ",")}</b> · {a.origem} <span className="text-zinc-500">“{a.trecho}”</span>
+              </button>
+            ))}
+          </div>
+        )}
+        <input key={`v-${valorAtual}`} className={inputCls} type="number" step="0.01" min="0" defaultValue={valorAtual ?? ""} disabled={dis} onBlur={(e) => e.target.value !== String(valorAtual ?? "") && salvar(campoValor, e.target.value)} />
+      </Campo>
+      <div className="grid grid-cols-2 gap-2">
+        <Campo rotulo="Início">
+          <input key={`i-${d.dataInicio}`} className={inputCls} type="date" defaultValue={d.dataInicio ?? ""} disabled={dis} onBlur={(e) => e.target.value !== (d.dataInicio ?? "") && salvar("dataInicio", e.target.value)} />
+        </Campo>
+        <Campo rotulo="Fim">
+          <input key={`e-${d.dataFim}`} className={inputCls} type="date" defaultValue={d.dataFim ?? ""} disabled={dis} onBlur={(e) => e.target.value !== (d.dataFim ?? "") && salvar("dataFim", e.target.value)} />
+          {d.sugestaoFim && !d.dataFim && (
+            <button type="button" disabled={dis} className="mt-1 text-left text-xs text-teal-700 underline" onClick={() => start(async () => avisar(await aceitarSugestao(d.id, "dataFim")))}>
+              Usar {d.sugestaoFim.valor.split("-").reverse().join("/")} ({d.sugestaoFim.motivo})
+            </button>
+          )}
+        </Campo>
+      </div>
+      <Campo rotulo="Lojas" largo>
+        <EditorLojas d={d} lojas={lojas} dis={dis} onSalvar={(v) => salvar("lojas", v)} />
+      </Campo>
+      <Campo rotulo={d.tipo === "VERBA_EXPOSICAO" ? "Contrapartida (obrigatória em verba)" : "Contrapartida"} largo>
+        <Textarea key={`t-${d.contrapartida}`} rows={2} defaultValue={d.contrapartida} disabled={dis} className="text-sm" onBlur={(e) => e.target.value !== d.contrapartida && salvar("contrapartida", e.target.value)} />
+      </Campo>
+      {(d.substituirCandidato || d.codCondicaoSubstituida) && (
+        <div className="sm:col-span-2 flex flex-wrap items-center gap-2 rounded-md border border-violet-200 bg-violet-50 px-3 py-2 text-sm">
+          {d.codCondicaoSubstituida ? (
+            <>
+              <span>Esta condição vai <b>substituir {d.codCondicaoSubstituida}</b> (o ERP encerra a antiga na véspera do início).</span>
+              <Button size="xs" variant="outline" disabled={dis} onClick={() => start(async () => avisar(await definirSubstituicao(d.id, null)))}>Desfazer</Button>
+            </>
+          ) : (
+            <>
+              <span>Já existe <b>{d.substituirCandidato}</b> nas mesmas lojas e período.</span>
+              <Button size="xs" disabled={dis} onClick={() => start(async () => avisar(await definirSubstituicao(d.id, d.substituirCandidato)))}>
+                Substituir {d.substituirCandidato}
+              </Button>
+            </>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function EditorLojas({ d, lojas, dis, onSalvar }: { d: DadosEditor; lojas: Opcao[]; dis: boolean; onSalvar: (v: string[]) => void }) {
+  const [sel, setSel] = useState<string[]>(d.lojas);
+  const [aberto, setAberto] = useState(false);
+  const rede = sel.includes("REDE");
+  const rotulo = (cod: string) => (cod === "REDE" ? "Toda a rede" : (lojas.find((l) => l.valor === cod)?.rotulo ?? cod));
+  return (
+    <div>
+      <div className="flex flex-wrap items-center gap-1">
+        {d.lojas.length ? d.lojas.map((l) => <span key={l} className="rounded bg-zinc-100 px-1.5 py-0.5 text-xs">{rotulo(l)}</span>) : <span className="text-xs text-red-600">nenhuma</span>}
+        {!d.bloqueado && (
+          <button type="button" className="ml-1 text-xs text-teal-700 underline" onClick={() => setAberto((x) => !x)}>
+            {aberto ? "fechar" : "editar lojas"}
+          </button>
+        )}
+      </div>
+      {aberto && (
+        <div className="mt-2 rounded-md border bg-white p-2">
+          <label className="mb-1 flex items-center gap-2 text-sm font-medium">
+            <input type="checkbox" checked={rede} onChange={(e) => setSel(e.target.checked ? ["REDE"] : [])} /> Toda a rede
+          </label>
+          <div className="grid max-h-48 grid-cols-2 gap-x-3 overflow-auto text-xs sm:grid-cols-3">
+            {lojas.map((l) => (
+              <label key={l.valor} className={cn("flex items-center gap-1.5 py-0.5", rede && "opacity-40")}>
+                <input
+                  type="checkbox"
+                  disabled={rede}
+                  checked={sel.includes(l.valor)}
+                  onChange={(e) => setSel((s) => (e.target.checked ? [...s, l.valor] : s.filter((x) => x !== l.valor)).sort())}
+                />
+                {l.rotulo}
+              </label>
+            ))}
+          </div>
+          <div className="mt-2 flex gap-2">
+            <Button size="xs" disabled={dis} onClick={() => { onSalvar(sel); setAberto(false); }}>Salvar lojas</Button>
+            <Button size="xs" variant="ghost" onClick={() => { setSel(d.lojas); setAberto(false); }}>Cancelar</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function Campo({ rotulo, largo, children }: { rotulo: string; largo?: boolean; children: React.ReactNode }) {
+  return (
+    <div className={cn("grid content-start gap-1", largo && "sm:col-span-2")}>
+      <span className="text-xs font-medium text-zinc-500">{rotulo}</span>
+      {children}
+    </div>
+  );
+}
+
+export function AprovarCondicao({
+  condId,
+  aprovadores,
+  aprovada,
+  podeAgora,
+  motivo,
+  emRevisao,
+}: {
+  condId: number;
+  aprovadores: (Opcao & { alcadaOk: boolean })[];
+  aprovada: string | null;
+  podeAgora: boolean;
+  motivo: string | null;
+  emRevisao: boolean;
+}) {
+  const [pend, start] = useTransition();
+  const [ap, setAp] = useState("");
+  if (aprovada)
+    return (
+      <div className="flex flex-wrap items-center justify-between gap-2 rounded-md border border-emerald-200 bg-emerald-50 px-3 py-2 text-sm text-emerald-800">
+        <span>✓ {aprovada}</span>
+        {emRevisao && <Button size="xs" variant="outline" disabled={pend} onClick={() => start(async () => avisar(await desfazerAprovacao(condId)))}>Desfazer aprovação</Button>}
+      </div>
+    );
+  if (!emRevisao) return null;
+  return (
+    <div className="grid gap-2 rounded-md border border-zinc-200 bg-zinc-50 px-3 py-2.5">
+      <div className="flex flex-wrap items-center gap-2">
+        <select className={cn(inputCls, "w-auto min-w-60")} value={ap} onChange={(e) => setAp(e.target.value)}>
+          <option value="">Quem aprova?</option>
+          {aprovadores.map((a) => (
+            <option key={a.valor} value={a.valor}>{a.rotulo}{a.alcadaOk ? "" : " — sem alçada"}</option>
+          ))}
+        </select>
+        <Button size="sm" disabled={!podeAgora || !ap || pend} onClick={() => start(async () => avisar(await aprovarCondicao(condId, ap)))}>
+          {pend ? "Aprovando…" : "Aprovar esta condição"}
+        </Button>
+      </div>
+      {motivo && <p className="text-xs text-red-700">{motivo}</p>}
+    </div>
+  );
+}
+
+export function ConferirAmarelos({ negId, n, conferido, aprovadores }: { negId: number; n: number; conferido: string | null; aprovadores: Opcao[] }) {
+  const [pend, start] = useTransition();
+  const [ap, setAp] = useState("");
+  const [marcado, setMarcado] = useState(false);
+  if (!n) return null;
+  if (conferido) return <p className="text-sm text-emerald-800">✓ {n} item(ns) deduzido(s) conferido(s) por {conferido}.</p>;
+  return (
+    <div className="flex flex-wrap items-center gap-2 text-sm">
+      <label className="flex items-center gap-2">
+        <input type="checkbox" checked={marcado} onChange={(e) => setMarcado(e.target.checked)} />
+        Conferi os <b>{n}</b> itens amarelos (deduzidos ou de atenção) contra o e-mail
+      </label>
+      <select className={cn(inputCls, "w-auto")} value={ap} onChange={(e) => setAp(e.target.value)}>
+        <option value="">quem conferiu?</option>
+        {aprovadores.map((a) => (
+          <option key={a.valor} value={a.valor}>{a.rotulo}</option>
+        ))}
+      </select>
+      <Button size="sm" variant="outline" disabled={!marcado || !ap || pend} onClick={() => start(async () => avisar(await conferirAmarelos(negId, ap)))}>
+        Registrar conferência
+      </Button>
+    </div>
+  );
+}
+
+export function Encerrar({ negId, sugerirEscalar }: { negId: number; sugerirEscalar: boolean }) {
+  const [pend, start] = useTransition();
+  const [modo, setModo] = useState<null | "recusado" | "escalado">(null);
+  const [motivo, setMotivo] = useState("");
+  return (
+    <div className="grid gap-2">
+      <div className="flex flex-wrap gap-2">
+        <Button size="sm" variant={sugerirEscalar ? "default" : "outline"} onClick={() => setModo("escalado")}>Escalar à Diretoria</Button>
+        <Button size="sm" variant="destructive" onClick={() => setModo("recusado")}>Recusar</Button>
+      </div>
+      {modo && (
+        <div className="grid gap-2">
+          <Textarea rows={2} placeholder={modo === "escalado" ? "Por que vai à Diretoria? (ex.: conflito entre §4 e §5)" : "Motivo da recusa"} value={motivo} onChange={(e) => setMotivo(e.target.value)} />
+          <div className="flex gap-2">
+            <Button size="sm" disabled={pend || !motivo.trim()} onClick={() => start(async () => avisar(await encerrar(negId, modo, motivo)))}>
+              Confirmar {modo === "escalado" ? "escalonamento" : "recusa"}
+            </Button>
+            <Button size="sm" variant="ghost" onClick={() => setModo(null)}>Cancelar</Button>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+export function BotaoReabrir({ negId }: { negId: number }) {
+  const [pend, start] = useTransition();
+  return <Button size="sm" variant="outline" disabled={pend} onClick={() => start(async () => avisar(await reabrir(negId)))}>Reabrir para revisão</Button>;
+}
+
+export function BotaoReler({ negId, disabled }: { negId: number; disabled?: boolean }) {
+  const [pend, start] = useTransition();
+  return (
+    <Button size="sm" variant="ghost" disabled={pend || disabled} onClick={() => start(async () => avisar(await relerComIa(negId)))}>
+      Reler ao vivo com a IA
+    </Button>
+  );
+}
+
+export function Copiar({ texto, rotulo = "Copiar" }: { texto: string; rotulo?: string }) {
+  return (
+    <Button
+      size="xs"
+      variant="outline"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(texto);
+          toast.success("Copiado.");
+        } catch {
+          toast.error("Não consegui copiar; selecione o texto.");
+        }
+      }}
+    >
+      {rotulo}
+    </Button>
+  );
+}

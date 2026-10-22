@@ -66,21 +66,25 @@ export async function rodada(handlers: Record<TipoTarefa, Handler>, opts: { sess
   if (!(await pegarLease(dono, 5 * 60_000))) return { executadas: 0, ocupada: true };
   let executadas = 0;
   try {
-    const agora = new Date();
-    const filtros = [
-      or(eq(s.tarefas.status, "pendente"), and(eq(s.tarefas.status, "executando"), lt(s.tarefas.leaseAte, agora))),
-      lte(s.tarefas.proximaEm, agora),
-    ];
-    if (opts.sessionId) filtros.push(eq(s.tarefas.sessionId, opts.sessionId));
-    const fila = await db
-      .select()
-      .from(s.tarefas)
-      .where(and(...filtros))
-      .orderBy(s.tarefas.proximaEm, s.tarefas.id)
-      .limit(opts.limite ?? 30);
-    for (const t of fila) {
-      await executar(t, handlers[t.tipo]);
-      executadas++;
+    // até 4 passadas: uma tarefa criada nesta rodada (ex.: verificar depois de ler) já roda nela
+    for (let passada = 0; passada < 4; passada++) {
+      const agora = new Date();
+      const filtros = [
+        or(eq(s.tarefas.status, "pendente"), and(eq(s.tarefas.status, "executando"), lt(s.tarefas.leaseAte, agora))),
+        lte(s.tarefas.proximaEm, agora),
+      ];
+      if (opts.sessionId) filtros.push(eq(s.tarefas.sessionId, opts.sessionId));
+      const fila = await db
+        .select()
+        .from(s.tarefas)
+        .where(and(...filtros))
+        .orderBy(s.tarefas.proximaEm, s.tarefas.id)
+        .limit(opts.limite ?? 30);
+      if (!fila.length) break;
+      for (const t of fila) {
+        await executar(t, handlers[t.tipo]);
+        executadas++;
+      }
     }
   } finally {
     await soltarLease(dono);
