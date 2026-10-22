@@ -63,11 +63,11 @@ const json = (s: z.ZodType) => {
 
 function anexoPrompts() {
   const agentes = [
-    { nome: "Agente Extrator", quando: "Lê cada e-mail novo (tarefa "Ler e-mail").", recebe: "O e-mail (remetente, data, assunto, corpo) e os anexos, entre as marcas `<EMAIL>` e `<ANEXO>`.", prompt: PROMPT_EXTRATOR, schema: schemaExtracao },
-    { nome: "Agente Verificador", quando: "Logo depois do Extrator (tarefa "Verificar").", recebe: "O mesmo e-mail e a leitura do Extrator, entre as marcas `<EMAIL>` e `<LEITURA>`.", prompt: PROMPT_VERIFICADOR, schema: schemaVerificacao },
+    { nome: "Agente Extrator", quando: "Lê cada e-mail novo (tarefa 'Ler e-mail').", recebe: "O e-mail (remetente, data, assunto, corpo) e os anexos, entre as marcas `<EMAIL>` e `<ANEXO>`.", prompt: PROMPT_EXTRATOR, schema: schemaExtracao },
+    { nome: "Agente Verificador", quando: "Logo depois do Extrator (tarefa 'Verificar').", recebe: "O mesmo e-mail e a leitura do Extrator, entre as marcas `<EMAIL>` e `<LEITURA>`.", prompt: PROMPT_VERIFICADOR, schema: schemaVerificacao },
     { nome: "Agente Redator · resumo", quando: "Depois da verificação e a cada alteração, aprovação ou envio.", recebe: "O resultado já calculado pelo sistema (faróis, alçada, status) e, se houver, as alterações feitas na revisão e o estado atual.", prompt: PROMPT_REDATOR, schema: schemaRedacao },
-    { nome: "Agente Redator · resposta ao fornecedor", quando: "Quando a pessoa clica em "Gerar texto".", recebe: "O estado atual da negociação (valores, vigência, aprovações, gravação no ERP).", prompt: PROMPT_TEXTO_FORNECEDOR, schema: schemaTexto },
-    { nome: "Agente Redator · memorando à Diretoria", quando: "Quando a pessoa clica em "Gerar texto".", recebe: "O mesmo estado atual.", prompt: PROMPT_TEXTO_DIRETORIA, schema: schemaTexto },
+    { nome: "Agente Redator · resposta ao fornecedor", quando: "Quando a pessoa clica em 'Gerar texto'.", recebe: "O estado atual da negociação (valores, vigência, aprovações, gravação no ERP).", prompt: PROMPT_TEXTO_FORNECEDOR, schema: schemaTexto },
+    { nome: "Agente Redator · memorando à Diretoria", quando: "Quando a pessoa clica em 'Gerar texto'.", recebe: "O mesmo estado atual.", prompt: PROMPT_TEXTO_DIRETORIA, schema: schemaTexto },
   ];
   return agentes
     .map((a) => `### ${a.nome}\n\n**Quando roda:** ${a.quando} **O que recebe:** ${a.recebe}\n\n**Prompt completo (instruções do agente):**\n\n${bloco(a.prompt)}\n\n**Formato de saída (validado pelo sistema; resposta fora do formato é recusada):**\n\n${json(a.schema)}`)
