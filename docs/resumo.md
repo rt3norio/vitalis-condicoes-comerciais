@@ -24,7 +24,7 @@ A IA lê o e-mail e a planilha, uma segunda IA confere a leitura e a IA escreve 
 
 ### Processo
 
-- Tudo é tarefa: fica gravada no banco, roda em segundo plano a cada minuto e, se falhar, tenta de novo na rodada seguinte.
+- O processo é assíncrono porque não é transacional: ninguém fica esperando na tela a gravação no ERP. Por isso tudo é tarefa: fica gravada no banco, roda em segundo plano a cada minuto e, se falhar, tenta de novo na rodada seguinte.
 - O e-mail anda por 5 status (Recebido, Verificação, Revisão humana, Aguardando envio, Enviado), como um ticket que troca de raia.
 - As condições de um e-mail vão juntas ao ERP (premissa a validar). Antes do envio, tudo é reconferido com o ERP.
 - O ERP é consultado antes da IA, para não jogar leitura fora quando ele cai.

@@ -61,7 +61,7 @@ hr { display: none; }
 <h2>Decisões de desenho</h2>
 <h3>Processo</h3>
 <ul>
-<li>Tudo é tarefa: fica gravada no banco, roda em segundo plano a cada minuto e, se falhar, tenta de novo na rodada seguinte.</li>
+<li>O processo é assíncrono porque não é transacional: ninguém fica esperando na tela a gravação no ERP. Por isso tudo é tarefa: fica gravada no banco, roda em segundo plano a cada minuto e, se falhar, tenta de novo na rodada seguinte.</li>
 <li>O e-mail anda por 5 status (Recebido, Verificação, Revisão humana, Aguardando envio, Enviado), como um ticket que troca de raia.</li>
 <li>As condições de um e-mail vão juntas ao ERP (premissa a validar). Antes do envio, tudo é reconferido com o ERP.</li>
 <li>O ERP é consultado antes da IA, para não jogar leitura fora quando ele cai.</li>
@@ -290,7 +290,7 @@ hr { display: none; }
   R3 -- "escalar (§11)" --> X
   R4 -- "reconfere e grava,<br/>tentando de novo se falhar" --> R5["5 · Enviado"]
   R4 -- "ERP recusou ou mudou" --> R3
-  R5 --> G[("ERP")]</pre></div><p>Cada etapa é uma tarefa registrada e executada em segundo plano, a cada minuto. Nada chega ao ERP sem uma pessoa com alçada aprovar, e cada passo fica no histórico: o que a IA leu, o que as regras disseram, quem corrigiu o quê e quem aprovou.</p>
+  R5 --> G[("ERP")]</pre></div><p>O processo é assíncrono porque não é transacional: ninguém fica esperando na tela a gravação no ERP, e o cadastro pode levar alguns minutos sem prejuízo. Por isso cada etapa é uma tarefa registrada e executada em segundo plano, a cada minuto. Nada chega ao ERP sem uma pessoa com alçada aprovar, e cada passo fica no histórico: o que a IA leu, o que as regras disseram, quem corrigiu o quê e quem aprovou.</p>
 <h3>Quando o ambiente não coopera</h3>
 <p>O ERP do case cai de propósito (cerca de 1 em cada 5 chamadas responde &quot;sistema em manutenção&quot;) e aceita no máximo 10 chamadas por minuto. A solução lida com isso assim:</p>
 <ul>
@@ -534,9 +534,9 @@ hr { display: none; }
 </tr>
 <tr>
 <td>Execução</td>
-<td>ERP instável (manutenção, limite de 10 por minuto)</td>
-<td>na hora × fila em segundo plano</td>
-<td>Tudo é tarefa, a cada minuto, com nova tentativa</td>
+<td>O processo não é transacional (ninguém espera a gravação no ERP na hora) e o ERP é instável (manutenção, limite de 10 por minuto)</td>
+<td>síncrono, na hora × assíncrono, em fila</td>
+<td>Assíncrono: tudo é tarefa, a cada minuto, com nova tentativa</td>
 <td>Resiliente e auditável, com até 1 minuto de espera</td>
 </tr>
 <tr>

@@ -86,7 +86,7 @@ flowchart TB
   R5 --> G[("ERP")]
 ```
 
-Cada etapa é uma tarefa registrada e executada em segundo plano, a cada minuto. Nada chega ao ERP sem uma pessoa com alçada aprovar, e cada passo fica no histórico: o que a IA leu, o que as regras disseram, quem corrigiu o quê e quem aprovou.
+O processo é assíncrono porque não é transacional: ninguém fica esperando na tela a gravação no ERP, e o cadastro pode levar alguns minutos sem prejuízo. Por isso cada etapa é uma tarefa registrada e executada em segundo plano, a cada minuto. Nada chega ao ERP sem uma pessoa com alçada aprovar, e cada passo fica no histórico: o que a IA leu, o que as regras disseram, quem corrigiu o quê e quem aprovou.
 
 ### Quando o ambiente não coopera
 
@@ -233,7 +233,7 @@ Vídeo (até 3 min): [A PREENCHER: link do vídeo]
 | Decisão | Contexto | Opções | Escolha | Consequência |
 |---|---|---|---|---|
 | Unidade de trabalho | Um e-mail pode ter várias condições (Gama: desconto + verba) | e-mail × condição | A negociação (o e-mail), com as condições dentro | O pacote vai junto ao ERP (premissa 3) |
-| Execução | ERP instável (manutenção, limite de 10 por minuto) | na hora × fila em segundo plano | Tudo é tarefa, a cada minuto, com nova tentativa | Resiliente e auditável, com até 1 minuto de espera |
+| Execução | O processo não é transacional (ninguém espera a gravação no ERP na hora) e o ERP é instável (manutenção, limite de 10 por minuto) | síncrono, na hora × assíncrono, em fila | Assíncrono: tudo é tarefa, a cada minuto, com nova tentativa | Resiliente e auditável, com até 1 minuto de espera |
 | Revisão humana | A política exige alçada | opcional × obrigatória | Obrigatória, com as saídas aprovar, recusar ou escalar | Nada é gravado sem dono |
 | Incerteza | O case pede "o que foi suposto" | sim/não × semáforo | Verde, amarelo (deduzido, exige ciência) e vermelho (trava); cinza só nas regras da política que não se aplicam (por exemplo, contrapartida num desconto) | Toda suposição vira uma ciência registrada, com nome e hora |
 | Ciência por item | Quem aprova pode dizer depois que "não viu" o que aceitou | uma caixa "conferi tudo" × ciência em cada item | **Dar ciência** em cada item amarelo, ao lado da dica do campo; a aprovação só libera com todos cientes, e se uma edição muda o item, o sistema pede ciência de novo | Cada ciência fica gravada com o texto do item que a pessoa viu, o nome e a hora |
