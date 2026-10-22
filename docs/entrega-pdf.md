@@ -89,7 +89,7 @@ Cada etapa é uma **tarefa** gravada no banco e executada por um processo em seg
 | **Cliente do ERP** (HTTP) | Fala o contrato do `mock_erp` com `Idempotency-Key` | Trocar para o SAP real = trocar endereço e autenticação. |
 | **Hospedagem** (Fly.io, uma máquina) | Link público | Máquina sempre ligada (o agendador roda nela), ~US$ 5/mês. |
 
-**Custo de IA:** a leitura dos 4 e-mails do dataset roda uma vez e fica salva; reiniciar a demo não chama a IA. IA ao vivo só quando alguém gera ou cola um e-mail novo. Em produção, ~1 leitura por e-mail recebido (centavos por e-mail com o modelo atual).
+**Custo de IA:** a leitura dos 4 e-mails do dataset roda uma vez e fica salva; reiniciar a demo não chama a IA. IA ao vivo só quando alguém gera ou cola um e-mail novo. Em produção, ~1 leitura por e-mail recebido: **~US$ 0,006 por e-mail** com o GLM-5.3 (medido nos 4 e-mails: ~3,2 mil tokens de entrada e ~1,7 mil de saída por e-mail, somando Extrator, Verificador e Redator). Modelos mais baratos foram avaliados e não leram igual (C10).
 
 **Como ficaria no ambiente da Vitalis:** Azure (hospedagem e banco), Outlook/Exchange (caixa do comercial como entrada), SAP (gravação), Teams (aviso para o aprovador), Databricks (indicadores). **[A FAZER: diagrama]**
 
