@@ -1,6 +1,6 @@
 # Documento completo
 
-> Solução (link público): [vitalis-condicoes.fly.dev](https://vitalis-condicoes.fly.dev) · Vídeo (até 3 min): [A PREENCHER: link do vídeo] · Código: repositório privado, disponível sob pedido.
+> Solução (link público): [vitalis-condicoes.fly.dev](https://vitalis-condicoes.fly.dev) · Vídeo (até 3 min): [youtu.be/GcBO8e5EWDs](https://youtu.be/GcBO8e5EWDs) · Código: repositório privado, disponível sob pedido.
 >
 > O e-mail do fornecedor entra, a IA lê e uma segunda IA confere. Regras fixas (hardcoded) no sistema, sem IA, checam a política comercial e o cadastro do ERP. Uma pessoa com alçada decide, e o sistema grava a condição no ERP sozinho, tentando de novo se o ERP falhar.
 
@@ -217,7 +217,7 @@ Para a pessoa não precisar de treinamento, a tela:
 
 ## 07 · Demonstração
 
-Vídeo (até 3 min): [A PREENCHER: link do vídeo]
+Vídeo (até 3 min): [youtu.be/GcBO8e5EWDs](https://youtu.be/GcBO8e5EWDs)
 
 | Tempo | O que mostra |
 |---|---|

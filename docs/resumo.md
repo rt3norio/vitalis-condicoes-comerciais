@@ -1,6 +1,6 @@
 # Cadastro de condições comerciais com IA
 
-Vitalis · Case AI Builder (Pareto) · 22/10/2026 · [A PREENCHER: nome e e-mail do autor]
+Vitalis · Case AI Builder (Pareto) · 22/10/2026 · Rodrigo Tenorio · rt3norio@gmail.com
 
 > Estas duas primeiras páginas foram revisadas para leitura humana e trazem os pontos mais importantes, para avaliar por leitura direta. O restante do documento, a partir da página 3, é longo e detalhado e deve ser lido por IA.
 
@@ -8,7 +8,7 @@ O e-mail do fornecedor vira condição gravada no ERP, com uma pessoa decidindo 
 
 **E-mail → IA lê → segunda IA confere → regras fixas (hardcoded) da política e do ERP → pessoa com alçada aprova → ERP**
 
-Solução: [vitalis-condicoes.fly.dev](https://vitalis-condicoes.fly.dev) · Vídeo: [A PREENCHER: link do vídeo]
+Solução: [vitalis-condicoes.fly.dev](https://vitalis-condicoes.fly.dev) · Vídeo: [youtu.be/GcBO8e5EWDs](https://youtu.be/GcBO8e5EWDs)
 
 ## O que a solução garante
 
