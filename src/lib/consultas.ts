@@ -9,12 +9,6 @@ export async function listarNegociacoes(sid: string) {
   const conds = ids.length
     ? await db.select({ id: s.condicoes.id, n: s.condicoes.negociacaoId, ordem: s.condicoes.ordem, aprov: s.condicoes.aprovadaEm }).from(s.condicoes).where(inArray(s.condicoes.negociacaoId, ids)).orderBy(s.condicoes.ordem)
     : [];
-  const fs = ids.length
-    ? await db
-        .select({ n: s.farois.negociacaoId, condicaoId: s.farois.condicaoId, codigo: s.farois.codigo, cor: s.farois.cor, titulo: s.farois.titulo, detalhe: s.farois.detalhe })
-        .from(s.farois)
-        .where(inArray(s.farois.negociacaoId, ids))
-    : [];
   const tarefasAbertas = ids.length
     ? await db
         .select({ n: s.tarefas.negociacaoId, tipo: s.tarefas.tipo, erro: s.tarefas.ultimoErro, prox: s.tarefas.proximaEm, tent: s.tarefas.tentativas })
@@ -25,13 +19,7 @@ export async function listarNegociacoes(sid: string) {
     ...n,
     nCondicoes: conds.filter((c) => c.n === n.id).length,
     nAprovadas: conds.filter((c) => c.n === n.id && c.aprov).length,
-    cores: {
-      verde: fs.filter((f) => f.n === n.id && f.cor === "verde").length,
-      amarelo: fs.filter((f) => f.n === n.id && f.cor === "amarelo").length,
-      vermelho: fs.filter((f) => f.n === n.id && f.cor === "vermelho").length,
-    },
     tarefa: tarefasAbertas.find((t) => t.n === n.id) ?? null,
-    faixas: conds.filter((c) => c.n === n.id).map((c) => fs.filter((f) => f.condicaoId === c.id)),
   }));
   const contagem = Object.fromEntries(STATUS.map((st) => [st, negs.filter((n) => n.status === st).length])) as Record<Status, number>;
   return { linhas, contagem, total: negs.length };

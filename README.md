@@ -36,7 +36,7 @@ Recebido ──ler_email──▶ Verificação ──verificar──▶ Revisã
 | Aprovar | Pessoa com alçada | Não |
 | Enviar ao ERP | Tarefa HTTP com Idempotency-Key | Não |
 
-Faróis: 🟢 ok · 🟡 deduzido/atenção (exige "Conferi os N itens") · 🔴 trava · ⚪ não se aplica (só Política). Catálogo em `../docs/desenho.md`.
+Faróis: 🟢 ok · 🟡 deduzido/atenção (exige "Dar ciência" em cada item) · 🔴 trava · ⚪ não se aplica (só Política). Catálogo em `docs/desenho.md`.
 
 ERP simulado: `/api/v1/{fornecedores,lojas,condicoes}`, mesmo contrato do `mock_erp` (10 req/min, ~20% de 503, idempotência). Cada sessão do navegador tem o seu.
 
@@ -48,6 +48,13 @@ ERP simulado: `/api/v1/{fornecedores,lojas,condicoes}`, mesmo contrato do `mock_
 - `src/lib/erp/` ERP simulado (servidor) e cliente HTTP
 - `src/db/` schema Drizzle (SQLite/libsql) · `drizzle/` migrações
 - `src/app/` telas e Server Actions
+
+## Documentação (`docs/`)
+
+- `entrega-pdf.md` rascunho do PDF de entrega (10 seções)
+- `registro-alteracoes.md` toda mudança e decisão, com o porquê
+- `desenho.md` funil, faróis, telas · `decisoes-stack.md` stack e arquitetura
+- `pendencias-negocio.md` dúvidas de negócio · `duvidas-do-caminho.md` dúvidas surgidas na construção
 
 ## Deploy (Fly.io)
 

@@ -1,8 +1,9 @@
 // Painel (S24): tabela única de negociações; botões de status funcionam como filtro da mesma tabela.
+// Sem faróis na tabela (D17): eles ficam na tela da negociação.
 import Link from "next/link";
 import { Suspense } from "react";
 import { AutoAtualizar, BotoesTopo, ProximaRodada } from "@/components/barra-topo";
-import { FaixaFarois, StatusBadge } from "@/components/farol";
+import { StatusBadge } from "@/components/farol";
 import { iaConfigurada } from "@/lib/agentes/agentes";
 import { listarNegociacoes, usoErpUltimoMinuto } from "@/lib/consultas";
 import { fmtData, fmtDataHora, hoje } from "@/lib/dominio/datas";
@@ -71,7 +72,6 @@ async function Painel({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
               <th className="px-4 py-2.5 font-medium">Assunto</th>
               <th className="px-4 py-2.5 font-medium">Recebido</th>
               <th className="px-4 py-2.5 font-medium">Condições</th>
-              <th className="px-4 py-2.5 font-medium">Faróis</th>
               <th className="px-4 py-2.5 font-medium">Status</th>
               <th className="px-4 py-2.5 font-medium">Andamento</th>
             </tr>
@@ -88,17 +88,6 @@ async function Painel({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
                 </td>
                 <td className="px-4 py-3 whitespace-nowrap text-zinc-600">{fmtDataHora(l.recebidoEm)}</td>
                 <td className="px-4 py-3 tabular-nums">{l.nCondicoes ? `${l.nAprovadas}/${l.nCondicoes} aprovadas` : "—"}</td>
-                <td className="px-4 py-3">
-                  {l.faixas.length ? (
-                    <div className="grid gap-1.5">
-                      {l.faixas.map((f, i) => (
-                        <FaixaFarois key={i} farois={f} tamanho="sm" />
-                      ))}
-                    </div>
-                  ) : (
-                    <span className="text-zinc-400">—</span>
-                  )}
-                </td>
                 <td className="px-4 py-3">
                   <div className="flex flex-col items-start gap-1">
                     <StatusBadge status={l.status} />
@@ -125,7 +114,7 @@ async function Painel({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
             ))}
             {!visiveis.length && (
               <tr>
-                <td colSpan={7} className="px-4 py-10 text-center text-zinc-500">Nada neste status.</td>
+                <td colSpan={6} className="px-4 py-10 text-center text-zinc-500">Nada neste status.</td>
               </tr>
             )}
           </tbody>
@@ -134,11 +123,6 @@ async function Painel({ searchParams }: Pick<PageProps<"/">, "searchParams">) {
       {ocultos > 0 && (
         <p className="text-xs text-zinc-500">{ocultos} negociação(ões) escalada(s) à Diretoria não aparece(m) para o seu perfil ({perfil.cargo}).</p>
       )}
-      <p className="flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-zinc-500">
-        <span>Como ler as bolinhas (sempre na mesma ordem, uma faixa por condição):</span>
-        <FaixaFarois farois={[]} rotulos tamanho="sm" />
-        <span>· passe o mouse para ver cada regra</span>
-      </p>
       <p className="text-xs text-zinc-500">
         Cada linha é um e-mail (uma negociação). Ela anda sozinha de Recebido até Revisão; só uma pessoa com alçada move para Aguardando envio. O envio ao ERP também é uma tarefa em segundo plano, que tenta de novo se o ERP falhar.
       </p>
